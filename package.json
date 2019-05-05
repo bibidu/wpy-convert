@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/duxianzhang/wpy-convert/issues"
   },
-  "homepage": "https://github.com/duxianzhang/wpy-convert#readme"
+  "homepage": "https://github.com/duxianzhang/wpy-convert#readme",
+  "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "chalk": "^2.4.2",
+    "less": "^3.9.0"
+  }
 }

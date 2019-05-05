@@ -4,6 +4,7 @@ wpy转换任意小程序框架代码
 ```
 编译工厂
   -compiler
+    -index.js [type, ...args] 根据type调用对应的编译器, 返回promise
     -less-compiler
       input: 'less 代码'
       output: 'css 代码'
@@ -13,7 +14,8 @@ wpy转换任意小程序框架代码
 
 工具函数
   -utils
-    -safeGet(exp, defaults = undefined): obj.friends.name -> undefined
+    -index.js [...] 工具方法集合
+    -log [log/warn/error] 输出日志
 
 template
   -tpl2obj.js
@@ -28,7 +30,7 @@ template
 
 style
   -less2css.js
-    input: 'wepy.style'
+    input: 'wepy.style[包含引入外链css和less]'
     output: 'less编译后的css代码'
 
 script
