@@ -6,35 +6,26 @@
  */
 require('babel-polyfill')
 const less2css = require('./style/less2css')
+const tpl2obj = require('./template/tpl2obj')
 
 
 // test
-var test = `
-@import '../common/common.less';
 
-.answer {
-  .word {
-    font-weight: bold;
-    font-size: 80rpx;
-    color: #322a22;
-    text-align: center;
-    &:after{
-      content: '';
-    }
-  }
-  .wordb {
-    font-size: 30rpx;
-    font-weight: bold;
-    color: #554c44;
-    text-align: center;
-    margin-bottom: 25rpx;
-  }
-}
-`
+let node = `<template>
+<view class="mask" wx:if='{{show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+  <view class="modal-wrap" style="height:{{status===2?hasMobile&&!edit?'766rpx':'938rpx':'736rpx'}}">
+      <view wx:if='{{status === 2}}'>
+        <view class='input-wrap' wx:if='{{!hasMobile || edit}}'>
+          <input type="number" class='input' placeholder='请填写手机号' maxlength='11' value='{{mobile}}' @input='changeMobile' style="border:2rpx solid {{color}};border-right:none;" />
+          <view class='submit' @tap='submit'>提交</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+</template>`
 
-let r = less2css(test)
 
-r.then(Res => {
-  console.log('Res');
-  console.log(Res);
-})
+let rst = tpl2obj(node)
+console.log('rst');
+console.log(rst);
