@@ -1,0 +1,69 @@
+<style lang="less">
+  // 分享图片preview
+  .preview{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:23;
+    background: rgba(0,0,0,0.65);
+    text-align:center;
+    image{
+      width:70%;
+      margin-top:90rpx;
+    }
+    view{
+      font-size:26rpx;
+      color:#eee;
+      margin-top:20rpx;
+    }
+  }
+</style>
+<template>
+  <!-- preview -->
+  <view class='preview' @tap.stop='tap2' @touchmove.stop='move2' wx-if='{{show}}'>
+    <image src='{{imgSrc}}' mode='widthFix'></image>
+    <view>{{msg}}</view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class Share extends wepy.component {
+    props = {
+      msg: {
+        type: String,
+        default: '图片已保存到相册，可分享给好友'
+      },
+      imgSrc: {
+        type: String
+      },
+      show: {
+        type: Boolean,
+        default: false,
+        twoWay: true
+      }
+    }
+
+    data = {
+    }
+    events = {
+    }
+
+    watch = {
+    }
+
+    methods = {
+      toggle() {
+        this.$emit('togglewarning')
+        this.show = false
+      },
+      tap2() {
+        this.show = false
+      },
+      move2() {
+      }
+    }
+  }
+</script>

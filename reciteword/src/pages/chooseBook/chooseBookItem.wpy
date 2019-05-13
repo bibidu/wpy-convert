@@ -1,0 +1,155 @@
+<template>
+  <view class='new-choose-item'>
+    <view class='item-top' wx:if='{{show}}'>
+      <view class='item-top-con'>以下是为你推荐的单词计划</view>
+      <view class='item-top-tip'> Tip:你可以在首页随时切换其他单词计划</view>
+    </view>
+    <view class='item-con'>
+      <repeat for='{{books}}'>
+        <view class='item-con-i' @tap='chooseBook({{item.target}})'>
+          <image class='con-i-left' src='{{item.icon}}'></image>
+          <view class='con-i-right'>
+            <view class='i-right-top'>{{item.name}}</view>
+            <view class='i-right-mid'>{{item.author}}</view>
+            <view class='i-right-bot'>{{item.planDesc}} | 每天{{item.stageWordNum}}词</view>
+          </view>
+          <image class='choose-icon' src='../../images/xcx_cxin_1@1.5x.png' wx:if='{{target === item.target}}'></image>
+        </view>
+      </repeat>
+    </view>
+    <view class='item-btn' style="{{target === -1 ? 'background: #DADADA; color: #FFFFFF;' : 'background: #FFD600; color: #322A22;'}}" @tap='toAnswer'>马上开始学习</view>
+    <!-- loading -->
+    <kcLoading :show.sync='showLoading'></kcLoading>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import api from '@/common/api'
+  import kcLoading from '@/components/kcLoading'
+
+  export default class chooseBookItem extends wepy.page {
+    config = {
+      navigationBarTitleText: '选择单词任务'
+    }
+    components = {
+      kcLoading
+    }
+    data = {
+      show: false,
+      showLoading: true,
+      bookId: -1,
+      target: -1,
+      books: []
+    }
+    methods = {
+      chooseBook(target) {
+        this.target = target
+        console.log('select', target)
+      },
+      async toAnswer() {
+        if (this.target !== -1) {
+          this.showLoading = true
+          await api.target({ target: this.target })
+          this.showLoading = false
+          this.$apply()
+          wepy.reLaunch({url: '/pages/index'})
+        }
+      }
+    }
+    async onLoad(options) {
+      let { categoryId } = options
+      let { books } = await api.getBookByCate({categoryId: parseInt(categoryId)})
+      this.show = true
+      this.books = books
+      this.showLoading = false
+      this.$apply()
+    }
+    async onShow() {}
+  }
+</script>
+
+<style lang='less'>
+  .new-choose-item {
+    width: 100%;
+    padding-bottom: 110rpx;
+    box-sizing: border-box;
+    .item-top {
+      width: 100%;
+      padding: 120rpx 30rpx 60rpx 30rpx;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      .item-top-con {
+        font-weight: bold;
+        font-size: 56rpx;
+        color: #322A22;
+      }
+      .item-top-tip {
+        opacity: 0.6;
+        font-size: 28rpx;
+        color: #ADACAA;
+      }
+    }
+    .item-con {
+      width: 100%;
+      padding: 0 30rpx;
+      box-sizing: border-box;
+      .item-con-i {
+        position: relative;
+        padding: 60rpx 0 43rpx 35rpx;
+        box-sizing: border-box;
+        background: #FFFFFF;
+        box-shadow: 0 4rpx 34rpx 0 rgba(220,220,220,0.50);
+        border-radius: 8rpx;
+        width: 690rpx;
+        height: 240rpx;
+        margin-bottom: 40rpx;
+        display: flex;
+        align-items: center;
+        .con-i-left {
+          width: 108rpx;
+          height: 136rpx;
+          margin-right: 45rpx;
+        }
+        .con-i-right {
+          flex: 1;
+          height: 136rpx;
+          .i-right-top {
+            font-weight: bold;
+            font-size: 32rpx;
+            color: #554C44;
+          }
+          .i-right-mid {
+            opacity: 0.6;
+            font-size: 24rpx;
+            color: #554C44;
+            margin: 14rpx 0;
+          }
+          .i-right-bot {
+            font-size: 24rpx;
+            color: #D0D0D0;
+          }
+        }
+        .choose-icon {
+          width: 56rpx;
+          height: 56rpx;
+          position: absolute;
+          right: 0;
+          bottom: 0;
+        }
+      }
+    }
+    .item-btn {
+      width: 100%;
+      height: 110rpx;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      font-size: 34rpx;
+      text-align: center;
+      line-height: 110rpx;
+    }
+  }
+</style>

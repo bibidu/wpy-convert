@@ -1,0 +1,111 @@
+<style lang="less" scoped>
+    .answer-modal{
+      position: fixed;
+      z-index: 7;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      text-align: center;
+      .image{
+        display: block;
+        width: 230rpx;
+        height: 160rpx;
+        margin: 220rpx auto 0;
+      }
+      .title{
+        color: #484E5E;
+        margin: 50rpx auto 30rpx;
+        font-size: 36rpx;
+        font-weight: bold;
+      }
+      .subtitle{
+        font-size: 30rpx;
+        color: #9A9FA8;
+      }
+      // .bot-btn{
+      //   position: absolute;
+      //   bottom: 230rpx;
+      //   left: 50%;
+      //   transform: translateX(-50%);
+      //   width: 630rpx;
+      //   height: 100rpx;
+      //   background:rgba(248,248,248,1);
+      //   border-radius:50rpx;
+      //   font-size: 30rpx;
+      //   text-align: center;
+      //   line-height: 100rpx;
+      //   &:after{
+      //     border: none;
+      //   }
+      //   .time{
+      //     position: absolute;
+      //     left: 70rpx;
+      //     top: 50%;
+      //     transform: translateY(-50%);
+      //     color: #48D76C;
+      //   }
+      //   .text{
+      //     color: #484E5E;
+      //     font-weight: bold;
+      //   }
+      //   .pgs-line{
+      //     position: absolute;
+      //     height: 2rpx;
+      //     bottom: 0rpx;
+      //     background: #48D76C;
+      //     width: 0%;
+          
+      //   }
+      //   .tenAnimate{
+      //     animation: keyf 5s linear;
+      //     animation-fill-mode: forwards; 
+      //   }
+      // }
+    }
+    // @keyframes keyf {
+    //   from {
+    //     width: 0%;
+    //   }
+    //   to {
+    //     width: 100%;
+    //   }
+    // }
+</style>
+<template>
+  <view class='answer-modal' wx:if='{{showFlag}}'>
+    <image class='image' src='../../images/ttb_wan_1@2x.png'></image>
+    <view class='title'>Unit{{unit}}完成啦</view>
+    <view class='subtitle'>快去做题巩固一下记忆吧!</view>
+    <!-- 底部按钮 -->
+    <!-- <button class='bot-btn' @tap='tapBtn'>
+      <text class='time'>{{restTime}}s</text>
+      <view class='text'>巩固记忆</view>
+      <view class='pgs-line {{aniClassName}}'></view>
+    </button> -->
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class AnimateModal extends wepy.component {
+    data = {
+      unit: 1,
+      showFlag: false
+    }
+    methods = {
+      show({ unit }) {
+        this.unit = unit
+        this.showFlag = true
+        setTimeout(() => {
+          this.showFlag = false
+          console.log('冒泡enableMemory....')
+          this.$emit('enableMemory')
+          this.$apply()
+        }, 800)
+      },
+      hide() {
+        this.showFlag = false
+      }
+    }
+  }
+</script>

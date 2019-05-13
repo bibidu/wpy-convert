@@ -1,0 +1,159 @@
+<style lang="less">
+  .kcinfomodal{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0,0,0,0.4);
+    // background: #fff;
+    z-index: 11;
+    .modal{
+      width: 560rpx;
+      height: 480rpx;
+      position: fixed;
+      z-index: 3;
+      top: 305rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      -webkit-transform: translateX(-50%);
+      // background: #fff;
+      background: url(https://xcx-cdn.kaochong.com/image/recite/xcx_tan_1@3x.png);
+      background-size: cover;
+      // box-shadow: 0 4rpx 34rpx 0 rgba(220,220,220,0.80);
+      border-radius: 8rpx;
+      .topnav{
+        text-align: right;
+        overflow: hidden;
+        width: 100%;
+        height: 72rpx;
+        .close_container{
+          width: 82rpx;
+          height: 100%;
+          padding-right: 31rpx;
+          box-sizing: border-box;
+          float: right;
+          .close{
+            margin-top: 30rpx;
+            width: 30rpx;
+            height: 30rpx;
+          }
+        }
+      }
+      .rest{
+        padding: 0 40rpx 30rpx;
+        box-sizing: border-box;
+        // .winner{
+        //   width: 294rpx;
+        //   height: 230rpx;
+        //   display: block;
+        //   margin: 0 auto;
+        // }
+        .nickname{
+          font-size: 36rpx;
+          color: #322A22;
+          margin-top: 34rpx;
+          text-align: center;
+        }
+        .desc{
+          font-size: 30rpx;
+          color: #554C44;
+          // text-align: center;
+          margin-top: 30rpx;
+          .strong{
+            font-weight: bold;
+          }
+        }
+        .introduce-item{
+          padding: 0 40rpx;
+          box-sizing: border-box;
+          display: flex;
+          display: -webkit-flex;
+          margin-bottom: 50rpx;
+          image{
+            width: 120rpx;
+            height: 120rpx;
+          }
+          .introduce-container{
+            flex: 1;
+            -webkit-flex: 1;
+            height: 100%;
+            margin-left: 46rpx;
+            text-align: left;
+            .title{
+              color: #322A20;
+              font-size: 30rpx;
+            }
+            .introduce-desc{
+              margin: 0;
+              font-size: 24rpx;
+              color: #B1A79C;
+            }
+          }
+        }
+        button{
+          width: 360rpx;
+          height: 90rpx;
+          background: #FFD600;
+          box-shadow: 0 1rpx 15rpx 0 rgb(236,205,46);
+          border-radius: 100rpx;
+          margin: 64rpx auto;
+          font-size: 30rpx;
+          line-height: 90rpx;
+          color: #322A22;
+          &::after{
+            border: none;
+          }
+        }
+      }
+    }
+  }
+</style>
+<template>
+  <view class="kcinfomodal" wx:if='{{show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <!-- 浮云图片 -->
+    <!-- <image class='cloud' src='../images/xcx_tan_1@3x.png'></image> -->
+      <view class='modal'>
+        <view class='topnav'>
+          <view class='close_container' @tap='close' wx-if='{{canClose}}'>
+            <image class='close' src='../images/xcx_wan_2@2x.png'></image>
+          </view>
+        </view>
+        <view class='rest'>
+          <!-- 完成全部任务 -->
+          <view>
+            <view class='nickname'>{{nickname}}</view>
+            <view class='desc'>小程序通过“<text class='strong'>艾宾浩斯</text>”记忆曲线设计了每日任务。建议每天按计划只学习一个任务，多复习之前学过的单词，会更好的帮助记忆哦~</view>
+            <button @tap='tapBtn'>我知道啦</button>
+          </view>
+        </view>
+      </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class KcInfoModal extends wepy.component {
+    data = {
+      canClose: true
+    }
+    props = {
+      show: {
+        type: Boolean,
+        default: true
+      }
+    }
+    methods = {
+      tap1() {
+      },
+      move1() {
+      },
+      close() {
+        this.show = false
+      },
+      tapBtn() {
+        this.show = false
+      }
+    }
+  }
+</script>

@@ -1,0 +1,231 @@
+<template>
+  <view class="current-book-wrapper">
+    <view class='top-wrapper'>
+      <view class='title'>修改单词计划</view>
+      <view class='btn-wrapper'>
+        <button class='btn normal' @tap="reset">清空进度</button>
+        <button class='btn highlight' @tap="goBookList">切换计划</button>
+      </view>
+    </view>
+    <!-- 正在学习 -->
+    <view class='book-wrapper'>
+      <image src='../images/ttb_xiu_1@2x.png' class='class-icon'></image>
+      <view class='class-name'>正在学习</view>
+    </view>
+    <!-- 书籍信息 -->
+    <view class='book-info'>
+      <image src='{{wordbook.icon}}' class='book-image'></image>
+      <view class='book-text-info'>
+        <view class='book-name'>{{wordbook.name}}</view>
+        <view class='book-subtitle'>{{wordbook.studyNum || 0}}/{{wordbook.wordsNum || 0}}词</view>
+        <!-- <view class='person-count'>{{wordbook.peopleNum}}人已背</view> -->
+        <view class='progress'>
+          <view class='finish-pgs' style="width:{{wordbook.schedule || 0}}%"></view>
+        </view>
+      </view>
+    </view>
+    <!-- 学习计划 -->
+    <view class='book-wrapper'>
+      <image src='../images/ttb_xiu_1@2x.png' class='class-icon'></image>
+      <view class='class-name'>学习计划</view>
+    </view>
+    <view class='table-info'>
+      <view class='table-cell'>
+        <view class='key'>每日学习</view>
+        <view class='value'>{{wordbook.stageWordNum}}词</view>
+      </view>
+      <view class='table-cell'>
+        <view class='key'>预计完成时间</view>
+        <view class='value'>{{wordbook.expectFinishTime}}</view>
+      </view>
+    </view>
+    <kcLoading :show.sync="loading"/>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  // import trycatch from 'wepy-trycatch'
+  import { BOOK_MODAL_TEXT } from '@/common/constant'
+  // import storage from '@/common/storage'
+  import api from '@/common/api'
+  import common from '@/common/common'
+
+  import kcLoading from '@/components/kcLoading'
+  // import kcNotification from '@/components/kcNotification' // 通知提醒框
+  // import DropMenu from '@/components/wordslist/dropMenu'
+  let target = null
+
+  // @trycatch()
+  export default class CurrentBook extends wepy.page {
+    config = {
+      navigationBarTitleText: '单词天天背'
+    }
+    components = {
+      kcLoading
+    }
+
+    data = {
+      loading: true,
+      wordbook: {}
+    }
+
+    methods = {
+      goBookList() {
+        this.$navigate('selectbookList', { target })
+      },
+      async reset() {
+        const { text, btnText } = BOOK_MODAL_TEXT[0]
+        let modal = await common.showModalSync(text, btnText)
+        if (modal) {
+          await this.clearProgress(target)
+        }
+      }
+    }
+    async clearProgress(target) {
+      this.loading = true
+      await Promise.all([
+        api.resetWordProgress({ target }),
+        wepy.removeStorageSync('v2-continue-study'),
+        wepy.removeStorageSync(`v2-qs-${target}`)
+      ])
+      // TODO: 刷新当前页数据
+      await this.renderData()
+      this.loading = false
+      this.$apply()
+    }
+    async renderData() {
+      let { wordbook } = await api.getBookByTarget({target})
+      let { year, yearMonth } = common.getTime(wordbook.expectFinishTime)
+      wordbook.expectFinishTime = year + yearMonth
+      this.wordbook = wordbook
+    }
+    async onLoad(options) {
+      target = options.target
+      await this.renderData()
+      this.loading = false
+      this.$apply()
+    }
+  }
+</script>
+<style lang="less" scoped>
+  .current-book-wrapper{
+    .top-wrapper{
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 40rpx;
+      box-sizing: border-box;
+      margin-top: 30rpx;
+      .title{
+        flex: 1;
+        color: #484E5E;
+        font-size: 44rpx;
+        font-weight: bold;
+      }
+      .btn-wrapper{
+        display: flex;
+        justify-content: flex-end;
+        .btn{
+          text-align: center;
+          height:54rpx;
+          background:rgba(248,248,248,1);
+          border-radius:28rpx;
+          line-height: 54rpx;
+          color: #484E5E;
+          font-size: 26rpx;
+          width: 170rpx;
+          &:after{
+            border: none;
+          }
+          &.highlight{
+            color: #fff;
+            background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+            box-shadow:0px 4rpx 15rpx 0px rgba(255,154,38,0.2);
+          }
+          &.normal{
+            margin-right: 20rpx;
+          }
+        }
+      }
+    }
+    .book-wrapper{
+      margin: 70rpx 0 45rpx;
+      .class-icon{
+        width: 24rpx;
+        height: 26rpx;
+        margin: 0 10rpx 0 55rpx;
+      }
+      .class-name{
+        display: inline-block;
+        font-size: 36rpx;
+        color: #484E5E;
+        font-weight: bold;
+      }
+    }
+    .book-info{
+      padding: 0 30rpx;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      .book-image{
+        // border: 1px solid #ccc;
+        width: 140rpx;
+        height: 170rpx;
+      }
+      .book-text-info{
+        flex: 1;
+        margin-left: 30rpx;
+        .book-name{
+          margin-top: 20rpx;
+          color: #484E5E;
+          font-size: 30rpx;
+          font-weight: bold;
+        }
+        .book-subtitle{
+          margin: 30rpx 0 20rpx;
+          color: #90949F;
+          font-size: 26rpx;
+        }
+        .person-count{
+          margin: 30rpx 0 20rpx;
+          color: #90949F;
+          font-size: 26rpx;
+        }
+        .progress{
+          position: relative;
+          background: rgba(248,248,248,1);
+          height: 10rpx;
+          width: 100%;
+          border-radius: 9rpx;
+          .finish-pgs{
+            position: absolute;
+            z-index: 4;
+            top: 0;
+            left: 0;
+            border-radius: 9rpx;
+            background: #FFAE3A;
+            width: 0;
+            height: 100%;
+          }
+        }
+      }
+    }
+    .table-info{
+      margin: 0 40rpx;
+      font-size: 30rpx;
+      .table-cell{
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2rpx solid #EEEEEE;
+        height: 109rpx;
+        line-height: 109rpx;
+        .key{
+          color: #9A9FA8;
+        }
+        .value{
+          color: #6B7379;
+        }
+      }
+    }
+  }
+</style>

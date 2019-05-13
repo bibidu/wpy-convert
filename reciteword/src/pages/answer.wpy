@@ -1,0 +1,1252 @@
+<template>
+  <view class="answer" wx:if='{{loaded}}'>
+    <!-- 顶部进度条 -->
+    <HorizonProgress :hide.sync='firstInto' :progress.sync='progress'></HorizonProgress>
+    <view class='word'>
+      <text>{{question.en}}</text>
+    </view>
+    <view class='wordb'>
+      {{question.soundmark}}
+    </view>
+    <!-- 音频区 -->
+    <block>
+      <Player :hide.sync='firstInto' @playAudio.user='playAudio'></Player>
+    </block>
+    <!-- 按钮组 -->
+    <block>
+      <view class='btn_group' hidden="{{state === 1}}">
+        <repeat for='{{question.options}}' key='{{index}}'>
+          <view class='btn_container' @tap='chooseOne({{index}})'>
+            <button class='{{item.class}}' hover-start-time='0'>
+              {{item.zh}}
+            </button>
+            <view id='options' class='{{item.optionClass}}'>{{item.option}}</view>
+          </view>
+        </repeat>
+        <!-- 我不确定 -->
+        <button :class='{nosure: true, select: notSureStyle}' @tap='notSure'>
+          我不确定
+          <view class='time' style="{{countdown < 5 ? 'color:#FF536E' : ''}}">{{countdown}}s</view>
+          <!-- 环形进度条 -->
+          <view class='circle-container' style='border-color:{{warnStyle}};'></view>
+          <view id='cir' class='left' style='transform:rotate({{leftCircle}}deg);-webkit-transform:rotate({{leftCircle}}deg);'></view>
+          <view id='cir' class='right' hidden='{{!rightShow}}' style='transform:rotate({{rightCircle}}deg);-webkit-transform:rotate({{rightCircle}}deg);'></view>
+          <view class='stable-right' hidden='{{!stableShow}}' style='border-color:{{warnStyle}}'></view>
+        </button>
+      </view>
+    </block>
+    <!-- 释义 -->
+    <block>
+      <view hidden="{{state === 0}}">
+      <scroll-view scroll-y class='desc-group'>
+        <view class='about_item' hidden='{{!question.wordClass}}' style='margin-bottom:40rpx;'>
+          <view class='title-container'>
+            <view class='icon blue'></view>
+            <view class='text'>释义</view>
+          </view>
+          <view class='paragraph'>
+            <view class='b'>{{question.wordClass}}</view>
+          </view>
+        </view>
+        <view class='about_item' hidden='{{!question.enExample && !question.zhExample}}'>
+          <view class='title-container'>
+            <view class='icon green'></view>
+            <view class='text'>例句</view>
+          </view>
+          <view class='paragraph'>
+            <view class='en-example' hidden='{{!question.enExample}}'>{{question.enExample}}</view>
+            <view class='desc b' hidden='{{!question.zhExample}}'>{{question.zhExample}}</view>
+          </view>
+        </view>
+        <view class='about_item' hidden='{{!question.enToEn}}'>
+          <view class='title-container'>
+            <view class='icon red'></view>
+            <view class='text'>常用搭配</view>
+          </view>
+          <view class='paragraph'>
+            <view class='b'>{{question.enToEn}}</view>
+          </view>
+        </view>
+        <!-- 向下箭头 -->
+        <!-- <image src='../images/xcx_xiang_1@2x.png' class='tobottom'></image> -->
+      </scroll-view>
+      <form data-id='-1' @submit='continueAnswer' report-submit='true'>
+        <button formType='submit' :class='{nosure: true, selectContinue: continueClass}'>
+          继续背
+          <view class='time' style="{{countdown < 5 ? 'color:#FF536E' : ''}}">{{countdown}}s</view>
+          <view class='circle-container' style='border-color:{{warnStyle}};'></view>
+          <view id='cir' class='left' style='transform:rotate({{leftCircle}}deg);-webkit-transform:rotate({{leftCircle}}deg);'></view>
+          <view id='cir' class='right' hidden='{{!rightShow}}' style='transform:rotate({{rightCircle}}deg);-webkit-transform:rotate({{rightCircle}}deg);'></view>
+          <view class='stable-right' hidden='{{!stableShow}}' style='border-color:{{warnStyle}}'></view>
+        </button>
+      </form>
+      </view>
+    </block>
+    <kcNotification :show.sync='showWarnModal' :msg.sync='warnMsg' :btnMsg.sync='warnBtnMsg' @togglewarning.user='togglewarning'></kcNotification>
+    <!-- 复习完成提示框 -->
+    <!-- <reviewSuccessModal :show.sync='showReviewSuccessModal' @tapOver.user='reviewOver'></reviewSuccessModal> -->
+    <!-- 防重复点击 100模态框 -->
+    <kcLoading :show.sync='showLoading' :transparent='transparent'></kcLoading>
+    <!-- 模版消息授权 -->
+    <authModal :isIOS.sync='isIOS' :show.sync='authShow' @agreeAuth.user='agreeAuth'></authModal>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import storage from '@/common/storage'
+import { bindEvent, removeAllEvent } from '@/common/dep'
+import api from '@/common/api'
+import { bunchDownload, stopDownload } from '@/common/download'
+import {
+  mean2answer,
+  answer2mean,
+  SHARE_TITLE,
+  ANSWER_PARAMS
+} from '@/common/constant'
+import common from '@/common/common'
+import kcLoading from '@/components/kcLoading' // loading框
+import kcNotification from '@/components/kcNotification' // 通知提醒框
+import HorizonProgress from '@/components/answer/horizonProgress' // 顶部进度条
+import Player from '@/components/answer/player' // 小喇叭播放控件
+import authModal from '@/components/authModal' // 模板消息授权
+
+import { getStore } from 'wepy-redux'
+const store = getStore()
+
+let lockChoose = false // 防二次提交的选择锁
+let lockContinue = false // 防二次提交的继续背锁
+let isFinalTest = false // 是否是最终测试
+let yesSrc = 'https://xcx-cdn.kaochong.com/recite/yes.mp3'
+let yesSrcCache = 'https://xcx-cdn.kaochong.com/recite/yes.mp3'
+let noSrc = 'https://xcx-cdn.kaochong.com/recite/no.mp3'
+let noSrcCache = 'https://xcx-cdn.kaochong.com/recite/no.mp3'
+let todayWordsSum = 50 // 总题数
+let surplus = 50 // 剩余题目数
+let errorTime = 0 // 记录本题错误次数
+let i = 0 // 计算时间需要
+let questionStatus = null // 是否还有题目
+let nextQuestion = null // 下一题
+let isOver = false // 是否停止倒计时
+let hasExit = false // 是否切出页面
+let aniTimeout = null
+let onlyError = null // 是否是复习模式且只答错题
+let cacheAudios = []
+let deepFinal = null
+let testAudios = [] // 暂时放这 之后移除
+
+export default class Answer extends wepy.page {
+  config = {
+    navigationBarTitleText: '单词天天背'
+  }
+  components = {
+    kcLoading,
+    kcNotification,
+    HorizonProgress,
+    Player,
+    authModal
+  }
+  computed = {
+  }
+  mixins = []
+
+  data = {
+    loaded: false,
+    answer: null, // 正确答案
+    transparent: false,
+    state: 0, // 0 答题阶段  1 释义阶段 【固定】
+    from: null, // 缓存options
+    target: null, // 缓存options
+    stage: null, // 缓存options
+    options: null,
+    countdown: 10, // 倒计时的时间【固定】
+    isPlaying: false, // 是否正在播放【固定】
+    leftCircle: 0, // CSS环形进度条【固定】
+    rightCircle: 0, // CSS环形进度条【固定】
+    stableShow: false, // CSS环形进度条【固定】
+    rightShow: true, // CSS环形进度条【固定】
+    warnStyle: '', // CSS环形进度条【固定】
+    question: {}, // 当前题信息【固定】
+    progress: 0, // 进度条
+    showLoading: true, // 显示透明遮罩(防重复点击),
+    isRight: null, // 当前题是否正确（给continue切换音频用）
+    showWarnModal: false, // 异常提示框
+    warnMsg: null, // 异常提示框
+    warnBtnMsg: null, // 异常提示框
+    firstInto: true, // 是否是第一次进入
+    notSureStyle: false, // 我不确定 的样式是否显示
+    continueClass: false, // 继续答题 的样式是否显示
+    hasDownloadError: false,
+    authShow: false,
+    isIOS: false, // 设备是否是IOS
+    answerModule: ''
+  }
+  // 状态切换时的操作
+  watchState(newV) {
+    if (newV === 0) {
+      // 释义 => 答题
+      if (this.isRight || isFinalTest) {
+        this.question = this.addOption(nextQuestion)
+        this.answer = nextQuestion.realAnswer
+        nextQuestion = null
+      } else {
+        this.confuseQuestion() // 混淆该错题
+      }
+      if (this.question.voice) {
+        this.playAudioPlayer(this.question.voice)
+      }
+      this.resetInitData(0)
+      this.startAni()
+      // test
+      // this.methods.chooseOne(this.answer - 1)
+      this.$apply()
+      return
+    }
+    if (newV === 1) {
+      // 答题 => 释义
+      if (this.question.voice) {
+        this.playAudioPlayer(this.question.voice)
+      }
+      this.resetInitData(1)
+      this.startAni()
+      // test
+      // this.continueAnswer()
+    }
+  }
+  // 重置数据
+  resetInitData(index) {
+    const mode = index === 0 ? 'answer' : 'resolve'
+    this.stableShow = false // CSS进度条
+    this.warnStyle = '' // CSS进度条
+    this.rightShow = true // CSS进度条
+    this.leftCircle = 0 // CSS进度条
+    this.rightCircle = 0 // CSS进度条
+    if (index === 0) {
+      lockChoose = false // 解锁
+    } else {
+      lockContinue = false // 解锁
+    }
+    this.countdown = ANSWER_PARAMS[mode]['countdown'] // 倒计时参数
+    i = 0 // 倒计时参数
+    clearTimeout(aniTimeout)
+    isOver = false // 停止之前的倒计时
+    this.notSureStyle = false // 清空我不确定样式
+    this.continueClass = false // 清空继续背样式
+    this.$apply()
+  }
+  methods = {
+    playAudio() {
+      this.playAudioPlayer(this.question.voice)
+    },
+    // 同意发送模版消息授权
+    agreeAuth() {
+      console.log('我同意了')
+      api.subscript({ status: 2 })
+      bindEvent('recite-onload-action', { fn: () => {} })
+    },
+    // 拒绝发送模版消息授权
+    // refuseAuth() {
+    //   console.log('我拒绝了')
+    // }
+    chooseOne: async index => {
+      if (lockChoose) return
+      lockChoose = true
+
+      this.judgeRight(index + 1) // 停止倒计时并判断是否正确、播放音效、显示答题样式、计算进度条、统计错误次数
+      try {
+        // 错题重复阶段
+        if (errorTime === 1 && !isFinalTest) {
+          this.methods.toggleState()
+          bindEvent('recite-word', { fn: () => this.methods.toggleState() })
+        } else {
+          // 复习
+          if (this.answerModule === 'review') {
+            this.methods.toggleState()
+            this.getWordsFromStorage({ index: index + 1 })
+            return
+          }
+          // 正常答题
+          if (this.answerModule === 'normal') {
+            if (!isFinalTest) {
+              this.methods.toggleState()
+            } else {
+              bindEvent('recite-word', { fn: () => this.methods.toggleState() })
+            }
+            return this.getWordsFromApi({ index: index + 1 }) // 从后台api获取下题目
+          }
+          // 深度学习
+          if (this.answerModule === 'deeplearn') {
+            this.getWordsDeepLearn({ answerIndex: index + 1 })
+          }
+        }
+      } catch (error) {
+        console.log('choose error')
+        this.showLoading = false
+        this.resolveException(error ? error.errMsg : error)
+      }
+    },
+    notSure() {
+      this.methods.chooseOne(5)
+    },
+    toggleState: (time = 0) => {
+      console.log('toggleState')
+      // continueAnswer => this
+      if (questionStatus === 1 && (errorTime === 0 || isFinalTest)) {
+        let params =
+          this.answerModule === 'review'
+            ? { wordsNum: todayWordsSum, onlyError }
+            : undefined
+        params = params ? Object.assign(params, {answerModule: this.answerModule}) : {answerModule: this.answerModule}
+        return this.answerToSign(this.answerModule, params)
+      }
+
+      let delayTime, state
+
+      // 最终测试
+      if (isFinalTest) {
+        state = 0
+        delayTime = answer2mean
+      } else {
+        // 答题 => 释义
+        if (this.state === 0) {
+          state = 1
+          delayTime = answer2mean
+        } else if (this.state === 1) {
+          state = 0
+          delayTime = mean2answer
+          errorTime = this.isRight ? 0 : 1 // 统计错误次数 [从judgeRight移到此处]
+        }
+      }
+
+      setTimeout(() => {
+        this.clearOptionStyle()
+        this.state = state
+        this.watchState(state) // 手动控制状态切换
+        this.$apply()
+      }, delayTime)
+    },
+    async togglewarning() {
+      // 网络错误的按钮事件
+      removeAllEvent()
+      this.state = 0
+      this.resetInitData(0)
+      this.onLoad(this.options)
+      console.log('warning....')
+    }
+  }
+  // 初始化页面全局变量
+  initPageGlobalParams() {
+    lockChoose = false // 防二次提交的选择锁
+    lockContinue = false // 防二次提交的继续背锁
+    isFinalTest = false // 是否是最终测试
+    yesSrc = 'https://xcx-cdn.kaochong.com/voice/recite/common/yes.wav'
+    yesSrcCache = 'https://xcx-cdn.kaochong.com/voice/recite/common/yes.wav'
+    noSrc = 'https://xcx-cdn.kaochong.com/voice/recite/common/no.mp3'
+    noSrcCache = 'https://xcx-cdn.kaochong.com/voice/recite/common/no.mp3'
+    todayWordsSum = 50 // 总题数
+    surplus = 50 // 剩余题目数
+    errorTime = 0 // 记录本题错误次数
+    i = 0 // 计算时间需要
+    questionStatus = null // 是否还有题目
+    nextQuestion = null // 下一题
+    isOver = false // 是否停止倒计时
+    hasExit = false // 是否切出页面
+    aniTimeout = null
+    onlyError = null // 是否是复习模式且只答错题
+    cacheAudios = []
+    deepFinal = null
+    // downloadTimeout = false
+    removeAllEvent()
+    clearTimeout(aniTimeout)
+  }
+  // 获取用户系统信息 判断IOS or Android
+  getSystemInfo() {
+    this.isIOS = this.$parent.globalData.isIOS
+  }
+  // [RB]重置data数据
+  _resetData(data) {
+    this.showLoading = true
+    this.options = data
+  }
+  // async initDevelopData() {
+  //   this.showAnswer = SHOW_DEVELOP_MENU && await storage.get('develop-showAnswer')
+  // }
+  async onLoad(options) {
+    this.firstInto = true
+    // 加载开发者选项数据
+    // await this.initDevelopData()
+    // 重置data数据
+    this._resetData(options)
+    // 获取系统信息并缓存系统型号
+    await this.getSystemInfo()
+    this.onLoadAction(options)
+    this.$apply()
+  }
+  async downloadAudios() {
+    cacheAudios = []
+    bindEvent('recite-bunch-download-a', {
+      fn: () => this.deepNext()
+    })
+    let { todayWords: audios } = await api.getDeepAudios()
+    if (audios) {
+      bunchDownload(
+        audios,
+        1,
+        async ({ hasFinish, currBunch, results }) => {
+          cacheAudios.push(results[0])
+          if (hasFinish || currBunch === 4) {
+            console.log('下了4个......')
+            bindEvent('recite-bunch-download-a', {
+              fn: () => this.deepNext()
+            })
+          }
+        }
+      )
+    }
+  }
+  // 缓存答题模式
+  saveAnswerModule(options) {
+    console.log('options')
+    console.log(options)
+    // 缓存deepFinal (true => 最终跳转深度打卡页)
+    deepFinal = options.deepFinal
+    let answerModule = ''
+    if (options) {
+      if (options.from) {
+        if (options.from === 'deeplearn') {
+          answerModule = 'deeplearn'
+        } else {
+          answerModule = 'review'
+        }
+      } else {
+        answerModule = 'normal'
+      }
+    }
+    console.log('answerModule')
+    console.log(answerModule)
+    // 修改redux中的 answerModule
+    // store.dispatch({
+    //   type: 'UPDATE_MODULE',
+    //   payload: answerModule
+    // })
+    this.answerModule = answerModule
+    this.$apply()
+  }
+  async onLoadAction(options) {
+    try {
+      this.showLoading = true
+      const indexInfo = await storage.get('userInfo')
+      // 初始化页面全局变量
+      this.initPageGlobalParams()
+      this.firstInto = true
+      // 缓存答题模式
+      this.saveAnswerModule(options)
+      // this.answerModule = options && options.from ? 'review' : 'normal'
+
+      // 当 1.正常答题模式&&最后一个阶段 => 为最终测试模式
+      //   2.深度学习进入 => 为最终测试模式
+      isFinalTest = this.answerModule === 'deeplearn' ||
+        (indexInfo.userInfo.finalTestFlag && this.answerModule === 'normal')
+      await this.initAudio()
+      // 如果initAudio超时 则终止
+      // console.log('-----initAudio超时 终止后续操作-----')
+      // if (downloadTimeout) return
+      // console.log('-----initAudio的后续操作-----')
+      let audios, pk
+
+      // 深度学习模式
+      if (options.from === 'deeplearn' && isFinalTest) {
+        // cacheAudios = await storage.get('deeplearn_audios')
+        // console.log('cacheAudios')
+        // console.log(cacheAudios)
+        // if (!cacheAudios) {
+        this.loaded = true
+        this.$apply()
+        return this.downloadAudios()
+        // }
+        // this.deepNext()
+        // return
+      }
+      // 正常模式
+      if (this.answerModule === 'normal') {
+        console.log('normal...')
+        let { todayWords: audios } = await api.getTodayPackage()
+        if (audios) {
+          bindEvent('recite-bunch-download', {
+            fn: () => this.getBeginQuestion()
+          })
+          bunchDownload(
+            audios,
+            1,
+            async ({ hasFinish, currBunch, results }) => {
+              // console.log(currBunch)
+              cacheAudios.push(results[0])
+              if (hasFinish || currBunch === 4) {
+                bindEvent('recite-bunch-download', {
+                  fn: () => this.getBeginQuestion()
+                })
+              }
+            }
+          )
+        }
+        this.loaded = true
+        this.$apply()
+        return
+      }
+
+      // 复习模式
+      const { target, stage, onlyError: onlyErrorLatest } = options
+      onlyError = onlyErrorLatest
+      store.dispatch({
+        type: 'BIND_BOOK_STAGE',
+        payload: { target, stage }
+      })
+      pk = await api.getStageWords({ target, stage })
+      audios = pk.data.list
+      if (onlyError === 'true') {
+        audios = audios.filter(item => !item.rightSign)
+      }
+      if (audios) {
+        console.log('getStageWords单词')
+        console.log(audios)
+        testAudios = audios
+        bindEvent('recite-bunch-download', {
+          fn: audios => this.reviewNext(audios)
+        })
+        bunchDownload(audios, 1, ({ hasFinish, currBunch, results }) => {
+          // console.log(currBunch)
+          cacheAudios.push(results[0])
+          if (hasFinish || currBunch === 4) {
+            console.log('cacheAudios-----------')
+            console.log(cacheAudios)
+            bindEvent('recite-bunch-download', { fn: () => this.reviewNext() })
+          }
+        })
+      }
+      this.loaded = true
+      this.$apply()
+    } catch (error) {
+      // console.log('loadAction  捕获异常~~~~~~~~~~~~~~~~')
+      console.log('downloadAudio error')
+      console.log(error)
+      // this.firstInto = true
+      this.showLoading = false
+      this.resolveException('音频加载超时')
+    }
+  }
+  async reviewNext() {
+    console.log('reviewNext')
+    // console.log('testAudios')
+    // console.log(testAudios)
+    const audios = testAudios
+    // console.log(testAudios)
+    // console.log(audios)
+    await storage.set('wordslist', audios)
+    await this.getWordsFromStorage({ index: 0 })
+    this.firstInto = false
+    this.showLoading = false
+    this.startAni()
+    this.$apply()
+  }
+  onShow() {
+    lockChoose = false
+    // 恢复暂停
+    hasExit = false
+    isOver = false
+    if (!this.firstInto) {
+      this.startAni()
+    }
+  }
+  onHide() {
+    hasExit = true
+    isOver = true
+  }
+  onUnload() {
+    stopDownload()
+    hasExit = true
+    isOver = true
+  }
+  // 答题完跳转打卡的公共方法
+  async answerToSign(answerModule, params) {
+    console.log('answerToSign,,,')
+    switch (answerModule) {
+      // 正常模式
+      case 'normal':
+        // 返现书
+        // const indexInfo = await storage.get('userInfo')
+        // if (indexInfo.wordbook.type === 1) {
+        //   return this.$redirect('/pages/subPages/signin/signin')
+        // }
+        this.$redirect('/pages/subPages/signin/normal', {answerModule})
+        break
+      // 深度模式
+      case 'deeplearn':
+        this.$redirect('/pages/subPages/deeplearn/sign')
+        break
+      // 复习模式
+      case 'review':
+        this.$redirect('/pages/subPages/signin/normal', params)
+    }
+  }
+  // 每次缓存的单词的预处理
+  async preTreatment(list, index) {
+    const isRight = index === this.answer
+    if (index) {
+      list = common.reBuildQue(list, isRight)
+      if (list.length === 0) {
+        return {
+          questionStatus: 1
+        }
+      }
+      await storage.set('wordslist', list)
+      return {
+        todayWordsSum: todayWordsSum,
+        surplus: list.length,
+        question: this.addOption(list[0]),
+        questionStatus: 0,
+        answer: list[0].realAnswer
+      }
+    } else {
+      // 第一次进入
+      this.playAudioPlayer(list[0].voice)
+      return {
+        todayWordsSum: list.length,
+        surplus: list.length,
+        question: this.addOption(list[0]),
+        questionStatus: 0,
+        answer: list[0].realAnswer
+      }
+    }
+  }
+  // 从缓存查询下个单词
+  // index: 选择的答案;
+  getWordsFromStorage({ index }) {
+    console.log('getWordsFromStorage')
+    console.log(index)
+    storage.get('wordslist').then(async list => {
+      // 数据预处理
+      let test = await this.preTreatment(list, index)
+      console.log('preTretment')
+      console.log(test)
+      let {
+        todayWordsSum: todayWordsSumLatest,
+        surplus: surplusLatest,
+        question,
+        answer,
+        questionStatus: questionStatusLatest
+      } = test
+      if (questionStatusLatest === 1) {
+        questionStatus = 1
+        this.$apply()
+        bindEvent('recite-word', { fn: () => this.methods.toggleState() })
+        return
+      }
+      const voice = this.getStorageAudio(question.id)
+      if (index) {
+        nextQuestion = Object.assign(question, { voice })
+      } else {
+        this.question = Object.assign(question, { voice })
+        this.answer = answer
+      }
+      todayWordsSum = todayWordsSumLatest
+      surplus = surplusLatest
+      questionStatus = questionStatusLatest
+      index &&
+        bindEvent('recite-word', { fn: () => this.methods.toggleState() })
+      this.$apply()
+    })
+  }
+  // 深度学习获取下个单词
+  async getWordsDeepLearn({answerIndex}) {
+    try {
+      let {
+        todayWordsSum: _todayWordsSum,
+        surplus: _surplus,
+        question,
+        status
+      } = await api.deepAnswer({answerIndex})
+      console.log('getWordsDeepLearn')
+      console.log(status)
+      todayWordsSum = _todayWordsSum
+      surplus = _surplus
+
+      if (status === 0) {
+        // 不是最后一题
+        const voice = this.getStorageAudio(question.id)
+        nextQuestion = Object.assign(question, { voice })
+        this.methods.toggleState()
+      } else if (status === 1) {
+        // 深度学习阶段 => 跳转打卡页
+        return this.answerToSign('deeplearn')
+        // return this.$redirect('/pages/subPages/deeplearn/sign')
+      }
+    } catch (error) {
+      console.log('深度学习获取下个单词')
+      console.log(error)
+      this.showLoading = false
+      this.resolveException(error ? error.errMsg : error)
+    }
+  }
+  // 从后台查询下个单词
+  async getWordsFromApi({ index }) {
+    // let result
+    // 获取下一题信息
+    try {
+      const {
+        code,
+        todayWordsSum: _todayWordsSum,
+        surplus: _surplus,
+        question,
+        status
+      } = await api.answer(index)
+
+      if (code === 8) {
+        if (deepFinal) {
+          return this.answerToSign('deeplearn')
+        }
+        this.answerToSign('normal')
+      }
+
+      todayWordsSum = _todayWordsSum
+      surplus = _surplus
+
+      if (question) {
+        // 不是最后一题
+        const voice = this.getStorageAudio(question.id)
+        nextQuestion = Object.assign(question, { voice })
+      } else {
+        // 是最后一题
+        questionStatus = status
+        if (isFinalTest) {
+          if (deepFinal) {
+            return this.answerToSign('deeplearn')
+          }
+          this.answerToSign('normal')
+        }
+      }
+      bindEvent('recite-word', { fn: () => this.methods.toggleState() })
+    } catch (error) {
+      this.showLoading = false
+      this.resolveException(error ? error.errMsg : error)
+      console.log('getWordsFromApi error')
+      console.log(error)
+    }
+  }
+  confuseQuestion() {
+    // 混淆
+    this.confuse(this.question, this.answer) // 混淆选项并返回正确选项
+  }
+  confuse(question, rightAnswer) {
+    const ops = question.options
+    let newOps = [ops[3], ops[2], ops[0], ops[1]]
+    question.options = newOps
+    this.question = this.addOption(question)
+    this.answer = this.randOrder(rightAnswer)
+  }
+  randOrder(init) {
+    const rules = { 1: 3, 2: 4, 3: 2, 4: 1 }
+    return rules[init]
+  }
+  getStorageAudio(id) {
+    // 根据id获取缓存中的音频url
+    // console.log('cacheAudios.....')
+    // console.log(cacheAudios)
+    // console.log(id)
+    const audio = cacheAudios.find((item, index) => item.id === id)
+    return audio.voice
+  }
+  // 深度学习
+  async deepNext() {
+    this.showLoading = true
+    let {
+      status,
+      question,
+      todayWordsSum: _todayWordsSum,
+      surplus: _surplus
+    } = await api.deepAnswer()
+    console.log('deepAnswer......')
+    console.log(question)
+    console.log(status)
+    if (status === 0) {
+      question = this.addOption(question)
+      todayWordsSum = _todayWordsSum
+      surplus = _surplus
+      this.answer = question.realAnswer
+      this.progress = common.caclProgress(todayWordsSum, surplus)
+      this.firstInto = false
+      const newVoice = this.getStorageAudio(question.id)
+      question.voice = newVoice
+      this.question = question
+      this.playAudioPlayer(newVoice)
+    } else if (status === 1) {
+      // this.$redirect('./subPages/deeplearn/sign')
+      this.answerToSign('deeplearn')
+    }
+    this.showLoading = false
+    this.$apply()
+  }
+  async getBeginQuestion(isReConnect) {
+    // 获取题目信息
+    try {
+      // console.log('beginFirstQuestion...')
+      this.showLoading = true
+      // 获取第一道题
+      const {
+        status,
+        question: _question,
+        todayWordsSum: _todayWordsSum,
+        surplus: _surplus
+      } = await api.begin()
+
+      if (status !== 1) {
+        let question = this.addOption(_question)
+        todayWordsSum = _todayWordsSum
+        surplus = _surplus
+        this.answer = question.realAnswer
+        this.progress = common.caclProgress(todayWordsSum, surplus)
+        this.firstInto = false
+        const newVoice = this.getStorageAudio(question.id)
+        question.voice = newVoice
+        this.question = question
+        this.playAudioPlayer(newVoice)
+      } else {
+        this.answerToSign('normal')
+      }
+      this.showLoading = false
+      this.$apply()
+      // 是否关闭模板消息弹窗
+      const indexInfo = await storage.get('userInfo')
+      bindEvent('recite-onload-action', { fn: () => this.startAni() })
+      // 订阅授权
+      // 0:取消 2:确定 1:默认（需要弹窗)
+      if (indexInfo.userInfo.subscriptionStatus === 1) {
+        this.authShow = true
+      } else {
+        bindEvent('recite-onload-action', { fn: () => this.startAni() })
+      }
+      this.$apply()
+      //
+      // this.startAni()
+    } catch (error) {
+      this.showLoading = false
+      this.resolveException(error ? error.errMsg : error)
+      console.log(error)
+      console.log('获取题目信息getBeginQuestion报错')
+    }
+  }
+  // 结束当前题目
+  continueAnswer(e) {
+    if (lockContinue) return
+    lockContinue = true
+
+    this.collectFormId(e)
+    isOver = true
+    this.updateContinueStyle(e)
+    this.$apply()
+    bindEvent('recite-word', { fn: () => this.methods.toggleState() })
+  }
+  // 倒计时动画开始
+  async startAni() {
+    // 是否满足开启动画条件
+    const canStartAni = !hasExit && !isOver && this.countdown > 0
+
+    aniTimeout = setTimeout(() => {
+      if (canStartAni) {
+        // i = ++i
+        if (++i % 10 === 0) {
+          this.followTimeCanvas2(i) // 环形进度条倒计时
+          this.countdown = common.countDown(this.countdown - 1)
+        }
+        // 结束倒计时的临界点
+        if (i === 100 && this.state === 0) {
+          this.methods.chooseOne(5)
+        } else if (i === 200 && this.state === 1) {
+          // this.continueAnswer()
+        }
+        this.$apply()
+        this.startAni()
+      } else {
+        clearTimeout(aniTimeout)
+      }
+    }, 100)
+  }
+  // CSS进度条
+  followTimeCanvas2(i) {
+    const son = this.state === 0 ? 100 : 200
+    const threshold = this.state === 0 ? 50 : 150
+    let pre = 360 / son
+    if (this.rightCircle < 180) {
+      this.stableShow = false
+      this.rightCircle = pre * i
+    } else if (this.rightCircle <= 360) {
+      this.warnStyle = i > threshold ? '#FF536E' : ''
+      this.stableShow = true
+      this.rightShow = false
+      this.leftCircle = pre * i - 180
+    }
+    this.$apply()
+  }
+  async initAudio(isReConnect) {
+    // 初始化音频
+    try {
+      // 断网后重连 还原原始音效
+      if (isReConnect) {
+        yesSrc = yesSrcCache
+        noSrc = noSrcCache
+      }
+      // console.log('initAudio')
+      await this.downloadTrueFalseAudio() // 下载正确、错误音效
+    } catch (error) {
+      this.showLoading = false
+      this.resolveException(error ? error.errMsg : error)
+      console.log('initAudio')
+      console.log(error)
+    }
+  }
+  async downloadTrueFalseAudio() {
+    // 下载正确、错误音效
+    const funcList = [this.downloadAudio(yesSrc), this.downloadAudio(noSrc)]
+    let [yesRet, noRet] = await Promise.all(funcList)
+    yesSrc = yesRet
+    noSrc = noRet
+    this.$apply()
+  }
+  async collectFormId(e) {
+    // 收集模板消息
+    console.log(e)
+    if (
+      e &&
+      e.detail &&
+      e.detail.formId &&
+      e.detail.formId.indexOf('mock') === -1
+    ) {
+      const stor = (await storage.get('formIds')) || []
+      if (stor.length < 20) {
+        const formId = e.detail.formId
+        const expire = new Date().getTime() + 604800000
+        stor.push({ formId, expire })
+        storage.set('formIds', stor)
+      }
+    }
+  }
+  addOption(arr) {
+    // 增加A B C D
+    const options = ['A', 'B', 'C', 'D']
+    arr.options.forEach((e, index) => {
+      e['option'] = options[index]
+    })
+    return arr
+  }
+  updateContinueStyle(e) {
+    // 修改继续背样式
+    if (
+      e &&
+      e.currentTarget &&
+      e.currentTarget.dataset &&
+      e.currentTarget.dataset.id === '-1'
+    ) {
+      this.continueClass = true
+    }
+  }
+  updateOptionStyle(myAnswer) {
+    // 修改正误样式
+    const rightAnswer = this.answer
+    const arr = this.question
+    if (myAnswer >= 0 && arr && arr.options) {
+      if (myAnswer === 6 && this.countdown !== 0) {
+        this.notSureStyle = true
+      }
+      arr.options.forEach((e, index) => {
+        if (myAnswer === rightAnswer) {
+          e['class'] = index + 1 === rightAnswer ? 'bingo' : ''
+          e['optionClass'] = index + 1 === rightAnswer ? 'check' : ''
+        } else {
+          if (index + 1 === rightAnswer) {
+            e['class'] = 'bingo'
+            e['optionClass'] = index + 1 === rightAnswer ? 'check' : ''
+          } else if (index + 1 === myAnswer) {
+            e['class'] = 'error'
+            e['optionClass'] = index + 1 === myAnswer ? 'check' : ''
+          }
+        }
+      })
+    }
+  }
+  clearOptionStyle() {
+    // 清空正误样式
+    const arr = this.question
+    // 不确定的样式
+    this.notSureStyle = false
+    this.continueClass = false
+    if (arr && arr.options) {
+      arr.options.forEach(e => {
+        e['class'] = ''
+        e['optionClass'] = ''
+      })
+    }
+  }
+  resolveException(msg) {
+    // 异常处理
+    const warnMsg = common.getErrorCode(msg)
+    this.showWarnModal = true
+    this.warnMsg = warnMsg
+    this.warnBtnMsg = '重新加载'
+    isOver = true
+    this.stopAni()
+    this.$apply()
+  }
+  async onShareAppMessage(options) {
+    return {
+      title: SHARE_TITLE,
+      path: '/pages/index'
+      // imageUrl: src
+    }
+  }
+  judgeRight(myAnswer) {
+    // 先停止倒计时，然后判断是否正确、播放音效、显示答题样式、统计错误次数
+    this.stopAni() // 停止倒计时
+    const isRight = myAnswer && myAnswer === this.answer
+    const newSrc = isRight ? yesSrc : noSrc // 播放答题音效
+    this.playAudioPlayer(newSrc)
+    this.updateOptionStyle(myAnswer) // 显示答题结果样式
+    // 更新进度条
+    const rightCase = isRight && errorTime === 0
+    if (rightCase || isFinalTest) {
+      this.progress = common.caclProgress(todayWordsSum, surplus - 1)
+    }
+    this.isRight = isRight // 缓存对错
+    this.$apply()
+    // return isRight
+  }
+  stopAni() {
+    // 停止动画
+    isOver = true
+    this.$apply()
+  }
+  async downloadAudio(url) {
+    // 封装下载音频方法
+    // try {
+    let start = +new Date()
+    let res = await wepy.downloadFile({ url })
+    let last = +new Date() - start
+    if (last >= 2000) {
+      console.log('音频加载超时')
+      console.log(last)
+      if (!this.hasDownloadError) {
+        console.log('手工抛出异常----------------------')
+        stopDownload()
+        this.hasDownloadError = true
+        this.$apply()
+        throw new Error('.....')
+      }
+    }
+    return res.tempFilePath
+  }
+  // 播放音频
+  playAudioPlayer(src) {
+    this.$invoke('Player', 'play', src)
+  }
+}
+</script>
+<style lang="less">
+@import '../common/common.less';
+.answer {
+  .word {
+    font-weight: bold;
+    font-size: 80rpx;
+    color: #322a22;
+    text-align: center;
+  }
+  .wordb {
+    font-size: 30rpx;
+    font-weight: bold;
+    color: #554c44;
+    text-align: center;
+    margin-bottom: 25rpx;
+  }
+  .btn_group {
+    width: 630rpx;
+    margin: 40rpx auto;
+    .btn_container {
+      position: relative;
+      button {
+        width: 100%;
+        height: 100rpx;
+        border-radius: 100rpx;
+        box-shadow: 0 2rpx 16rpx 0 rgba(210, 210, 210, 0.6);
+        background: #fff;
+        font-size: 30rpx;
+        color: #554c44;
+        text-indent: 126rpx;
+        text-align: left;
+        line-height: 100rpx;
+        box-sizing: border-box;
+        margin-bottom: 40rpx;
+        &::after {
+          border: none;
+        }
+        &.error {
+          color: #fff;
+          background: #ff6538;
+        }
+        &.bingo {
+          color: #fff;
+          background: #44d878;
+        }
+        &.nosure {
+          color: #fff;
+        }
+      }
+      #options {
+        position: absolute;
+        top: 50%;
+        left: 70rpx;
+        transform: translateY(-50%);
+        -webkit-transform: translateY(-50%);
+        font-size: 30rpx;
+        &.check {
+          color: #fff;
+        }
+      }
+    }
+  }
+  .desc-group {
+    position: relative;
+    padding: 40rpx 0;
+    margin: 0 auto;
+    // height: 500rpx;
+    height: 520rpx;
+    .tobottom {
+      position: absolute;
+      bottom: 10rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      -webkit-transform: translateX(-50%);
+      width: 76rpx;
+      height: 76rpx;
+    }
+    .about_item {
+      margin-top: 50rpx;
+      box-sizing: border-box;
+      font-size: 30rpx;
+      color: #554c44;
+      .title-container{
+        margin-bottom: 10rpx;
+        .icon {
+          margin: 16rpx 40rpx 0;
+          width: 14rpx;
+          height: 14rpx;
+          background: #5fbffb;
+          border-radius: 50%;
+          display: inline-block;
+          &.green {
+            background: #44d878;
+          }
+          &.red {
+            background: #ff5e77;
+          }
+          &.blue {
+            background: #5fbffb;
+          }
+        }
+        .text{
+          font-size: 28rpx;
+          display: inline-block;
+        }
+      }
+      .paragraph {
+        color: #322a22;
+        padding: 0 94rpx;
+        .b {
+          color: #554c44;
+        }
+        .en-example{
+          margin-bottom: 10rpx;
+          display: inline-block;
+        }
+        .desc {
+          opacity: 0.6;
+          font-size: 28rpx;
+          margin-top: 10rpx;
+        }
+      }
+    }
+  }
+}
+.nosure {
+  position: relative;
+  width: 630rpx;
+  height: 100rpx;
+  border-radius: 100rpx;
+  box-shadow: 0 2rpx 16rpx 0 rgba(210, 210, 210, 0.6);
+  background: #fff;
+  font-size: 30rpx;
+  color: #554c44;
+  text-indent: 160rpx;
+  text-align: left;
+  // text-align: center;
+  line-height: 100rpx;
+  box-sizing: border-box;
+  &::after {
+    border: none;
+  }
+  &.select {
+    color: #fff;
+    background-image: linear-gradient(135deg, #ffe00c 0%, #ffd100 100%);
+  }
+  &.selectContinue {
+    color: #fff;
+    background-image: linear-gradient(135deg, #ffe00c 0%, #ffd100 100%);
+  }
+  .time {
+    position: absolute;
+    font-size: 30rpx;
+    right: 45rpx;
+    top: 50%;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    color: #44d878;
+    font-weight: bold;
+  }
+}
+.circle-container {
+  width: @CIRCLE_WIDTH;
+  height: @CIRCLE_WIDTH;
+  border-radius: 50%;
+  border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
+  box-sizing: border-box;
+  position: absolute;
+  top: @TOP;
+  left: @LEFT;
+}
+#cir {
+  top: @TOP;
+  left: @LEFT;
+  box-sizing: border-box;
+  position: absolute;
+  width: @CIRCLE_WIDTH;
+  height: @CIRCLE_WIDTH;
+  border-radius: 50%;
+  border: @CIRCLE_BORDER solid #f0f0f0;
+}
+.left {
+  clip: rect(0, 18rpx, 36rpx, 0);
+}
+.right {
+  clip: rect(0, 36rpx, 36rpx, 18rpx);
+}
+.stable-right {
+  width: @CIRCLE_WIDTH;
+  height: @CIRCLE_WIDTH;
+  border-radius: 50%;
+  border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
+  position: absolute;
+  top: @TOP;
+  left: @LEFT;
+  box-sizing: border-box;
+  clip: rect(0, 36rpx, 36rpx, 18rpx);
+}
+.warn-style {
+  color: @CIRCLE_WARN_COLOR;
+}
+</style>

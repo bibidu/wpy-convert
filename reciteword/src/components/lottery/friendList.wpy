@@ -1,0 +1,125 @@
+<style lang="less">
+  .userlist {
+    text-align: center;
+    width: 100%;
+    .title {
+      font-size: 28rpx;
+      color: #554C44;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      .text {
+        margin: 0 20rpx;
+        color: #B1A79D;
+        font-size: 24rpx;
+      }
+    }
+    .flex-list {
+      display: flex;
+      flex-wrap: wrap;
+      .flex-item-friend {
+        text-align: center;
+        margin-top: 40rpx;
+        flex: 0 0 33.33%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+        .avatar {
+          width: 80rpx;
+          height: 80rpx;
+          border-radius: 50%; // border: 1rpx solid #ccc;
+        }
+        .nickname {
+          margin: 15rpx 0 10rpx;
+          font-size: 24rpx;
+        }
+        .desc {
+          font-size: 20rpx;
+          color: #B1A79D;
+          text-overflow: ellipsis;
+          width: 100%;
+          height: 28rpx;
+        }
+      }
+    }
+    .loadmore {
+      margin: 35rpx auto 0;
+      font-size: 24rpx;
+      color: #E3E3E3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      .expand {
+        margin-top: 10rpx;
+        width: 19rpx;
+        height: 11rpx;
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class="userlist" wx:if='{{show}}'>
+    <view class='title'>
+      <view class='text'>—— 已有{{list.length}}位朋友帮Ta提升了中奖概率 ——</view>
+    </view>
+    <view class='flex-list'>
+      <repeat for='{{showList}}' key='key' index='index'>
+        <view class='flex-item-friend'>
+          <image src="{{item.portrait || '../../images/xcx_ji_1@2x.png'}}" class='avatar'></image>
+          <view class='nickname'>{{item.nickname || '神秘好友'}}</view>
+        </view>
+      </repeat>
+    </view>
+    <!-- 加载更多 -->
+    <view class='loadmore' wx:if='{{list.length > 6}}' @tap='loadmore'>
+      <view class='text'>{{text}}</view>
+      <image src='../../images/xcx_chou_5@3x.png' class='expand'></image>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  export default class friendList extends wepy.component {
+    props = {
+      show: {
+        type: Boolean,
+        default: true
+      },
+      list: {
+        type: Array
+      }
+    }
+    data = {
+      showList: [],
+      text: '点击加载更多',
+      expand: false
+    }
+    events = {}
+    watch = {
+      list(newV) {
+        let newValue = JSON.parse(JSON.stringify(newV))
+        if (newValue.length > 6) {
+          newValue = this.expand ? newValue : newValue.slice(0, 6)
+        }
+        newValue.length = 6
+        this.showList = newValue
+        console.log('this.showList', newValue)
+        this.$apply()
+      }
+    }
+    methods = {
+      loadmore() {
+        this.expand = !this.expand
+        this.text = this.expand ? '点击收起' : '点击加载更多'
+        this.showList = this.expand ? this.list : this.list.slice(0, 6)
+      }
+    }
+    // onLoad() {
+    //   this.showList = this.list.slice(0, 6)
+    //   this.showList.length = 6
+    // }
+  }
+</script>

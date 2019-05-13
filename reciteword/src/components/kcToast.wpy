@@ -1,0 +1,139 @@
+<style lang="less">
+  .kc-toast{
+    position: absolute;
+    z-index: 15;
+    top: 470rpx;
+    width: 295rpx;
+    height: 205rpx;
+    left: 50%;
+    transform: translateX(-50%);
+    -webkit-transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    border-radius: 8rpx;
+    text-align: center;
+    image{
+      margin-top: 30rpx;
+      width: 81rpx;
+      height: 81rpx;
+    }
+    .text{
+      color: #fff;
+      font-size: 32rpx;
+      margin-top: 32rpx;
+      line-height: 0;
+    }
+  }
+  .prizeSpecial{
+    background: rgba(255, 255, 255, 1);
+    width: 500rpx;
+    height: 330rpx;
+    position: fixed;
+    z-index: 101;
+    top: 0rpx;
+    left: 0rpx;
+    right: 0rpx;
+    bottom: 0rpx;
+    margin: auto;
+    transform: translateX(0);
+    border-radius: 8rpx;
+    text-align:center;
+    image{
+      margin-top: 53rpx;
+      width: 104rpx; //84
+      height: 104rpx;
+    }
+    .text{
+      margin-top: 45rpx;
+      color: #000000;
+      font-size: 28rpx;
+      width: 440rpx;
+      height: 28rpx;
+      margin-left: 40rpx;
+      text-align: left;
+    }
+    .subtext{
+      font-size: 28rpx;
+      color: #000000;
+      text-align: center;
+      line-height: 28px;
+      margin-top: -15rpx;
+      width: 440rpx;
+      margin-left: 40rpx;
+      text-align: left;
+    }
+  }
+  .didoffline{
+    height: 380rpx;
+    .text{
+      margin-top: 75rpx;
+      font-size: 40rpx;
+      width: 500rpx;
+      text-align: center;
+      margin-left: 0;
+    }
+    .subtext{
+      font-size: 25rpx;
+      color: #CECECE;
+      margin-top: 50rpx;
+      width: 500rpx;
+      text-align: center;
+      margin-left: 0;
+    }
+    image{
+      height: 0;
+      width: 0;
+    }
+  }
+
+</style>
+<template>
+  <view class='kc-toast {{prizeToast}} {{offline}}' @tap.stop='tap2' @touchmove.stop='move2' wx-if='{{show}}'>
+    <image src='{{imgSrc}}' mode='widthFix'></image>
+    <view class='text'>{{msg}}</view>
+    <view class="subtext">{{subMsg}}</view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class KcToast extends wepy.component {
+    props = {
+      msg: {
+        type: String,
+        default: '解锁成功'
+      },
+      imgSrc: {
+        type: String,
+        default: '../images/xcx_shou_0@2x.png'
+      },
+      show: {
+        type: Boolean,
+        default: false,
+        twoWay: true
+      },
+      prizeToast: String,
+      offline: String,
+      subMsg: {
+        type: String,
+        default: ''
+      },
+      isCanClick: {
+        type: Boolean,
+        default: true
+      }
+    }
+    methods = {
+      toggle() {
+        this.$emit('togglewarning')
+        this.show = false
+      },
+      tap2() {
+        if (this.isCanClick) {
+          this.show = false
+        }
+      },
+      move2() {
+      }
+    }
+  }
+</script>

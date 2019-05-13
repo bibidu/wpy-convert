@@ -1,0 +1,113 @@
+<style lang="less">
+  @import '../../common/common.less';
+  .round-progress{
+    position: absolute;
+    top: 0;
+    height:100%;
+    .circle-container{
+      width: @CIRCLE_WIDTH;
+      height: @CIRCLE_WIDTH;
+      border-radius: 50%;
+      border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
+      box-sizing: border-box;
+      position: absolute;
+      top: @TOP;
+      left: @LEFT;
+    }
+    #cir{
+      top: @TOP;
+      left: @LEFT;
+      box-sizing: border-box;
+      position: absolute;
+      width: @CIRCLE_WIDTH;
+      height: @CIRCLE_WIDTH;
+      border-radius: 50%;
+      border: @CIRCLE_BORDER solid #F0F0F0;
+    }
+    .left{
+      clip: rect(0, 18rpx, 36rpx, 0);
+    }
+    .right{
+      clip: rect(0, 36rpx, 36rpx, 18rpx);
+    }
+    .stable-right{
+      width: @CIRCLE_WIDTH;
+      height: @CIRCLE_WIDTH;
+      border-radius: 50%;
+      border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
+      position: absolute;
+      top: @TOP;
+      left: @LEFT;
+      box-sizing: border-box;
+      clip: rect(0, 36rpx, 36rpx, 18rpx);
+    }
+    .warn-style{
+      color: @CIRCLE_WARN_COLOR;
+    }
+  }
+</style>
+<template>
+  <view class='round-progress'>
+    <view class='circle-container' style='border-color:{{warnStyle}};'></view>
+    <view id='cir' class='left' style='transform:rotate({{leftCircle}}deg);-webkit-transform:rotate({{leftCircle}}deg);'></view>
+    <view id='cir' class='right' wx-if='{{rightShow}}' style='transform:rotate({{rightCircle}}deg);-webkit-transform:rotate({{rightCircle}}deg);'></view>
+    <view class='stable-right' wx-if='{{stableShow}}' style='border-color:{{warnStyle}}'></view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class CircleProgress extends wepy.component {
+    data = {
+      warnStyle: '',
+      stableShow: false,
+      rightShow: true,
+      leftCircle: 0,
+      rightCircle: 0
+    }
+    watch = {
+      i(newV, oldV) {
+        this.start()
+      },
+      state(newV, oldV) {
+        this.resetData() // 重置数据
+      }
+    }
+    props = {
+      show: {
+        type: Boolean,
+        default: true
+      },
+      state: { // 答题状态 / 释义状态 0/1
+        type: Number,
+        default: 0
+      },
+      i: { // 粒度
+        type: Number,
+        default: 10
+      }
+    }
+    start() {
+      const son = this.state === 0 ? 100 : 200
+      const threshold = this.state === 0 ? 50 : 150
+      const pre = 360 / son
+      if (this.rightCircle < 180) {
+        this.stableShow = false
+        this.rightCircle = pre * this.i
+      } else if (this.rightCircle <= 360) {
+        this.warnStyle = this.i >= threshold ? '#FF536E' : ''
+        this.stableShow = true
+        this.rightShow = false
+        this.leftCircle = (pre * this.i) - 180
+      }
+      this.$apply()
+    }
+    resetData() {
+      this.warnStyle = ''
+      this.stableShow = false
+      this.rightShow = true
+      this.leftCircle = 0
+      this.rightCircle = 0
+    }
+  }
+</script>

@@ -1,0 +1,26 @@
+<template>
+  <view class="container" @tap='back'>
+    404(点击回到首页)
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  
+  export default class Index extends wepy.page {
+    config = {
+      navigationBarTitleText: '404'
+    }
+    data = {
+    }
+    components = {
+    }
+    methods = {
+      back() {
+        this.$redirect('index')
+      }
+    }
+  }
+</script>
+<style lang="less">
+</style>

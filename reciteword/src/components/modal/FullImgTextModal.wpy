@@ -1,0 +1,114 @@
+<style lang='less'>
+  .full-img-text-modal {
+    position: fixed;
+    z-index: 8;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    .full-img-text-modal-body{
+      position: fixed;
+      z-index: 9;
+      top: 200rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 560rpx;
+      height: 610rpx;
+      padding: 0 40rpx;
+      box-sizing: border-box;
+      font-size: 32rpx;
+      background: #fff;
+      border-radius: 18rpx;
+      .bg{
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .modal-body-above-bg{
+        position: absolute;
+        z-index: 11;
+        top: 90rpx;
+        bottom: 50rpx;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        .title{
+          font-size: 36rpx;
+          font-weight: bold;
+          display: block;
+          margin-bottom: 50rpx;
+        }
+        .subtitle{
+          margin-bottom: 52rpx;
+          .desc{
+            font-size: 28rpx;
+          }
+        }
+        .btn{
+          width: 360rpx;
+          height: 100rpx;
+          line-height: 100rpx;
+          background: #FFD600;
+          box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+          border-radius: 100rpx;
+          font-size: 32rpx;
+          &:after{
+            border: none;
+          }
+        }
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class='full-img-text-modal' wx:if='{{show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class='full-img-text-modal-body'>
+      <image class='bg' src='https://xcx-cdn.kaochong.com/recite/image/xcx_fantan_1@2x.png'></image>
+      <view class='modal-body-above-bg'>
+        <view class='title'>
+          恭喜你获得挑战资格！
+        </view>
+        <!-- 内容1 -->
+        <view class='subtitle'>
+          <view class='desc'>关注“单词天天背”公众号</view>
+        </view>
+        <!-- 内容2 -->
+        <view class='subtitle'>
+          <view class='desc'>回复“挑战”</view>
+        </view>
+        <!-- 内容3 -->
+        <view class='subtitle'>
+          <view class='desc'>加入专属挑战群吧！</view>
+        </view>
+        <button class='btn' @tap='tapModalBtn'>好的，看看规则</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  export default class FullImgTextModal extends wepy.component {
+    data = {
+      show: false
+    }
+    methods = {
+      tap1() {},
+      move1() {},
+      showModal() {
+        this.show = true
+      },
+      hideModal() {
+        this.show = false
+      },
+      tapModalBtn() {
+        this.$emit('tapModalBtn')
+      }
+    }
+  }
+</script>

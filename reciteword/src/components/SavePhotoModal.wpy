@@ -1,0 +1,71 @@
+<style lang="less">
+  .save-photo-modal{
+    position: fixed;
+    z-index: 9;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    text-align: center;
+    .modal-wrap{
+      width: 560rpx;
+      margin: 407rpx auto 0;
+      background: #fff;
+      border-radius: 8rpx;
+      padding-top: 70rpx;
+      box-sizing: border-box;
+      font-size: 30rpx;
+      color: #353535;
+      .button{
+        margin-top: 52rpx;
+        border: none;
+        border-top: 1rpx solid #e5e5e5;
+        font-size: 36rpx;
+        color: #02BB00;
+        background: #fff;
+        height: 100rpx;
+        line-height: 100rpx;
+        &:after{
+          border: none;
+        }
+      }
+    }
+  }
+</style>
+<template>
+  <view class="save-photo-modal" wx:if='{{show}}' @tap.stop='tapContainer' @touchmove.stop='move1'>
+    <view class='modal-wrap'>
+      <view class='text'>允许微信保存到相册后即可保存</view>
+      <view class='button-wrap'>
+        <button @tap='tapBtn' class='button' open-type='openSetting'>好的</button>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class SavePhotoModal extends wepy.component {
+    data = {
+      show: false
+    }
+    methods = {
+      tap1() {
+      },
+      move1() {
+      },
+      move2() {
+      },
+      show() {
+        this.show = true
+      },
+      hide() {
+        this.show = false
+      },
+      tapBtn() {
+        this.show = false
+      }
+    }
+  }
+</script>

@@ -1,0 +1,106 @@
+<style lang="less" scoped>
+    .notify-rest-part-modal{
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 7;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      text-align: center;
+      .image{
+        display: block;
+        width: 230rpx;
+        height: 160rpx;
+        margin: 220rpx auto 0;
+      }
+      .title{
+        color: #484E5E;
+        margin: 320rpx auto 30rpx;
+        font-size: 44rpx;
+        font-weight: bold;
+        .restPart{
+          font-family: 'DIN';
+          color: #FF9E38;
+          font-size: 70rpx;
+          padding: 0 14rpx;
+        }
+      }
+      .subtitle{
+        font-size: 30rpx;
+        color: #9A9FA8;
+      }
+      .bot-btn{
+        position: absolute;
+        bottom: 330rpx;
+        left: 50%;
+        transform: translateX(-50%);
+        width:360rpx;
+        height:100rpx;
+        line-height: 100rpx;
+        background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+        box-shadow:0px 4rpx 15rpx 0px rgba(255,154,38,0.2);
+        border-radius:50rpx;
+        &:after{
+          border: none;
+        }
+        .time{
+          position: absolute;
+          left: 70rpx;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #48D76C;
+        }
+        .text{
+          color: #fff;
+          font-size: 30rpx;
+        }
+        .pgs-line{
+          position: absolute;
+          height: 2rpx;
+          bottom: 0rpx;
+          background: #48D76C;
+          width: 0%;
+          
+        }
+      }
+    }
+</style>
+<template>
+  <view class='notify-rest-part-modal' wx:if='{{showModal}}'>
+    <view class='title'>剩余<text class='restPart'>{{restPart}}</text>组</view>
+    <view class='subtitle'>剩余{{restPart}}组，快去学习吧</view>
+    <!-- 底部按钮 -->
+    <button class='bot-btn' @tap='tapBtn'>
+      <view class='text'>开启下一组</view>
+    </button>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+  
+  let _resolve = null
+  export default class NotifyRestPartModal extends wepy.component {
+    data = {
+      showModal: false,
+      restPart: 0
+    }
+    methods = {
+      show({ restPart }) {
+        return new Promise(resolve => {
+          this.restPart = restPart
+          this.showModal = true
+          _resolve = resolve
+        })
+      },
+      hide() {
+        this.showModal = false
+      },
+      tapBtn() {
+        this.$emit('startNext')
+        _resolve()
+        this.showModal = false
+      }
+    }
+  }
+</script>

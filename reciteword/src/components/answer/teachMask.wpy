@@ -1,0 +1,69 @@
+<style lang="less" scoped>
+.teach-mask{
+  position: fixed;
+  z-index: 7;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background:rgba(0,0,0,0.4979);
+  .image{
+    width: 154rpx;
+    height: 200rpx;
+    margin: 727rpx 256rpx 0 340rpx;
+  }
+  .text{
+    color: #fff;
+    font-size: 30rpx;
+    margin: 40rpx auto 0;
+    text-align: center;
+  }
+}
+</style>
+<template>
+  <view class='teach-mask' wx:if='{{showMask}}' @touchmove='move' @touchend='moveEnd'>
+      <image class='image' src="../../images/ttb_hua_1@2x.png"></image>
+      <view class='text'>上划查看单词详情</view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import storage from '@/common/storage'
+
+let moved = false
+let _resolve = null
+export default class TeachMask extends wepy.component {
+  data = {
+    showMask: false
+  }
+  props = {
+  }
+  methods = {
+    render() {
+      return new Promise(async resolve => {
+        let hasMask = await storage.get('v2-teach-mask')
+        if (!hasMask) {
+          this.showMask = true
+          this.$apply()
+          _resolve = resolve
+        } else {
+          resolve()
+        }
+      })
+    },
+    move() {
+      if (moved) return
+      moved = true
+    },
+    moveEnd() {
+      if (moved) {
+        this.showMask = false
+        storage.set('v2-teach-mask', 1)
+        _resolve && _resolve()
+      }
+    }
+  }
+  onLoad() {
+  }
+}
+</script>

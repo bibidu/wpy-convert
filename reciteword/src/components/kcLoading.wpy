@@ -1,0 +1,62 @@
+<style lang="less">
+  .transparentmodal{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0);
+    // background: #fff;
+    // background: #ccc;
+    // opacity: .5;
+    z-index: 10;
+    text-align: center;
+    image{
+      position: absolute;
+      top: 442rpx;
+      left: 50%;
+      z-index: 11;
+      transform: translateX(-50%);
+      // margin-top: 442rpx;
+      width: 180rpx;
+      height: 180rpx;
+    }
+  }
+</style>
+<template>
+  <view class="transparentmodal" style="{{transparent ? 'background: rgba(255,255,255,0.16);' : 'background: #fff;'}}" hidden="{{show + '' === 'false'}}" @tap.stop='tap1' @touchmove.stop='move1'>
+    <image src='../images/loading.gif' />
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class KcLoading extends wepy.component {
+    props = {
+      show: {
+        type: Boolean,
+        default: true
+      },
+      transparent: {
+        type: Boolean,
+        default: true
+      }
+    }
+
+    data = {
+      bookIndex: 0
+    }
+    events = {
+    }
+
+    watch = {
+    }
+
+    methods = {
+      tap1() {
+      },
+      move1() {
+      }
+    }
+  }
+</script>

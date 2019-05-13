@@ -1,0 +1,173 @@
+<style lang="less">
+  .kcStateModal{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0,0,0,0.4);
+    // background: #fff;
+    z-index: 11;
+    .modal{
+      width: 560rpx;
+      // height: 560rpx;
+      position: fixed;
+      z-index: 3;
+      top: 184rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      -webkit-transform: translateX(-50%);
+      background: #fff;
+      border-radius: 18rpx;
+      .topnav{
+        text-align: right;
+        overflow: hidden;
+        width: 100%;
+        height: 72rpx;
+        .close_container{
+          width: 82rpx;
+          height: 100%;
+          padding-right: 31rpx;
+          box-sizing: border-box;
+          float: right;
+          .close{
+            margin-top: 30rpx;
+            width: 30rpx;
+            height: 30rpx;
+          }
+        }
+      }
+      .rest{
+        padding: 0 40rpx 50rpx;
+        box-sizing: border-box;
+        .img-logo{
+          width: 240rpx;
+          height: 150rpx;
+          margin:0 auto;
+          display:block;
+        }
+        .title{
+          margin-top: 30rpx;
+          font-size: 36rpx;
+          text-align: center;
+        }
+        .desc{
+          font-size: 28rpx;
+          // text-align: center;
+          color: #B1A79D;
+          margin: 25rpx 0 30rpx;
+        }
+        .introduce-item{
+          padding: 0 40rpx;
+          box-sizing: border-box;
+          display: flex;
+          display: -webkit-flex;
+          margin-bottom: 50rpx;
+          image{
+            width: 120rpx;
+            height: 120rpx;
+          }
+          .introduce-container{
+            flex: 1;
+            -webkit-flex: 1;
+            height: 100%;
+            margin-left: 46rpx;
+            text-align: left;
+            .title{
+              color: #322A20;
+              font-size: 30rpx;
+            }
+            .introduce-desc{
+              margin: 0;
+              font-size: 24rpx;
+              color: #B1A79C;
+            }
+          }
+        }
+        button{
+          width: 440rpx;
+          height: 100rpx;
+          background: #FFD600;
+          box-shadow: 0 1rpx 15rpx 0 rgb(236,205,46);
+          border-radius: 100rpx;
+          margin: 0rpx auto;
+          font-size: 32rpx;
+          line-height: 100rpx;
+          color: #322A22;
+          &::after{
+            border: none;
+          }
+        }
+        .btn2{
+          margin-top: 25rpx;
+          opacity: 0.4;
+          border: 2rpx solid #B1A79D;
+          color: #B1A79D;
+          background: #fff;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+</style>
+<template>
+  <view class="kcStateModal" wx:if='{{obj.show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <!-- 浮云图片 -->
+    <!-- <image class='cloud' src='../images/xcx_tan_1@3x.png'></image> -->
+      <view class='modal'>
+        <view class='topnav'>
+          <view class='close_container' @tap='close' wx:if='{{obj.canClose}}'>
+            <image class='close' src='../../images/xcx_wan_2@2x.png'></image>
+          </view>
+        </view>
+        <view class='rest'>
+          <view>
+            <image class='img-logo' src='{{obj.icon}}'></image>
+            <!-- <view class='title'>补签卡</view> -->
+            <!-- <view class='nickname'>{{nickname}}</view> -->
+            <view class='title'>{{obj.title}}</view>
+            <view class='desc'>{{obj.msg}}</view>
+            <button class='btn1' @tap='tapBtn1'>{{obj.btnText1}}</button>
+            <button class='btn2' @tap='tapBtn2'>{{obj.btnText2}}</button>
+          </view>
+        </view>
+      </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class kcStateModal extends wepy.component {
+    data = {
+      obj: {
+        show: false,
+        msg: '',
+        icon: '',
+        btnText: '',
+        canClose: false
+      }
+    }
+    props = {
+    }
+    methods = {
+      show(obj) {
+        this.obj = Object.assign(obj, {show: true})
+      },
+      tap1() {
+      },
+      move1() {
+      },
+      close() {
+        console.log('close....')
+        this.obj = Object.assign(this.obj, {show: false})
+      },
+      tapBtn1() {
+        this.obj = Object.assign(this.obj, {show: false})
+      },
+      tapBtn2() {
+        this.obj = Object.assign(this.obj, {show: false})
+        this.$emit('tapBtn2')
+      }
+    }
+  }
+</script>

@@ -1,0 +1,975 @@
+<style lang="less" scoped>
+@import '../common/font.less';
+.index {
+  font-family: 'DIN';
+  .bg-wrapper {
+    position: relative;
+    width: 100%;
+    height: 660rpx;
+    .bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .main-band{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      .title-wrapper1{
+        padding: 0 60rpx;
+        box-sizing: border-box;
+        margin-top: 60rpx;
+        display: flex;
+        justify-content: space-between;
+        color: #fff;
+        .bookname{
+          font-size: 30rpx;
+          font-weight: bold;
+          display:flex;
+          align-items:center;
+        }
+        .toggle-plan{
+          font-size: 26rpx;
+          height: 100%;
+          line-height: 60rpx;
+          background:rgba(0,0,0,0.05);
+          border-radius:30px;
+          color: #fff;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          &:after{
+            border: none;
+          }
+          .r-anchor{
+            margin-left: 12rpx;
+            width: 14rpx;
+            height: 16rpx;
+          }
+        }
+      }
+      .title-wrapper2{
+        margin-top: 4rpx;
+        padding: 0 60rpx;
+        box-sizing: border-box;
+        color: #fff;
+        font-size: 30rpx;
+        display: flex;
+        justify-content: flex-start;
+        .rest-day{
+          margin-left: 46rpx;
+        }
+        .big{
+          font-size: 40rpx;
+        }
+      }
+      .center-band{
+        position: relative;
+        width: 630rpx;
+        height: 230rpx;
+        margin: 78rpx auto 0;
+        background: #fff;
+        border-radius: 20rpx 0 20rpx 20rpx;
+        padding: 25rpx 40rpx;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: space-between;
+        .left{
+          .top{
+            display: flex;
+            align-items: flex-end;
+            .word{
+              font-size: 100rpx;
+              margin-bottom: -10rpx;
+            }
+            .cut{
+              font-size: 70rpx;
+            }
+            .count-word{
+              font-size: 60rpx;
+            }
+          }
+          .bottom{
+            font-size: 30rpx;
+            margin-top: 20rpx;
+            color:rgba(0,0,0,0.4);
+          }
+        }
+        .right{
+          width: 140rpx;
+          height: 170rpx;
+          margin-top: 8rpx;
+        }
+        .with-bg{
+          position: absolute;
+          width: 390rpx;
+          height: 142rpx;
+          right: 0;
+          top: -140rpx;
+        }
+      }
+      .center-btn{
+        margin: 50rpx auto 0;
+        width: 590rpx;
+        height: 100rpx;
+        background:linear-gradient(90deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+        box-shadow:0px 4rpx 19rpx 0px rgba(255,154,38,0.4);
+        border-radius: 50rpx;
+        color: #fff;
+        line-height: 100rpx;
+        font-size: 32rpx;
+        margin-bottom: 80rpx;
+        &:after{
+          border: none;
+        }
+      }
+      .bot-item{
+        height: 110rpx;
+        line-height: 110rpx;
+        margin: 0 60rpx;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 30rpx;
+        border-bottom: 2rpx solid #EEEEEE;
+        .left{
+          width: 100%;
+          display: flex;
+          align-items: center;
+          margin-top: -8rpx;
+          .left-area{
+            display: flex;
+            align-items: center;
+          }
+          .icon{
+            // margin-left: -15rpx;
+            height: 64rpx;
+            width: 64rpx;
+          }
+          .text{
+            margin-left: 14rpx;
+          }
+          navigator{
+            width: 100%;
+          }
+          .btn{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border: none;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            &:after{
+              border: none;
+            }
+            .icon{
+              margin: 0;
+              line-height: 110rpx;
+            }
+            .text{
+              color: #000;
+              font-size: 30rpx;
+            }
+            .btn-right{
+              display: flex;
+              align-items: center;
+              .text{
+                color: #FF9A26;
+              }
+              .icon{
+                margin-left: 11rpx;
+                width: 12rpx;
+                height: 24rpx;
+              }
+            }
+          }
+        }
+        .right{
+          font-family:'normal';
+          display: flex;
+          align-items: center;
+          .text{
+            color: #FF9A26;
+          }
+          .icon{
+            margin-left: 11rpx;
+            width: 12rpx;
+            height: 24rpx;
+          }
+        }
+      }
+    }
+  }
+  .banner{
+    position: absolute;
+    z-index: 3;
+    bottom: 60rpx;
+    left: 50%;
+    transform: translateX(-50%);
+    // border: 2rpx solid #ccc;
+    width: 630rpx;
+    height: 120rpx;
+  }
+  .contact{
+    position: fixed;
+    z-index: 6;
+    right: 30rpx;
+    bottom: 136rpx;
+    width: 128rpx;
+    height: 128rpx;
+    z-index: 4;
+    background: transparent;
+    padding: 0;
+    &:after{
+      border: none;
+    }
+    .contact-image{
+      width: 128rpx;
+      height: 128rpx;
+    }
+  }
+  .notify-add-to-desktop{
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .notify-add-to-desktop-btn{
+    position: fixed;
+    z-index: 11;
+    bottom: 130rpx;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300rpx;
+    height: 100rpx;
+    line-height: 100rpx;
+    background: #FFD600;
+    box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+    border-radius: 100rpx;
+    &:after{
+      border: none;
+    }
+  }
+
+}  
+</style>
+<template>
+  <view class="index">
+    <view class='bg-wrapper'>
+      <image src='{{bgImage}}' class='bg'></image>
+      <view class='main-band'>
+        <view class='title-wrapper1'>
+          <view class='bookname'>{{indexInfo.wordbook.name}}</view>
+          <button class='toggle-plan' @tap='goTogBook' id='a2'>
+            切换计划
+            <image class='r-anchor' src='../images/ttb_shou_12.png'></image>
+          </button>
+        </view>
+        <view class='title-wrapper2'>
+          <view class='study-day'>已学 <text class='big'>{{indexInfo.userInfo.alreadyStudyStage || 0}}</text> 天</view>
+          <view class='rest-day'>剩余 <text class='big'>{{indexInfo.userInfo.surplusDay || 0}}</text> 天</view>
+        </view>
+        <view class='center-band'>
+          <view class='left'>
+            <view class='top'>
+              <view class='word'>{{indexInfo.userInfo.studyWordsNum || 0}}</view>
+              <view class='cut'> / </view>
+              <view class='count-word'>{{indexInfo.wordbook.wordsNum || 0}}</view>
+            </view>
+            <view class='bottom'>已学单词数</view>
+          </view>
+          <image src='{{indexInfo.wordbook.icon}}' class='right'></image>
+          <!-- withBackground -->
+          <image class='with-bg' src='{{withBackground}}'></image>
+        </view>
+        <!-- 开始学习 按钮 -->
+        <button class='center-btn' @tap='goAnswer' open-type='{{btnOpenType}}'>{{btnText}}</button>
+        <!-- 我的学习数据 -->
+        <!-- <view class='bot-item'>
+          <view class='left' style="width:100%;">
+            <navigator
+              target="miniProgram"
+              open-type="navigate"
+              app-id='wx3c3ce5876643ac0f'
+              path="pages/user/home/home?courseId=271759&start_at=2019-03-25&end_time=2019-05-09"
+            >
+              <button class='btn' id='a7'>
+                <view class='left-area'>
+                  <image src='../images/ttb_shou_3.png' class='icon'></image>
+                  <view class='text'>我的学习数据</view>
+                </view>
+                <view class='btn-right'>
+                  <view class='text'>打卡有奖</view>
+                  <image class='icon' src='../images/ttb_shou_6@2x.png'></image>
+                </view>
+              </button>
+            </navigator>
+          </view>
+        </view> -->
+
+        <!-- 错题本 -->
+        <view class='bot-item' @tap='goWordsList' id='a1'>
+          <view class='left'>
+            <image src='../images/ttb_shou_4.png' class='icon'></image>
+            <view class='text'>错题本</view>
+          </view>
+          <view class='right'>
+            <view class='text' style='color:#90949F;width:200rpx;text-align:right;'>{{indexInfo.userInfo.mistakesCount || 0}}词</view>
+            <image class='icon' src='../images/ttb_shou_6@2x.png'></image>
+            </view>
+          </view>
+        <!-- 切换模式 -->
+        <view class='bot-item' @tap='tapSwitchModule'>
+          <view class='left'>
+            <button class='btn' id='a7'>
+              <view class='left-area'>
+                <image src='../images/ttb_shou_12@2x.png' class='icon'></image>
+                <view class='text'>切换模式</view>
+              </view>
+              <view class='btn-right'>
+                <view class='text'>{{indexInfo.userInfo.userModel}}</view>
+                <image class='icon' src='../images/ttb_shou_6@2x.png'></image>
+              </view>
+            </button>
+          </view>
+        </view>
+        <!-- 后台配置 start -->
+        <block wx:for='{{businessList}}' wx:key='{{index}}'>
+          <view class='bot-item'>
+            <view class='left'>
+              <!-- type === 0: navigator -->
+              <block wx:if='{{item.type === 0}}'>
+                <navigator
+                  target="miniProgram"
+                  open-type="navigate"
+                  app-id='{{item.appid}}'
+                  path="{{item.pagePath}}"
+                >
+                <button class='btn' id='a7'>
+                  <view class='left-area'>
+                    <image src='{{item.icon}}' class='icon'></image>
+                    <view class='text'>{{item.title}}</view>
+                  </view>
+                  <view class='btn-right'>
+                    <view class='text'>{{item.name}}</view>
+                    <image class='icon' src='../images/ttb_shou_6@2x.png'></image>
+                  </view>
+                </button>
+              </navigator>
+
+              </block>
+              <!-- type === 1: webview -->
+              <block wx:if='{{item.type === 1}}'>
+                <button class='btn' id='a7' @tap="tapBusinessBtn({{item}})">
+                  <view class='left-area'>
+                    <image src='{{item.icon}}' class='icon'></image>
+                    <view class='text'>{{item.title}}</view>
+                  </view>
+                  <view class='btn-right'>
+                    <view class='text'>{{item.name}}</view>
+                    <image class='icon' src='../images/ttb_shou_6@2x.png'></image>
+                  </view>
+                </button>
+              </block>
+            </view>
+          </view>
+        </block>
+
+        <!-- 后台配置 end -->
+        </view>
+      </view>
+      <!-- banner -->
+      <view class='banner' src='{{bannerUrl}}' wx:if='{{bannerUrl}}' @tap='goBanner' id='a5'>
+        <image src='{{bannerUrl}}' style="width:100%;height:100%"></image>
+      </view>
+      <!-- 反馈按钮 -->
+      <button class='contact' open-type="feedback">
+        <image class='contact-image' src='../images/ttb_shou_7@2x.png'></image>
+      </button>
+    <!-- 提示用户添加到桌面、添加小程序图片 -->
+    <block wx:if='{{addDeskInfo.show}}'>
+      <image class='notify-add-to-desktop' src='{{addDeskInfo.imgUrl}}'></image>
+      <button class='notify-add-to-desktop-btn' @tap='tapAddDeskConfirm'>我知道啦</button>
+    </block>
+    <kcNotification
+    :show.sync='showWarnModal'
+    :msg.sync='warnMsg'
+    :btnMsg.sync='warnBtnMsg'
+    @togglewarning.user='togglewarning'></kcNotification>
+    <!-- loading -->
+    <kcLoading :show.sync='showLoading'></kcLoading>
+    <!-- 解锁成功 toast -->
+    <kcToast :show.sync='showToast'></kcToast>
+    <!-- <button @tap='goSign'>fkwejlfkwjekflwjkl</button> -->
+    <VersionModal />
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+// 公共资源
+import { setCached, getCached, removeCached } from '@/common/storage'
+import api from '@/common/api'
+import common from '@/common/common'
+import {
+  yesSrc,
+  noSrc
+} from '@/common/constant'
+import { removeAllEvent } from '@/common/dep'
+// 组件
+import kcLoading from '@/components/kcLoading' // loading
+import kcNotification from '@/components/kcNotification' // 通知提醒框
+import kcToast from '@/components/kcToast' // toast框
+import kcStateModal from '@/components/kcStateModal' // StateModal框
+import VersionModal from '@/components/versionModal/index' // 新版本弹出框
+// 业务组件
+import ActivityIcon from '@/serviceComponents/ActivityIcon/ActivityIcon' // 活动icon
+import Login from '@/serviceComponents/login/login' // 登录
+
+import { bunchDownload } from '@/common/download'
+
+let isNewUser = false // 是否是新用户
+let lockMainBtn = false // 主按钮锁
+let bannerInnerUrl = null // banner页面显示的链接
+let btnUrl = null // 点击主按钮跳转的页面
+let pageLock = true
+
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '单词天天背',
+    navigationBarBackgroundColor: '#52A9E9'
+  }
+  // mixins = [testMixin]
+  components = {
+    kcLoading,
+    kcNotification,
+    kcToast,
+    ActivityIcon,
+    kcStateModal,
+    Login,
+    VersionModal
+  }
+  data = {
+    btnText: '开始学习', // 底部按钮
+    bgImage: 'https://xcx-cdn.kaochong.com/recite/image/ttb_shou_1@2x.jpg',
+    showWarnModal: false,
+    warnMsg: null,
+    warnBtnMsg: null,
+    showLoading: true,
+    // nickname: '',
+    bannerUrl: '',
+    indexInfo: {
+      userInfo: {
+        studyWordsNum: 0,
+        keepDay: 0,
+        todayWordsSum: 0,
+        surplusDay: 0,
+        target: 0,
+        wordsNum: 0,
+        alreadyStudyStage: 0
+      },
+      wordbook: {
+        title: '未选择单词书'
+      }
+    },
+    showToast: false,
+    clickShare: false, // 是否点击了发起分享
+    btnOpenType: '',
+    withBackground: '',
+    addDeskInfo: {
+      show: false,
+      imgUrl: ''
+    },
+    businessList: []
+  }
+
+  methods = {
+    // 登录成功
+    loginSuccess() {
+      this.loginSuccessAfter()
+    },
+    // 登录失败
+    loginError(error) {
+      this.resolveException(error)
+      console.log('index.wpy components loginError error')
+      console.log(error)
+    },
+    // 点击‘添加小程序到桌面’的 确定按钮
+    tapAddDeskConfirm() {
+      this.addDeskInfo = {...this.addDeskInfo, show: false}
+    },
+    goTogBook() {
+      const { target } = this.indexInfo.userInfo
+      this.$navigate('subPages/selectbook/index', {
+        target
+      })
+    },
+    goWordsList() {
+      if (pageLock) return
+      pageLock = true
+
+      let stage
+      // 用户信息 单词书信息
+      const { userInfo: uInfo, wordbook: bInfo } = this.indexInfo
+      const maxStudyStage = bInfo.maxStudyStage
+      if (uInfo.stage > maxStudyStage) {
+        stage = maxStudyStage + 1
+      } else {
+        stage = uInfo.status === 2 ? uInfo.stage + 1 : uInfo.stage
+      }
+      this.$navigate('subPages/wordslist/wordslist', {
+        stage,
+        maxStudyStage
+      })
+    },
+    goBanner() {
+      bannerInnerUrl && this.$navigate('/pages/banner/banner')
+    },
+    // 切换模式
+    async tapSwitchModule() {
+      const text = '切换学习模式会清空今天的学习数据哦，是否确定切换？'
+      const btnText = '切换模式'
+      let modal = await common.showModalSync(text, btnText)
+      if (modal) {
+        this.switchModule()
+      }
+    },
+    tapBusinessBtn({ type, pagePath }) {
+      console.log('type')
+      console.log(type)
+      console.log(pagePath)
+      if (type === 1) {
+        setCached('bannerObj', { pathUrl: pagePath })
+        this.$navigate('/pages/banner/banner')
+      }
+    },
+    async goAnswer() {
+      if (lockMainBtn) return
+      lockMainBtn = true
+
+      const { vid, target, stage, module, part, status } = this.indexInfo.userInfo
+
+      if (vid === 2) {
+        // await api.beginLearn()
+        // 完成任务需解锁 禁止跳转
+        if (status === 2) return
+        if (status === 3) return
+        const { timestamp } = await api.getServerTime()
+        // 缓存继续学习
+        setCached('v2-continue-study', new Date(timestamp).getDate())
+        if (status === 4 || module === 1) {
+          return this.$navigate('answerPractice', {target, part, finalTest: status === 4 ? 1 : 0})
+        }
+        if (module === 0) {
+          return this.$navigate('answerStudy', {target, part})
+        }
+      }
+      this.$navigate(btnUrl, {
+        target,
+        stage
+      })
+    },
+    togglewarning() {
+      this.login()
+    }
+  }
+  // 登录成功后的行为
+  loginSuccessAfter() {
+    this.login()
+  }
+  onReady() {
+    // this.setStyleWithTime()
+  }
+  async switchModule() {
+    const { userInfo } = this.indexInfo
+    await api.switchAnswerVersion()
+    removeCached('v2-continue-study')
+    removeCached(`v2-qs-${userInfo.target}`)
+    await this.getIndexInfo()
+    await this.handleIndexInfo()
+    this.$apply()
+  }
+  onLoad() {
+    wepy.loadFontFace({
+      family: 'DIN',
+      source: 'url("https://kaochong-xnr.oss-cn-beijing.aliyuncs.com/recite/fe/ttf/DIN-BlackItalic.ttf")',
+      success: console.log
+    })
+  }
+  async onShow() {
+    this.setStyleWithTime()
+    pageLock = false
+    removeAllEvent()
+    lockMainBtn = false // 主按钮锁
+    this.showLoading = true
+    await this.cacheDevice()
+    await this.login()
+    this.showLoading = false
+    this.$apply()
+    // console.log('index onShow')
+    // setTimeout(() => {
+    //   this.$navigate('/pages/subPages/signin/normal')
+    // }, 700);
+  }
+  setStyleWithTime() {
+    const { image, titleBackgroundColor, withBackground } = common.getIndexStyleWithTime()
+    wepy.setNavigationBarColor({
+      frontColor: '#ffffff',
+      backgroundColor: titleBackgroundColor,
+      animation: {
+        duration: 400,
+        timingFunc: 'easeIn'
+      }
+    })
+    this.withBackground = withBackground
+    this.bgImage = image
+    // console.log('titleBackgroundColor-------')
+    // console.log(titleBackgroundColor)
+    // console.log(image)
+    this.$apply()
+  }
+  // 缓存设备信息
+  async cacheDevice() {
+    const deviceInfo = await wepy.getSystemInfo()
+    const fullScreen = common.isFullScreen(deviceInfo)
+    let gd = this.$parent.globalData
+    gd.deviceInfo = {...deviceInfo, fullScreen}
+    // gd.deviceInfo = Object.assign({}, deviceInfo, fullScreen)
+    gd.isIOS = deviceInfo.system.includes('iOS')
+  }
+  // [reconfig]：首页流程
+  async login() {
+    try {
+      this.showLoading = true
+      // 登录授权
+      const loginState = await this.$invoke('Login', 'login')
+      if (!loginState) return
+      // 是否可以进入新版本
+      // let { betaFlag } = await api.canExperience()
+      // if (betaFlag) {
+      //   this.showLoading = false
+      //   this.$apply()
+      //   let value = await this.$invoke('VersionModal', 'show')
+      //   if (value === 'resolve') {
+      //     let { code } = await api.joinNewVersion({ choose: 1 })
+      //     if (code === 1) {
+      //       return this.$redirect('chooseBook')
+      //     }
+      //   } else {
+      //     await api.joinNewVersion({ choose: 0 })
+      //   }
+      // }
+      // 查询用户数据
+      await this.getIndexInfo()
+      // 查看自己发起的助力情况
+      const needFresh = await this.lookHelpFromSelf()
+      if (needFresh) {
+        // 更新用户数据
+        await this.getIndexInfo()
+      }
+      // 获取首页数据后续
+      await this.handleIndexInfo()
+      await this.getBusinessInfo()
+      // 查询活动icon信息
+      this.$invoke('ActivityIcon', 'show')
+      await this.afterFn()
+      this.showLoading = false
+      this.$apply()
+    } catch (error) {
+      console.log('报错login')
+      console.log(error)
+      this.showLoading = false
+      this.resolveException(error)
+    }
+  }
+  async getBusinessInfo() {
+    const { list } = await api.getBusiness()
+    this.businessList = list
+  }
+  // 下载正确、错误音效
+  downloadYN() {
+    const gd = this.$parent.globalData
+    if (gd.cacheYes && gd.cacheNo) return
+    bunchDownload(
+      [yesSrc, noSrc].map(i => ({voice: i})),
+      2,
+      async ({ hasFinish, results }) => {
+        if (hasFinish) {
+          gd.cacheYes = results[0].voice
+          gd.cacheNo = results[1].voice
+        }
+      }
+    )
+  }
+  async afterFn() {
+    const { scene, prizeId } = this.$parent.globalData
+    await Promise.all([
+      // 上报来自分享链接的用户
+      this.submitUserFromShare({ scene, prizeId }),
+      // 提交formId
+      this.submitFormIds(),
+      // 查询banner
+      this.getBannerInfo(),
+      // 帮助好友助力
+      this.relockHelp(),
+      // 下载正确、错误音频
+      this.downloadYN(),
+      // 上报学习时长数据
+      this.reportStudyInfo()
+    ])
+    .then(this.notifyAddDesk.bind(this))
+  }
+  async reportStudyInfo() {
+    const studyInfo = getCached('studyInfo')
+    if (studyInfo) {
+      console.log('===============studyInfo===============')
+      console.log(studyInfo)
+      const { onLoad, onUnload } = studyInfo
+      let times = Math.ceil((onUnload - onLoad) * 0.001) // 向上取整
+      times = times > 0 ? times : 1
+      await api.reportStudyTime({times})
+      removeCached('studyInfo')
+    }
+  }
+  // 提示添加到桌面或小程序
+  async notifyAddDesk() {
+    let rst = getCached('kc-tap-addToDesktop')
+    if (!rst) {
+      const isIOS = this.$parent.globalData.isIOS
+      setCached('kc-tap-addToDesktop', 1)
+      this.addDeskInfo = {
+        show: true,
+        imgUrl: common.getAddToDesktopImage(isIOS)
+      }
+      // this.$apply()
+    }
+  }
+  //  [reconfig]：上报来自分享链接的用户
+  submitUserFromShare({ scene, prizeId }) {
+    // 是否从分享进入
+    const isFromShare = scene === 1007 || scene === 1008
+    // 是否是抽奖用户
+    const isPrizeUser = prizeId && prizeId !== -1
+
+    // 1.从分享卡片进入 且 老用户
+    const condition1 = isFromShare && !isNewUser
+    // 2.从分享卡片进入 且 新用户 且 中奖了
+    const condition2 = isFromShare && isNewUser && isPrizeUser
+    // 3.从分享卡片进入 且 新用户 且 没中奖
+    const condition3 = isFromShare && isNewUser && !isPrizeUser
+
+    if (condition1) {
+      return wepy.reportAnalytics('sharewayintoolduser', {})
+    }
+    if (condition2) {
+      return wepy.reportAnalytics('prizeentrynewuser', { openid: '' })
+    }
+    if (condition3) {
+      return wepy.reportAnalytics('helplockentrynewuser', { openid: '' })
+    }
+  }
+  //  [reconfig]：获取banner信息
+  async getBannerInfo() {
+    try {
+      const { wordbook } = this.indexInfo
+      if (!wordbook || !wordbook.target) return
+
+      const bannerObj = await api.banner({ target: wordbook.target })
+      if (!bannerObj.data) return
+
+      const { banner, pathUrl } = bannerObj.data
+      setCached('bannerObj', bannerObj.data)
+      this.bannerUrl = banner || null
+      bannerInnerUrl = pathUrl || ''
+      // this.$apply()
+    } catch (error) {
+      this.resolveException(error)
+      this.showLoading = false
+      console.log('banner error')
+      console.log(error)
+    }
+  }
+  //  [ok]：帮助好友助力
+  relockHelp() {
+    const {
+      shareOpenId: openId,
+      shareTarget: target,
+      shareStage: stage,
+      activityId,
+      scene,
+      from
+    } = this.$parent.globalData
+    const selfOpenId = this.indexInfo.userInfo.openId
+    // 是否从卡片进入
+    const fromCard = scene === 1007 || scene === 1008
+    // 是否从解锁卡片进入(正常解锁)
+    const withRelock = from === 'relock'
+
+    if (
+      withRelock &&
+      openId &&
+      openId !== selfOpenId &&
+      fromCard &&
+      !activityId
+    ) {
+      api.createRelockShare({ openId, target, stage })
+    }
+  }
+  //  [ok]：查看自己发起的助力情况
+  async lookHelpFromSelf() {
+    const needCheck = this.indexInfo.userInfo.status === 2
+    // 未完成今日单词
+    if (!needCheck) return false
+
+    const { status } = await api.getHelpStatus()
+    console.log('status')
+    console.log(status)
+    if (status === 1) {
+      await this.relockNextStage()
+      return true
+    }
+    return false
+  }
+  //  [ok]：查询首页用户数据
+  async getIndexInfo() {
+    try {
+      let {code, userInfo, wordbook} = await api.indexV2()
+      // token失效 => 重新登录
+      if (code === 3 || code === 4) {
+        return this.login()
+      }
+      // 是否选书
+      if (code === 7) {
+        return this.$redirect('chooseBook')
+      }
+      const { status, target } = userInfo
+      const { part } = wordbook
+
+      // 缓存数据
+      let gd = this.$parent.globalData
+      gd.target = target
+      gd.isNewUser = isNewUser = status === 0
+      // 新版单词书阶段数
+      gd.part = part
+      setCached('userInfo', { userInfo, wordbook })
+      this.indexInfo = { userInfo, wordbook }
+      this.$apply()
+    } catch (error) {
+      this.resolveException(error)
+      this.showLoading = false
+      console.log('get index error')
+      console.log(error)
+    }
+  }
+  // [ok]:获取首页数据后续
+  async handleIndexInfo() {
+    let { userInfo } = this.indexInfo
+    const { vid, status, todayWordsSum, surplus } = userInfo
+    // 继续学习
+    let continueStudy
+    if (vid === 2) {
+      const { timestamp } = await api.getServerTime()
+      let day = getCached('v2-continue-study')
+      continueStudy = parseInt(day) === parseInt(new Date(timestamp).getDate())
+    } else {
+      continueStudy = todayWordsSum !== surplus
+    }
+    switch (status) {
+      case 0:
+        wepy.reLaunch({url: '/pages/chooseBook/chooseBookCategory'})
+        this.btnOpenType = ''
+        break
+      case 1:
+        this.btnText = continueStudy ? '继续学习' : '开始学习'
+        this.btnOpenType = ''
+        btnUrl = '/pages/answer'
+        break
+      case 2:
+        this.btnText = '提前解锁下一个任务'
+        this.btnOpenType = 'share'
+        btnUrl = ''
+        break
+      case 3:
+        this.btnText = '全部任务已完成，新任务即将开发'
+        this.btnOpenType = ''
+        btnUrl = ''
+        break
+      case 4:
+        this.btnText = '最终测试'
+        this.btnOpenType = ''
+        btnUrl = '/pages/answer'
+        break
+    }
+    // this.$apply()
+  }
+  // [ok]:发送模板消息formIds
+  async submitFormIds() {
+    try {
+      const formIds = getCached('formIds')
+      if (formIds) {
+        await api.collect({ formIds: JSON.stringify(formIds) })
+        wepy.removeStorageSync('formIds')
+      }
+    } catch (error) {
+      this.resolveException(error)
+      this.showLoading = false
+      console.log('发送模板消息formIds报错' + error)
+    }
+  }
+  // 异常处理
+  resolveException(err) {
+    if (err) err = err.errMsg
+    const warnMsg = common.getErrorCode(err)
+    this.showWarnModal = true
+    this.warnMsg = warnMsg
+    this.warnBtnMsg = '重新登录'
+    this.$apply()
+  }
+  onShareAppMessage(options) {
+    // v2:上报统计
+    api.reportShare()
+    this.$parent.globalData.callShareMenu = true
+    const from = options.from
+    const { openId, target, stage, status, vid, userId } = this.indexInfo.userInfo
+    let { shareBook, unlockBook } = this.indexInfo.wordbook
+    shareBook = {...shareBook, imageUrl: shareBook.img}
+    unlockBook = {...unlockBook, imageUrl: unlockBook.img}
+
+    if (from === 'button' && (status === 2 || status === 3)) {
+      // v2:上报统计
+      api.reportShareRelock()
+      return {
+        ...unlockBook,
+        path: vid === 2
+          ? `/pages/index?openId=${openId}&target=${target}&stage=${stage}&from=relock&vid=${vid}&userId=${userId}`
+          : `/pages/index?openId=${openId}&target=${target}&stage=${stage}&from=relock&vid=${vid}&userId=${userId}`
+      }
+    }
+    return {
+      ...shareBook,
+      path: `/pages/index?vid=${vid}&userId=${userId}`
+    }
+  }
+  // 开始解锁
+  async relockNextStage() {
+    await api.openNext()
+    this.showToast = true
+    this.$apply()
+    setTimeout(() => {
+      this.showToast = false
+      this.$apply()
+    }, 2000)
+  }
+}
+</script>
+
+

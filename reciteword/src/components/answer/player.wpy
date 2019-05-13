@@ -1,0 +1,90 @@
+<style lang="less">
+.player {
+  .voice {
+    position: relative;
+    // height: 90rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: -webkit-flex;
+    -webkit-align-items: center;
+    -webkit-justify-content: center;
+    // width: 140rpx;
+    margin: 0 auto;
+    text-align: center;
+    box-sizing: border-box;
+    height: 34rpx;
+    image {
+      width: 44rpx;
+      height: 100%;
+    }
+  }
+}
+</style>
+<template>
+  <view class='player'>
+    <view class='voice' @tap='playAudio' id='a6'>
+      <image src="{{ isPlaying ? 'https://xcx-cdn.kaochong.com/recite/image/ttb_lian_1@2x.gif' : 'https://xcx-cdn.kaochong.com/recite/image/ttb_lian_1@2x.png'}}"></image>
+      <audio id="myAudio"></audio>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+
+let audioCtx = null
+export default class Player extends wepy.component {
+  data = {
+    isPlaying: false
+  }
+  props = {
+    src: {
+      type: String
+    }
+  }
+  methods = {
+    stop() {
+      audioCtx.stop()
+    },
+    playAudio() {
+      console.log('paling')
+      this.$emit('playAudio')
+    },
+    play(newVoice) {
+      // console.log('接收到新的src')
+      // console.log(newVoice)
+      audioCtx.stop()
+      audioCtx.src = newVoice
+      audioCtx.play()
+      // audioCtx.stop()
+      // if (newVoice === audioCtx.src) {
+      //   audioCtx.play()
+      // } else {
+      //   audioCtx.src = newVoice
+      // }
+    }
+  }
+  onLoad() {
+    // console.log('createInnerAudioContext onload')
+    audioCtx = wepy.createInnerAudioContext()
+    audioCtx.autoplay = true
+    audioCtx.onPlay(() => {
+      console.log('设置isPlaying true')
+      this.isPlaying = true
+      this.$apply()
+    })
+    audioCtx.onEnded(() => {
+      this.isPlaying = false
+      this.$emit('playOver')
+      console.log('事件冒泡。。。播放完毕；。。。。。。。。。。。。。。。。。')
+      this.$apply()
+    })
+    audioCtx.onError(err => {
+      console.log('audioctx error')
+      console.log(err)
+      this.isPlaying = false
+      this.$apply()
+    })
+  }
+}
+</script>

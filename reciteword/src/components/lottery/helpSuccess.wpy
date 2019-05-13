@@ -1,0 +1,144 @@
+<style lang="less">
+  .help-success{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // background: rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.35);
+    z-index: 10;
+    text-align: center;
+    .modal{
+      width: 600rpx;
+      height: 525rpx;
+      border-radius: 18rpx;
+      // background: linear-gradient(0deg, #FFCB00 0%, #FF9F5B 100%);
+      background-image: linear-gradient(-180deg, #FFD600 0%, #FFA13F 100%);
+      padding: 0 25rpx;
+      box-sizing: border-box;
+      position: absolute;
+      top: 270rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      .top-image{
+        width: 480rpx;
+        height: 120rpx;
+        margin-top: -48rpx;
+      }
+      .content{
+        // margin-top: 100rpx;
+        padding: 70rpx 32rpx 0;
+        box-sizing: border-box;
+        border-radius: 8rpx;
+        width: 100%;
+        height: 427rpx;
+        background: #fff;
+        font-size: 30rpx;
+        margin-top:-10rpx;
+        .text{
+          color: #322A22;
+          .strong{
+            color: #FF9504;
+            font-size: 40rpx;
+          }
+        }
+        .button{
+          font-size: 28rpx;
+          background: #FFD600;
+          border-radius: 100rpx;
+          background: #FFD600;
+          box-shadow: 0 3rpx 24rpx 0 #EAEAEA;
+          width: 485rpx;
+          height: 100rpx;
+          margin: 75rpx auto 0;
+          line-height: 100rpx;
+          color: #554C44;
+          &:after{
+            border: none;
+          }
+        }
+      }
+    }
+    .bot-text{
+      color: #fff;
+      font-size: 28rpx;
+      position: absolute;
+      top: 826rpx;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+</style>
+<template>
+  <view class="help-success" wx:if='{{obj.show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class='modal'>
+      <!-- 顶部图片 -->
+      <image src="{{obj.success ? '../../images/xcx_zhu_1@2x.png' : '../../images/xcx_zhu_2@2x.png'}}" class='top-image'></image>
+      <!-- 白底主区域 -->
+      <view class='content'>
+        <!-- 成功 -->
+        <view class='text' wx:if='{{obj.success}}'>
+          感谢你的支援,好友提升中奖概率至
+          <text class='strong'>{{obj.rate}}</text>
+          ,距离获得
+          <text class='strong'>{{obj.prize}}</text>
+          更近了一步
+        </view>
+        <!-- 失败 -->
+        <view class='text' wx:else>
+          <view>Oops，</view>
+          <view>每人每天只能帮一位好友助力哦~</view>
+          <view>来背个单词，说不定能拿奖呢~</view>
+        </view>
+        <button class='button' @tap='confirm'>
+          {{obj.text}}
+          <!-- 5分钟完成单词任务，参与抽奖 -->
+        </button>
+      </view>
+    </view>
+    <view class='bot-text' @tap='giveup'>
+      放弃抽奖 >
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class HelpSuccess extends wepy.component {
+    props = {
+    }
+
+    data = {
+      obj: {}
+    }
+    events = {
+    }
+
+    watch = {
+    }
+
+    methods = {
+      // this.$invoke('friend', 'showModal', {success: true, prize: 'af', rate: 'x8'})
+      // this.$invoke('friend', 'showModal', {success: false})
+      showModal(obj) {
+        this.obj = Object.assign(obj, {show: true})
+        this.$apply()
+      },
+      hideModal() {
+        this.obj = {show: false}
+      },
+      tap1() {
+      },
+      move1() {
+      },
+      confirm() {
+        this.$emit('confirm')
+      },
+      giveup() {
+        this.$emit('giveup')
+        this.obj = {show: false}
+      }
+    }
+  }
+</script>

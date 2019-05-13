@@ -1,0 +1,190 @@
+<style lang="less">
+  .warn-modal{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0,0,0,0.16);
+    z-index: 11;
+    .modal{
+      width: 560rpx;
+      height: 380rpx;
+      position: fixed;
+      z-index: 3;
+      background: #fff;
+      border-radius: 8rpx;
+      top: 330rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      -webkit-transform: translateX(-50%);
+      .topnav{
+        text-align: right;
+        overflow: hidden;
+        .close_container{
+          width: 82rpx;
+          height: 72rpx;
+          padding-right: 31rpx;
+          box-sizing: border-box;
+          float: right;
+          .close{
+            display: none;
+            margin-top: 30rpx;
+            width: 30rpx;
+            height: 30rpx;
+          }
+        }
+      }
+      .rest{
+        padding: 30rpx 47rpx;
+        box-sizing: border-box;
+        .winner{
+          width: 82rpx;
+          height: 82rpx;
+          display: block;
+          margin: 0 auto;
+        }
+        .nickname{
+          font-size: 36rpx;
+          color: #322A22;
+          margin-top: 34rpx;
+          text-align: center;
+        }
+        .desc{
+          font-size: 30rpx;
+          color: #B1A79D;
+          text-align: center;
+          margin-top: 30rpx;
+        }
+        .introduce-item{
+          padding: 0 40rpx;
+          box-sizing: border-box;
+          display: flex;
+          display: -webkit-flex;
+          margin-bottom: 50rpx;
+          image{
+            width: 120rpx;
+            height: 120rpx;
+          }
+          .introduce-container{
+            flex: 1;
+            -webkit-flex: 1;
+            height: 100%;
+            margin-left: 46rpx;
+            text-align: left;
+            .title{
+              color: #322A20;
+              font-size: 30rpx;
+            }
+            .introduce-desc{
+              margin: 0;
+              font-size: 24rpx;
+              color: #B1A79C;
+            }
+          }
+        }
+        button{
+          width: 240rpx;
+          height: 90rpx;
+          background: #FFD600;
+          box-shadow: 0 1rpx 15rpx 0 rgba(236,205,46,0.50);
+          border-radius: 100rpx;
+          margin: 35rpx auto;
+          font-size: 30rpx;
+          line-height: 90rpx;
+          color: #322A22;
+          &::after{
+            border: none;
+          }
+        }
+      }
+    }
+  }
+  //
+  .book_container{
+    position: relative;
+    width: 100%;
+    height: 205rpx;
+    margin-bottom: 37rpx;
+    box-shadow: 0 2rpx 16rpx 0 rgba(210,210,210,0.60);
+    .bookinfo{
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      display: -webkit-flex;
+      -webkit-justify-content: flex-start;
+      -webkit-align-items: center;
+      box-sizing: border-box;
+      padding: 35rpx 53rpx;
+      .image{
+        width: 116rpx;
+        height: 116rpx;
+        margin-right: 52rpx;
+      }
+      .bookname{
+        font-size: 36rpx;
+      }
+    }
+  }
+  .choose{
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 40rpx;
+    height: 40rpx;
+  }
+</style>
+<template>
+  <view class="warn-modal" wx-if='{{show}}' @tap.stop='tap2' @touchmove.stop='move2'>
+    <view class='modal'>
+      <view class='rest'>
+        <!-- 完成全部任务 -->
+        <view wx-if="{{show}}" style='padding-top:30rpx;'>
+          <image class='winner' src='../images/xcx_jia_1@2x.png'></image>
+          <view class='desc'>{{msg}}</view>
+          <button @tap='toggle'>{{btnMsg}}</button>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class KcNotification extends wepy.component {
+    props = {
+      msg: {
+        type: String,
+        default: '报错了，失去联系.'
+      },
+      btnMsg: {
+        type: String,
+        default: '重新登录'
+      },
+      show: {
+        type: Boolean,
+        default: true,
+        twoWay: true
+      }
+    }
+
+    data = {
+    }
+    events = {
+    }
+
+    watch = {
+    }
+
+    methods = {
+      toggle() {
+        this.$emit('togglewarning')
+        this.show = false
+      },
+      tap2() {
+      },
+      move2() {
+      }
+    }
+  }
+</script>

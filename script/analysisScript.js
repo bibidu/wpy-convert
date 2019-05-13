@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-13 16:34:37
+ * @Last Modified time: 2019-05-13 19:00:43
  */
 
 const babel = require('babel-core')
@@ -58,15 +58,26 @@ function analysisScriptByAst(compiledCode) {
         { visitor }
     ]
   })
-
-  console.log(t.code)
+  console.log(t.code);
   return t.code
 }
 
-var code = `import authModal from '@/components/authModal' // 模板消息授权
-require('babel-polyfill')
-const utils = require('../../common/utils')
-const { connect } = require('redux')
+var code = `
+import wepy from 'wepy'
+import storage from '@/common/storage'
+
+import { bindEvent, removeAllEvent } from '@/common/dep'
+import api from '@/common/api'
+import { bunchDownload, stopDownload } from '@/common/download'
+import {
+  mean2answer,
+  answer2mean,
+  SHARE_TITLE,
+  ANSWER_PARAMS
+} from '@/common/constant'
+import common from '@/common/common.js'
+import kcLoading from '@/components/kcLoading' // loading框
+import kcNotification from '@/components/kcNotification' // 通知提醒框
 import { getStore } from 'wepy-redux'
 const store = getStore()
 
@@ -84,3 +95,4 @@ export default class Answer extends wepy.component {
 }`
 analysisScriptByAst(code)
 module.exports = analysisScriptByAst
+

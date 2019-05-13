@@ -1,0 +1,382 @@
+<template>
+  <view class='choosebook'>
+     <!-- @tap.stop='tap1' @touchmove.stop='move1' -->
+    <view class='tag-container' id='tag-container'>
+      <repeat for='{{otherBookList}}' key='key' index='index'>
+        <button data-index='{{index}}' @tap='togTag' id='booktag' :class='{tag: true, check: currTagStyleIndex === index}'>{{item.categoryName}}</button>
+      </repeat>
+    </view>
+     <!-- bindscroll='scroll' -->
+    <!-- <scroll-view style='flex:1;-webkit-flex:1;height:100%' scroll-y scroll-into-view='book{{currTagIndex}}' scroll-with-animation='true'> -->
+      <view class='book-container'>
+        <view class='title' wx:if='{{!isNew}}'>
+          <image src='../images/ttb_xiu_1@2x.png' class='class-icon'></image>
+          <text>正在学习</text>
+        </view>
+        <!-- <view data-from='0' @tap='tapBookItem' wx:if='{{!isNew}}'> -->
+        <view data-from='0' wx:if='{{!isNew}}'>
+          <bookitem :book.sync='currBook'></bookitem>
+        </view>
+        <repeat for='{{otherBookList}}' item='items'>
+          <view id='book{{index}}' class='_book'>
+            <view class='title'>
+              <image src='../images/ttb_xiu_1@2x.png' class='class-icon'></image>
+              <text>{{items.categoryName}}</text>
+            </view>
+            <repeat for='{{items.categoryBooks}}' key='key' index='index' item='item'>
+              <view style='margin-bottom:30rpx;' data-from='1' data-target='{{item.target}}' @tap='tapBookItem'>
+                <bookitem :book.sync='item'></bookitem>
+              </view>
+            </repeat>
+          </view>
+        </repeat>        
+      </view>
+      <!-- loading -->
+      <!-- <block wx:if='{{!loading}}'> -->
+      <kcLoading :transparent='loadTransparent' :show.sync='loading'></kcLoading>
+      <!-- </block> -->
+    <!-- </scroll-view> -->
+    <bookModal @selectBook.user='selectBook' @try.user='try'></bookModal>
+    <kcToast :show.sync='kctoast_show' :imgSrc.sync='kctoast_imgSrc' :msg.sync='kctoast_text' prizeToast='prizeSpecial' :subMsg.sync='kctoast_subText'></kcToast>
+    <view class='masker' wx:if='{{kctoast_show}}' @tap='maskerViewDidClicked'></view>
+    <!-- <ImgTitleTextBtnModal @tapBtn.user='moneyShareBtn'></ImgTitleTextBtnModal> -->
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import api from '@/common/api'
+  // import storage from '@/common/storage'
+  // import common from '@/common/common'
+  import {
+    BOOK_MODAL_TEXT
+    // RET_MONEY_NO_FRIEND_HELP
+  } from '@/common/constant'
+  import kcLoading from '@/components/kcLoading'
+  import bookitem from '@/components/chooseBook/bookitem'
+  import BookModal from '@/components/chooseBook/BookModal'
+  import kcToast from '@/components/kcToast'
+  // import ImgTitleTextBtnModal from '@/components/modal/ImgTitleTextBtnModal' // 提示返现分享的弹框
+
+  let lastTime = new Date().getTime()
+  let lastBook = false
+  // let $toggleTarget = null // 需要切换的单词书target
+  export default class BookList extends wepy.page {
+    config = {
+      navigationBarTitleText: '选择单词任务'
+    }
+    components = {
+      bookitem,
+      kcLoading,
+      bookModal: BookModal,
+      kcToast
+      // ImgTitleTextBtnModal
+    }
+    data = {
+      scale: 0, // 1rpx = scale px  [lx]
+      booklistH: [], // 每一类型高度  [lx]
+      target: null,
+      loading: true,
+      newbook: false,
+      // 新版本
+      tagList: [],
+      // currTagIndex: 0, // 控制点击tag的index
+      currTagStyleIndex: 0, // 控制当前tag样式 [lx]
+      currBook: {},
+      otherBookList: [], // 所有书籍 [lx]
+      isNew: false,
+      loadTransparent: false,
+      // tagsHeight: 102,
+      // scrollTop: 0,
+      // isScrolling: false,
+      kctoast_show: false,
+      kctoast_imgSrc: '../../images/xcx_xiang_4@2x.png',
+      kctoast_text: '好友助力成功~快来选择单词任务,',
+      kctoast_subText: '开始参与活动吧~',
+      // 选择单词书，开始参加活动吧~
+      isNeedToPrize: false
+    }
+    methods = {
+      tap1() {},
+      move1() {},
+      // async moneyShareBtn() {
+      //   console.log('moneyShareBtn;.....')
+      //   await this.toggleBookTarget($toggleTarget)
+      // },
+      maskerViewDidClicked() {
+        if (this.kctoast_show) {
+          this.kctoast_show = false
+          this.$apply()
+        }
+      },
+      tapc() {
+        console.log('tapc')
+      },
+      async selectBook({target, type}) {
+        console.log('target', target)
+        this.loading = true
+        await this.toggleBookTarget(target)
+        this.loading = false
+        this.$apply()
+      },
+      // async try (target, {reviewBtn, pattern}) {
+      //   console.log('BOOK_MODAL_TEXT')
+      //   console.log(BOOK_MODAL_TEXT)
+      //   const {text, btnText} = this.getModalText({reviewBtn, pattern})
+      //   let modal = await common.showModal(text, btnText)
+      //   if (modal) {
+      //     // 重置单词书
+      //     if (reviewBtn) {
+      //       await this.resetBook(target)
+      //       return this.backPage()
+      //     }
+      //     // 切换模式
+      //     if (reviewBtn) {
+      //       await api.deepReset({target, pattern: pattern === 0 ? 1 : 0})
+      //     } else {
+      //       await api.deepChange({target, pattern: pattern === 0 ? 1 : 0})
+      //     }
+      //     this.backPage()
+      //   }
+      // },
+      tapBookItem(e) {
+        const from = parseInt(e.currentTarget.dataset.from)
+        const target = e.currentTarget.dataset.target
+        console.log('from....', from)
+        let bookObj
+        // 标签分类
+        if (from === 1) {
+          let canuse
+          this.otherBookList.forEach(bookList => {
+            bookList.categoryBooks.forEach(book => {
+              if (target === book.target) {
+                canuse = target !== this.currBook.target
+                console.log('book')
+                console.log(book)
+                bookObj = Object.assign(book, {
+                  canuse,
+                  finishTimeCh: this.rebuildFinishTimes(book.finishTimes)
+                })
+              }
+            })
+          })
+        } else if (from === 0) { // 当前学习
+          bookObj = Object.assign(this.currBook, {
+            canuse: false,
+            finishTimeCh: this.rebuildFinishTimes(this.currBook.finishTimes)
+          })
+        }
+        this.$invoke('bookModal', 'showModal', bookObj)
+      }
+    }
+    async toggleBookTarget(target) {
+      console.log('正在切换单词书')
+      const currTarget = this.currBook.target
+      wepy.removeStorageSync('v2-continue-study')
+      wepy.removeStorageSync(`v2-qs-${currTarget}`)
+      await api.target({ target })
+      wepy.reLaunch({url: '/pages/index'})
+    }
+    backPage() {
+      if (this.isNew) return
+      this.$back()
+    }
+    addSelected(list, target) { // 单词书数组添加selected字段
+      return list.map(book => {
+        return Object.assign(book, {
+          selected: book.target === target
+        })
+      })
+    }
+    // 计算应当显示给用户的新书
+    caclShouldIsNewBook(now, stor, list) {
+      if (!now || !stor) return list
+      list = list.map(item => {
+        return Object.assign(item, {
+          isnew: false
+        })
+      })
+      // 计算最新的书
+      let shouldArr = this.caclLatestBook(now, stor)
+      return list.map((item, index) => {
+        for (let i = 0; i < shouldArr.length; i++) {
+          // console.log(target)
+          // console.log(typeof item.target)
+          if (shouldArr[i].target === item.target) {
+            console.log('into')
+            console.log(shouldArr[i])
+            // item = shouldArr[i]
+            return shouldArr[i]
+          }
+        }
+        return item
+      })
+    }
+    getModalText({reviewBtn, pattern}) {
+      // 重新背
+      if (reviewBtn) {
+        return BOOK_MODAL_TEXT[0]
+      }
+      if (!reviewBtn) {
+        // 当前该书是深度模式
+        if (pattern === 1) {
+          return BOOK_MODAL_TEXT[2]
+        }
+        return BOOK_MODAL_TEXT[1]
+      }
+    }
+    async resetBook(target) {
+      this.loading = true
+      await api.resetWordProgress({ target }) // 重置单词书
+      this.otherBookList = this.otherBookList.map(item => {
+        let categoryBooks = item.categoryBooks.map(book => book.target === target ? Object.assign(book, { schedule: 0 }) : book)
+        return {...item, categoryBooks}
+      })
+      if (this.currBook.target === target) {
+        this.currBook = Object.assign(this.currBook, { schedule: 0 })
+      }
+      console.log(this.otherBookList)
+      this.loading = false
+      this.$apply()
+    }
+    caclLatestBook(now, stor) {
+      let arr = []
+      for (let i = 0; i < now.length; i++) {
+        let flag = false
+        for (let j = 0; j < stor.length; j++) {
+          if (now[i].target === stor[j].target) {
+            flag = true
+            break
+          }
+        }
+        if (!flag) {
+          arr.push(now[i])
+        }
+      }
+      return arr
+    }
+    rebuildFinishTimes(finishTimes) {
+      console.log('finishTimes')
+      console.log(finishTimes)
+      if (!finishTimes) finishTimes = 0
+      const arr = ['一轮记忆', '二轮记忆', '三轮记忆', '四轮记忆', '五轮记忆', '六轮记忆', '七轮记忆', '八轮记忆', '九轮记忆', '十轮记忆']
+      return finishTimes < 10 ? arr[finishTimes] : arr[9]
+    }
+    async togTag(e) {
+      const index = e.target.dataset.index
+      console.log('togTag index', index)
+      if (this.currTagStyleIndex !== index) {
+        // this.currTagIndex = index // 新增
+        this.currTagStyleIndex = index
+        lastBook = this.booklistH.length - 1 === index
+        let scrollTop = index === 0 ? 0 : this.booklistH[index - 1]
+        wepy.pageScrollTo({scrollTop, duration: 0})
+        this.$apply()
+      }
+    }
+    getAdd(arr, index) {
+      return arr.slice(0, index + 1).reduce((prev, curr) => parseInt(prev + curr), 0)
+    }
+
+    getBooksHeight(data) {
+      console.log('getBooksHeight', data)
+      let itemHeight = data.map((item) => (90 + item.categoryBooks.length * 272) * this.scale)
+      let dis = this.isNew ? 0 : 260 * this.scale
+      itemHeight[0] = itemHeight[0] + dis
+      this.booklistH = itemHeight.map((item, index) => this.getAdd(itemHeight, index))
+      console.log(itemHeight, this.booklistH)
+      this.$apply()
+    }
+    async onLoad(options) {
+      const { windowWidth } = this.$parent.globalData.deviceInfo
+      this.scale = windowWidth / 750
+      this.isNew = !options.target
+
+      let { data } = await api.findAll()
+      console.log(data)
+      this.getBooksHeight(data.allBooks)
+      this.currBook = data.userBook  // 正在学习的书的信息
+      this.otherBookList = data.allBooks // 其他所有书的信息
+      this.loading = false
+      this.$apply()
+    }
+    preMake(list, column, def) {
+      return list.map(e => {
+        return Object.assign(e, {
+          [column]: def
+        })
+      })
+    }
+    onPageScroll(e) {
+      let now = new Date().getTime()
+      if (now - lastTime <= 100) return
+      lastTime = now
+      const newTop = e.scrollTop
+      let currTagStyleIndex = this.booklistH.findIndex(item => item > newTop)
+      this.currTagStyleIndex = lastBook ? this.booklistH.length - 1 : currTagStyleIndex
+      lastBook = false
+      this.$apply()
+    }
+  }
+</script>
+
+<style lang='less'>
+  .choosebook {
+    .tag-container {
+      padding-top: 70rpx;
+      position: fixed;
+      top: 0rpx;
+      left: 0;
+      width: 100%;
+      z-index: 8;
+      background: #fff;
+      .tag {
+        margin: 0 0 30rpx 30rpx; // width: 140rpx;
+        padding: 0 30rpx;
+        height: 60rpx;
+        border-radius: 100rpx;
+        line-height: 60rpx;
+        font-size: 30rpx;
+        background: #fff;
+        color: #554C44;
+        border: 1rpx solid #D0D0D0;
+        display: inline-block;
+        box-sizing: border-box;
+        &:after {
+          border: none;
+        }
+      }
+      .check {
+        background: linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+        color: #fff;
+        border: none;
+      }
+    }
+    .book-container {
+      background: #fff;
+      margin: 260rpx 30rpx 0; 
+      .title {
+        font-size: 36rpx;
+        color: #554C44;
+        font-weight: bold;
+        margin: 50rpx 0;
+        .class-icon{
+          width: 24rpx;
+          height: 26rpx;
+          margin-right: 10rpx;
+        }
+        text{
+
+        }
+      }
+    }
+    .masker {
+      background: rgba(0, 0, 0, 0.4);
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      top: 0;
+      z-index: 100;
+    }
+  }
+</style>

@@ -1,0 +1,235 @@
+<style lang='less'>
+  .auth {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 20; // 苹果
+    .modal_IOS {
+      width: 620rpx;
+      height: 516rpx;
+      background: #fff;
+      border-radius: 10rpx;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-left: -310rpx;
+      margin-top: -358rpx;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      .title {
+        font-weight: bold;
+        height: 98rpx;
+        line-height: 98rpx;
+        width: 100%;
+        text-align: center;
+        font-size: 36rpx;
+        color: #000;
+        box-sizing: border-box;
+        letter-spacing: 1.8rpx;
+        border-bottom: 1rpx solid #C7C6C8;
+      }
+      image {
+        width: 70rpx;
+        height: 70rpx;
+        margin-top: 35rpx;
+      }
+      .des {
+        width: 500rpx;
+        font-size: 32rpx;
+        color: #000;
+        line-height: 97rpx;
+        box-sizing: border-box;
+        height: 97rpx;
+        border-bottom: 1rpx solid #DADADA;
+      }
+      .con {
+        width: 500rpx;
+        font-size: 28rpx;
+        color: #888888;
+        text-align: center;
+        display: flex;
+        margin-top: 35rpx;
+        flex: 1;
+        &::before {
+          content: '';
+          display: block;
+          width: 10rpx;
+          height: 10rpx;
+          background: #888;
+          border-radius: 50%;
+          margin: 14rpx 19rpx 0 0;
+        }
+      }
+      .operator {
+        width: 100%;
+        height: 88rpx;
+        font-size: 34rpx;
+        color: #000;
+        box-sizing: border-box;
+        border-top: 1rpx solid #CAC9CB;
+        margin-bottom: 0;
+        display: flex;
+        .refuse {
+          text-align: center;
+          flex: 1;
+          height: 100%;
+          line-height: 86rpx;
+        }
+        .agree {
+          text-align: center;
+          flex: 1;
+          box-sizing: border-box;
+          border-left: 1rpx solid #CAC9CB;
+          color: #2FB922;
+          line-height: 86rpx;
+          height: 100%;
+        }
+      }
+    } // 安卓
+    .modal {
+      box-sizing: border-box;
+      padding: 60rpx 50rpx 50rpx 50rpx;
+      width: 550rpx;
+      height: 490rpx;
+      background: #fff;
+      box-sizing: border-box;
+      border-radius: 3rpx;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-left: -285rpx;
+      margin-top: -245rpx;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      .title {
+        font-size: 38rpx;
+        color: #353535;
+        font-weight: bold;
+      }
+      .wrap {
+        display: flex;
+        height: 150rpx;
+        align-items: center;
+        border-bottom: 1rpx solid #DADADA;
+        box-sizing: border-box;
+        image {
+          width: 80rpx;
+          height: 80rpx;
+        }
+        .des {
+          font-size: 28rpx;
+          color: #353535;
+          letter-spacing: 1.4rpx;
+          margin-left: 25rpx;
+          flex: 1;
+        }
+      }
+      .con {
+        font-size: 28rpx;
+        color: #888888;
+        text-align: center;
+        display: flex;
+        margin-top: 40rpx;
+        flex: 1;
+        &::before {
+          content: '';
+          display: block;
+          width: 10rpx;
+          height: 10rpx;
+          background: #888;
+          border-radius: 50%;
+          margin: 14rpx 19rpx 0 0;
+        }
+      }
+      .operator {
+        font-size: 28rpx;
+        color: #000;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: flex-end;
+        .refuse {
+          margin-right: 55rpx;
+        }
+        .agree {
+          color: #2FB922;
+          margin-right: 20rpx;
+        }
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class='auth' wx:if='{{show}}'>
+    <view class='modal_IOS' wx:if='{{isIOS}}'>
+      <view class='title'>微信授权</view>
+      <image src='https://xcx-cdn.kaochong.com/recite/image/xcx_she_4@3x.png'></image>
+      <view class='des'>{{desText}}</view>
+      <view class='con'>{{conText}}</view>
+      <view class='operator'>
+        <view class='refuse' @tap='refuseAuth' wx:if='{{refuse}}'>拒绝</view>
+        <view class='agree' @tap='agreeAuth'>允许</view>
+      </view>
+    </view>
+    <view class='modal' wx:else>
+      <view class='title'>微信授权</view>
+      <view class='wrap'>
+        <image src='https://xcx-cdn.kaochong.com/recite/image/xcx_she_4@3x.png'></image>
+        <view class='des'>{{desText}}</view>
+      </view>
+      <view class='con'>{{conText}}</view>
+      <view class='operator'>
+        <view class='refuse' @tap='refuseAuth'  wx:if='{{refuse}}'>拒绝</view>
+        <view class='agree' @tap='agreeAuth'>允许</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  export default class AuthModal extends wepy.component {
+    props = {
+      isIOS: {
+        type: Boolean,
+        default: false
+      },
+      show: {
+        type: Boolean,
+        default: false
+      },
+      refuse: {
+        type: Boolean,
+        default: false
+      },
+      conText: {
+        type: String,
+        default: '发送学习提醒和中奖通知'
+      },
+      desText: {
+        type: String,
+        default: '单词天天背申请获取以下权限：'
+      }
+    }
+    methods = {
+      refuseAuth() {
+        this.show = false
+        this.$apply()
+        console.log('refuse auth')
+        this.$emit('refuseAuth')
+      },
+      agreeAuth() {
+        this.show = false
+        this.$apply()
+        console.log('agree auth')
+        this.$emit('agreeAuth')
+      }
+    }
+  }
+</script>

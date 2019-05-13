@@ -1,0 +1,122 @@
+<style lang='less' scoped>
+  .version-modal {
+    position: fixed;
+    z-index: 8;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    .modal-wrapper{
+      position: relative;
+      width: 560rpx;
+      height: 740rpx;
+      margin: 234rpx auto 0;
+      background: #fff;
+      border-radius: 18rpx;
+      text-align: center;
+      .title{
+        font-weight: bold;
+        color: #484E5E;
+        font-size: 32rpx;
+        margin-bottom: 25rpx;
+      }
+      .image{
+        width: 326rpx;
+        height: 200rpx;
+        display: inline-block;
+        margin-top: 60rpx;
+      }
+      .text{
+        color: #9A9FA8;
+        font-size: 30rpx;
+        margin: 0 0 65rpx;
+        padding: 0 40rpx;
+        box-sizing: border-box;
+        
+      }
+      .btn-wrapper{
+        // display: flex;
+        position: absolute;
+        bottom: 51rpx;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 90rpx;
+        padding: 0 40rpx;
+        box-sizing: border-box;
+        .btn{
+          width: 360rpx;
+          height: 100%;
+          line-height: 90rpx;
+          box-shadow:0px 4rpx 16rpx 0px rgba(210,210,210,0.41);
+          border-radius: 50rpx;
+          border: 2rpx solid rgba(202,203,207,1);
+          font-size: 30rpx;
+          margin: 0 auto 10rpx;
+          &:after{
+            border: none;
+          }
+        }
+        .highlight{
+          background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+          box-shadow:0px 4rpx 15rpx 0px rgba(255,154,38,0.2);
+          color: #fff;
+          border: none;
+        }
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class='version-modal' wx:if='{{show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class='modal-wrapper' @tap.stop='tap2' @touchmove.stop='move2'>
+      <image src='../../images/ttb_nei_1@2x.png' class='image'></image>
+      <view class='title'>
+        单词天天背更新啦！
+      </view>
+      <view class='text'>
+        <!-- <view>神秘全新版本，诚邀内测～</view>
+        <view>* 内测版只能选择4/6/考研</view>
+        <view>* 内测期间无法回退老版本</view>
+        <view>* 学习记录在内测后会自动恢复</view> -->
+        <view>1、背单词方式更新</view>
+        <view>增加学习过程，加深记忆；</view>
+        <view>2、单词内容更新</view>
+        <view>新增例句音频；</view>
+      </view>
+      <view class='btn-wrapper'>
+        <button class='btn highlight' @tap="modalEvent('resolve')">马上体验</button>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  let resolvefn = null
+  export default class Index extends wepy.component {
+    data = {
+      show: false
+    }
+    methods = {
+      tap1() {
+        this.show = false
+        resolvefn = null
+      },
+      move1() {},
+      tap2() {},
+      move2() {},
+      modalEvent(value) {
+        (resolvefn && typeof resolvefn === 'function') && resolvefn(value)
+        this.show = false
+      },
+      show() {
+        this.show = true
+        return new Promise((resolve) => {
+          resolvefn = resolve
+        })
+      }
+    }
+  }
+</script>

@@ -1,0 +1,93 @@
+<style lang="less">
+  .container{
+  }
+</style>
+<template>
+  <view class="login-service-container">
+  </view>
+</template>
+
+<script>
+
+import wepy from 'wepy'
+import { setCached, getCached } from '@/common/storage'
+import api from '@/common/api'
+
+export default class Login extends wepy.component {
+  config = {
+    navigationBarTitleText: '登录业务组件'
+  }
+  data = {
+  }
+  methods = {
+    async login() {
+      try {
+        const _token = getCached('token')
+        const { scene, shareVid, shareUserId } = this.$parent.$parent.globalData
+        let indexInfo = getCached('userInfo')
+        // 判断是否有unionId
+        if (!_token || !indexInfo || !indexInfo.userInfo.unionId) {
+          const { code } = await wepy.login()
+          // 获取shareTestin
+          const {shareTestin} = this.$parent.$parent.globalData
+          const { openId } = await api.getOpenId(shareTestin ? {code, testinVersion: shareTestin} : {code})
+          const { rawData, encryptedData, iv } = await wepy.getUserInfo()
+          const userInfo = JSON.parse(rawData)
+          console.log({
+            openId,
+            encryptedData,
+            iv,
+            nickname: userInfo.nickName,
+            portrait: userInfo.avatarUrl,
+            fromwhere: scene,
+            vid: shareVid,
+            shareId: shareUserId
+          })
+          // 获取token及是否是新用户
+
+          const baseParams = {
+            openId,
+            encryptedData,
+            iv,
+            nickname: userInfo.nickName,
+            portrait: userInfo.avatarUrl,
+            fromwhere: scene
+          }
+          const params = shareVid ? {
+            ...baseParams,
+            vid: shareVid,
+            shareId: shareUserId
+          } : baseParams
+          const { token } = await api.login(params)
+          // 缓存本地
+          setCached('user', userInfo)
+          setCached('token', token)
+        }
+        return true
+      } catch (error) {
+        console.log('login.')
+        console.log(error)
+        this.logServiceError(this, error)
+        this.rejectAuthTodo(error)
+        return false
+      }
+    }
+  }
+  async realLogin() {
+  }
+  // 记录业务组件报错信息
+  logServiceError($, error) {
+    console.log(`【ERROR】来源:${$.config.navigationBarTitleText}${$.$name}-${JSON.stringify(error)}`)
+  }
+  // 拒绝授权时的操作
+  rejectAuthTodo(error) {
+    if (!error.errMsg) return
+    if (error.errMsg.indexOf('auth') !== -1) {
+      this.$parent.$redirect('/pages/auth')
+    } else {
+      // 弹出错误弹窗
+      this.$emit('loginError', error)
+    }
+  }
+}
+</script>

@@ -1,0 +1,674 @@
+<template>
+  <view class="signin">
+    <!-- canvas -->
+    <canvas canvas-id='canvas' style='background:#fff'></canvas>
+    <view class='content'>
+      <image src='https://xcx-cdn.kaochong.com/recite/image/ttb_da_1%202.png' class='bg'></image>
+      <view class='float_block'>
+        <view class='top'>
+          <view class='userinfo'>
+            <view class='nickname'>{{signin.nickname}}</view>
+            <view class='whereday'>{{signin.topText}}</view>
+          </view>
+          <image class='avatar' src='{{signin.avatarUrl}}'></image>
+        </view>
+        <view class='date-wrapper'>
+          <view class='date'>{{signin.weekday}}</view>
+          <view class='date'>{{signin.time}}</view>
+        </view>
+        <view class='bottom'>
+          <view class='left'>
+            <view class='word'>
+              <view class='big'>{{signin.okword}}</view>
+              <image src='../images/xcx_da_3@2x.png' class='line'></image>
+              <view class='tb'>
+                <view class='heart'>{{signin.title}}</view>
+                <view class='num'>{{signin.totalWords}}</view>
+              </view>
+            </view>
+            <view class='desc'>{{signin.studyText}}</view>
+          </view>
+          <view class='left'>
+            <view class='word'>
+              <view class='big'>{{signin.keepDay}}</view>
+              <image src='../images/xcx_da_3@2x.png' class='line' wx:if="{{signin.status !== 3}}"></image>
+              <view class='b'>
+                <view class='num' style="{{signin.status === 3 ? 'margin-left:10rpx;' : ''}}">{{signin.maxDayText}}</view>
+              </view>
+            </view>
+            <view class='desc'>{{signin.constantText}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <!-- 底部fixed -->
+    <!-- <view class='fixed-bot' wx:if="{{loaded && (activityType === 1 || activityType === 2) && answerModule !== 'review'}}"> -->
+    <view class='fixed-bot' wx:if="{{answerModule !== 'review'}}">
+      
+      <block>
+        <view class='review-btn-group long-group'>
+          <button class='review-btn' style='border:none;color:#fff;background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);box-shadow:0rpx 4rpx 19rpx 0rpx rgba(255,154,38,0.4);'
+            @tap='share' id='a7'>生成打卡图</button>
+          <navigator
+            target="miniProgram"
+            open-type="navigate"
+            app-id='wx3c3ce5876643ac0f'
+            path="pages/user/home/home?courseId=271759&start_at=2019-03-25&end_time=2019-05-09"
+          >
+            <button class='review-btn' id='a7'>
+              打卡抽奖
+            </button>
+          </navigator>
+        </view>
+      </block>
+      <!-- <block wx:else>
+        <view class='text'>打个卡，为自己的努力留下印记吧~</view>
+        <image class='trigle' src='../images/xcx_da_2.png'></image>
+        <ActivityIcon></ActivityIcon>
+        <view class='bottom_btn_container'>
+          <button class='bottom_btn' @tap='share' id='a7'>分享给朋友</button>
+        </view>
+      </block> -->
+    </view>
+    <!-- preview -->
+    <share :imgSrc.sync='shareImg' :show.sync='shareShow'></share>
+    <!-- 保存图片提示框 -->
+    <SavePhotoModal />
+    <kcNotification :show.sync='showWarnModal' :msg.sync='warnMsg' :btnMsg.sync='warnBtnMsg' @togglewarning.user='togglewarning'></kcNotification>
+    <kcLoading :show.sync='showLoading'></kcLoading>
+    
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import storage, { getCached } from '@/common/storage'
+  // import { SHARE_TITLE } from '@/common/constant'
+  import api from '@/common/api'
+  import common from '@/common/common'
+
+  import kcLoading from '@/components/kcLoading'
+  import kcNotification from '@/components/kcNotification' // 通知提醒框
+  import SavePhotoModal from '@/components/SavePhotoModal' // 通知提醒框
+  import share from '@/components/signin/share' // 分享图的预览图
+  import ActivityIcon from '@/serviceComponents/ActivityIcon/ActivityIcon' // 活动icon
+
+  import { connect } from 'wepy-redux'
+
+  let deviceWidth = 1
+  const topx = function(px) {
+    return common.topx(deviceWidth, px)
+  }
+  @connect({
+    localTarget: state => state.review.target,
+    localStage: state => state.review.stage
+  })
+  export default class Siginv2 extends wepy.page {
+    config = {
+      navigationBarTitleText: '单词天天背'
+    }
+    components = {
+      kcLoading,
+      kcNotification,
+      share,
+      ActivityIcon,
+      SavePhotoModal
+    }
+    mixins = []
+
+    data = {
+      shareImg: null,
+      showLoading: true,
+      showWarnModal: false,
+      warnMsg: null,
+      warnBtnMsg: null,
+      shareShow: false, // 是否显示分享成功弹窗
+      signin: {},
+      inviteBtnIsFirst: false,
+      userInfo: {}
+    }
+
+    computed = {
+    }
+
+    methods = {
+      retErrorPage() {
+        this.$back()
+      },
+      async reviewNext() {
+        this.$redirect('answer', {
+          from: 'signin',
+          stage: parseInt(this.signin.stage) + 1,
+          target: this.signin.target,
+          onlyError: this.onlyError
+        })
+      },
+      bindClose() {
+        this.showVideo = false
+        this.$apply()
+      },
+      videoEnd() {
+        this.showVideo = false
+        this.$apply()
+      },
+      videoError() {
+        this.showVideo = false
+        console.log('videoError')
+      },
+      async share() {
+        try {
+          this.showLoading = true
+          // 新前端打卡
+          await this.drawPunchCard()
+          // await this.clipResult()
+          await wepy.saveImageToPhotosAlbum({filePath: this.shareImg})
+          this.shareShow = true
+          this.showLoading = false
+          this.$apply()
+        } catch (error) {
+          if ((error.errMsg).includes('auth')) {
+            // 防止openSetting权限列表未渲染出保存到相册
+            this.showLoading = false
+            this.$apply()
+            this.$invoke('SavePhotoModal', 'show')
+            // await common.showWxModal('请允许保存到相册')
+            // setTimeout(async() => {
+            //   this.showLoading = false
+            //   this.$apply()
+            //   // await wepy.openSetting()
+            // }, 500)
+          } else if ((error.errMsg).includes('cancel')) {
+            this.showLoading = false
+            this.$apply()
+          } else {
+            this.resolveException()
+          }
+        }
+      },
+      togglewarning() {
+        this.renderData()
+      }
+    }
+    async renderData() {
+      try {
+        // 服务器时间
+        let { nowTime } = await api.getServerTime()
+        let { weekday, yearMonth, time } = common.getTime(nowTime)
+        // 缓存查用户信息
+        const user = await storage.get('user')
+        console.log('avatarUrl')
+        console.log(user.avatarUrl)
+        // 请求index接口
+        let { userInfo, wordbook } = await api.indexV2()
+        this.userInfo = { userInfo, wordbook }
+
+        let uInfo = userInfo
+        let bInfo = wordbook
+
+        const isFinal = uInfo.status === 3
+        let persent
+        if (isFinal) {
+          persent = common.getPersent(uInfo.finalTest, uInfo.todayWordsSum) // 单词进度百分比
+        }
+        this.signin = {
+          nickname: user.nickName,
+          topText: isFinal ? `已掌握${persent}%${bInfo.name}` : `已完成第${uInfo.stage}天的学习`,
+          avatarUrl: user.avatarUrl,
+          weekday: `${weekday} ${yearMonth}`,
+          time: time,
+          okword: isFinal ? (persent * bInfo.wordsNum * 0.01).toFixed(0) : uInfo.studyWordsNum,
+          title: bInfo.title,
+          totalDay: bInfo.totalStage,
+          status: uInfo.status,
+          isReview: false,
+          target: bInfo.target,
+          totalWords: bInfo.wordsNum,
+          studyText: isFinal ? '最终掌握单词' : '已掌握单词',
+          keepDay: uInfo.alreadyStudyStage,
+          maxDayText: uInfo.status === 3 ? '天' : bInfo.totalStage + '天',
+          constantText: '连续学习'
+        }
+      } catch (error) {
+        console.log(error)
+        this.showLoading = false
+        this.$apply()
+        this.resolveException()
+        console.log(error)
+      }
+    }
+    async onLoad(options) {
+      deviceWidth = this.$parent.globalData.deviceInfo.screenWidth
+      this.showLoading = true
+      // 查询活动icon信息
+      this.$invoke('ActivityIcon', 'show')
+      await this.renderData()
+      this.showLoading = false
+      this.$apply()
+    }
+    async getBgPunchImage() {
+      const { wordbook } = getCached('userInfo')
+      const { width, height } = await wepy.getImageInfo({ src: wordbook.punchCardImg })
+      const { tempFilePath } = await wepy.downloadFile({ url: wordbook.punchCardImg })
+      return {
+        image: tempFilePath,
+        width,
+        height
+      }
+    }
+    async getSystemInfo() {
+      return await wepy.getSystemInfo()
+    }
+    async getAvatar() {
+      const { avatarUrl } = getCached('user')
+      const { width, height } = await wepy.getImageInfo({ src: avatarUrl })
+      const { tempFilePath } = await wepy.downloadFile({ url: avatarUrl })
+      return {
+        image: tempFilePath,
+        width,
+        height
+      }
+    }
+    async getMpCode() {
+      const { tempFilePath } = await wepy.downloadFile({ url: 'https://kaochong-xnr.oss-cn-beijing.aliyuncs.com/recite/rd/dcttb-mini-qrcord.png' })
+      return tempFilePath
+    }
+    getPunchInfo() {
+      // const { userInfo, wordbook } = getCached('userInfo')
+      const { userInfo, wordbook } = this.userInfo
+      const {
+        nickname,
+        alreadyStudyStage
+      } = userInfo
+      const {
+        name,
+        totalStage
+      } = wordbook
+      return {
+        nickname,
+        bookname: name,
+        punchText: `已打卡:${alreadyStudyStage}/${totalStage}天`
+      }
+    }
+    drawPunchCard() {
+      return new Promise(async resolve => {
+        const { windowWidth, windowHeight } = await this.getSystemInfo()
+        const {
+          image: bgPunchImage,
+          width: punchWidth,
+          height: punchHeight
+        } = await this.getBgPunchImage()
+        const {
+          image: avatarImage
+        } = await this.getAvatar()
+        const mpCodeImage = await this.getMpCode()
+        const {
+          nickname,
+          bookname,
+          punchText
+        } = this.getPunchInfo()
+
+        const ctx = wx.createCanvasContext('canvas')
+        const [offsetX, offsetY] = [30, -50]
+
+        // 白色背景
+        ctx.save()
+        ctx.setFillStyle('#ffffff')
+        ctx.fillRect(0, 0, windowWidth, windowHeight)
+
+        ctx.restore()
+
+        // 背景图
+        ctx.drawImage(bgPunchImage, 0, 0, punchWidth, punchHeight, 0, 0, topx(750), topx(954))
+
+
+        // 小程序码
+        ctx.drawImage(mpCodeImage, topx(500 + offsetX), topx(1009 + offsetY), topx(153), topx(153))
+
+
+
+        // 昵称 @example: 爱飞的鱼
+        ctx.setFillStyle('#323232')
+        ctx.font = 'normal bold 16px sans-serif'
+        ctx.fillText(nickname, topx(40 + offsetX), topx(1109 + offsetY))
+
+        // 书名 @example: 四级核心200次
+        ctx.setFillStyle('#323232')
+        ctx.setFontSize(topx(26))
+        ctx.fillText(bookname, topx(40 + offsetX), topx(1161 + offsetY))
+
+        // 打卡信息 @example: 已打卡：3/30天
+        ctx.setFillStyle('#323232')
+        ctx.setFontSize(topx(26))
+        ctx.fillText(punchText, topx(40 + offsetX), topx(1197 + offsetY))
+
+        
+        // 小程序码-提示文案 @example: 长按识别立即提升单词量
+        ctx.setFillStyle('#323232')
+        ctx.setFontSize(topx(20))
+        ctx.fillText('长按识别立即提升单词量', topx(460 + offsetX), topx(1197 + 0 + offsetY))
+        // 头像
+        ctx.save()
+        // ctx.arc(topx(50 + 55 + offsetX), topx(929 + 55 + offsetY), topx(85), 0, Math.PI * 2)
+        // ctx.clip()
+        // ctx.draw()
+
+        // ctx.save()
+        ctx.arc(topx(50 + 55 + offsetX), topx(929 + 55 + offsetY), topx(75), 0, Math.PI * 2)
+        ctx.clip()
+        ctx.setFillStyle('#ffffff')
+        ctx.fillRect(0, 0, topx(170), topx(170))
+        ctx.drawImage(avatarImage, topx(30 + offsetX), topx(909 + offsetY), topx(150), topx(150))
+        ctx.restore()
+
+        ctx.draw(true, async () => {
+          const res = await wepy.canvasToTempFilePath({canvasId: 'canvas'})
+          this.shareImg = res.tempFilePath
+          this.$apply()
+          resolve()
+        })
+      })
+    }
+    // 截图展示
+    async clipResult() {
+      let example = this.signin
+      let str = common.obj2url(example) // 对象转url后缀
+      console.log('str')
+      console.log(str)
+      const url = encodeURI(`https://xcx.kaochong.com/posters/webshot/getimage2${str}`)
+      console.log('url')
+      console.log(url)
+      let share = await wepy.downloadFile({url})
+      if ((share.tempFilePath).includes('.un')) {
+        this.shareImg = (share.tempFilePath).split('.un')[0]
+      } else {
+        this.shareImg = share.tempFilePath
+      }
+      this.$apply()
+    }
+    // 异常处理
+    resolveException() {
+      this.showWarnModal = true
+      this.warnMsg = '网络失联了，请检查网络'
+      this.warnBtnMsg = '重新加载'
+      this.$apply()
+    }
+    onShareAppMessage(options) {
+      // v2:上报统计
+      api.reportShare()
+      let { vid, userId } = this.userInfo.userInfo
+      let { shareBook } = this.userInfo.wordbook
+      shareBook = {...shareBook, imageUrl: shareBook.img}
+      return {
+        ...shareBook,
+        path: `/pages/index?vid=${vid}&userId=${userId}`
+      }
+    }
+  }
+</script>
+<style lang="less">
+  // @import '../../../common/font.less';
+  .signin{
+    font-family: 'DIN';
+    padding: 30rpx 8rpx 0;
+    .content{
+      width: 100%;
+      height: 764rpx;
+      box-sizing:border-box;
+      position:relative;
+      .bg{
+        width:100%;
+        height:100%;
+        position:absolute;
+        top:0;
+        left:0;
+        z-index:1;
+      }
+      .float_block{
+        position:absolute;
+        top:0;
+        left:0;
+        width:100%;
+        z-index:3;
+        .top{
+          padding: 122rpx 60rpx 0;
+          box-sizing: border-box;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          display: -webkit-flex;
+          -webkit-justify-content: space-between;
+          -webkit-align-items: flex-start;
+          .userinfo{
+            color: #fff;
+            font-size: 40rpx;
+            .nickname{
+              font-weight:bold;
+              font-size: 40rpx;
+            }
+            .whereday{
+              font-weight:bold;
+            }
+          }
+          .avatar{
+            width: 134rpx;
+            height: 134rpx;
+            border-radius: 50%;
+            border: 8rpx solid #fff;
+          }
+        }
+        .date-wrapper{
+          font-size: 24rpx;
+          color: #fff;
+          padding:0 80rpx;
+          margin-top: 120rpx;
+          .date{
+          }
+        }
+        .bottom{
+          display: flex;
+          justify-content: space-between;
+          display: -webkit-flex;
+          -webkit-justify-content: space-between;
+          margin-top: 106rpx;
+          padding: 0 97rpx;
+          box-sizing: border-box;
+          .left{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            display: -webkit-flex;
+            -webkit-flex-direction: column;
+            -webkit-justify-content: center;
+            -webkit-align-items: center;
+            .word{
+              display: flex;
+              display: -webkit-flex;
+              align-items: center;
+              -webkit-align-items: center;
+              .big{
+                font-size: 62rpx;
+                font-weight:bold;
+              }
+              .line{
+                width:14rpx;
+                height:52rpx;
+                margin:0 7rpx;
+              }
+              .tb{
+                font-size: 24rpx;
+                padding: 6rpx 0;
+                margin-left: 6rpx;
+                .heart{
+                  color: #FF9146;
+                }
+                .num{
+                  color: #B1A79D;
+                  font-weight:bold;
+                }
+              }
+              .b{
+                font-size: 24rpx;
+                padding: 30rpx 0 6rpx;
+                color:#B1A79D;
+              }
+            }
+            .desc{
+              margin-top: 4rpx;
+              font-size: 24rpx;
+              color: #B1A79D;
+            }
+          }
+        }
+      }
+      }
+    // 底部固定长条按钮样式
+    .fixed-bot{
+      position: fixed;
+      bottom: 107rpx;
+      left: 30rpx;
+      right: 30rpx;
+      // .bottom_btn_container{
+      //   position: relative;
+      //   margin-top:-50rpx;
+      //   padding-top:50rpx;
+      //   .bottom_btn{
+      //     height: 110rpx;
+      //     background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+      //     box-shadow:0px 4rpx 19rpx 0px rgba(255,154,38,0.4);
+      //     border-radius: 100rpx;
+      //     line-height: 110rpx;
+      //     font-size: 34rpx;
+      //     border: 0;
+      //     color: #fff;
+      //     &::after{
+      //       border: none;
+      //     }
+      //   }
+      // }
+      .text{
+        font-size: 30rpx;
+        text-align: center;
+        color: #ADACAA;
+        opacity: 0.5;
+        margin-top: 109rpx;
+      }
+      .trigle{
+        width: 24rpx;
+        height: 19rpx;
+        display: block;
+        margin: 13rpx auto 59rpx;
+      }
+    }
+    .lotteryTimeBot{
+      margin-top: 36rpx;
+      position: relative;
+      height: 330rpx;
+      font-size: 25rpx;
+      text-align: center;
+      .inviteFriendBtn{
+        z-index: 3;
+        position: absolute;
+        top: 62rpx;
+        // top: 145rpx;
+        height: 110rpx;
+        background: #FFD600;
+        box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+        border-radius: 100rpx;
+        line-height: 110rpx;
+        border: 0;
+        width: 690rpx;
+        color: #322A22;
+        font-size: 30rpx;
+        &::after{
+          border: none;
+        }
+      }
+      .savePicture{
+        z-index: 3;
+        color: #B1A79D;
+        position: absolute;
+        font-size: 30rpx;
+        top: 202rpx;
+        // top: 285rpx;
+        background: transparent;
+        // background: red;
+        // box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+        border-radius: 100rpx;
+        line-height: 110rpx;
+        width: 100%;
+        text-align: center;
+        height: 110rpx;
+        border: 1rpx solid #dedede;
+        // border: 0;
+        &::after{
+          border: none;
+        }
+      }
+    }
+
+    canvas{
+      position: absolute;
+      top: 0;
+      left: -100%;
+      // left: 0;
+      width:750rpx;
+      height:1234rpx;
+    }
+    #video_center{
+      width: 100%;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      z-index: 20;
+      transform: translateY(-50%);
+      -webkit-transform: translateY(-50%);
+    }
+    #myVideo{
+      width: 100%;
+      position: absolute;
+      top: 0rpx;
+      left: 0;
+      z-index: 20;
+    }
+    .black_bg{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 10;
+    }
+    .review-btn-group{
+      position: fixed;
+      z-index: 9;
+      bottom: 60rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 440rpx;
+      .review-btn{
+        margin-top: 30rpx;
+        // border: none;
+        background: #fff;
+        border: 2rpx solid rgba(202,203,207, 0.7);
+        // box-shadow: 0 2rpx 16rpx 0 rgba(210,210,210,0.60);
+        font-size: 30rpx;
+        height: 100rpx;
+        line-height: 100rpx;
+        color: #90949F;
+        border-radius: 100rpx;
+        &:after{
+          border: none;
+        }
+      }
+      .continue-review{
+        background: #FFD600;
+        box-shadow: 0 6rpx 23rpx 0 rgba(236,205,46,0.51);
+      }
+    }
+    .long-group{
+      width: 650rpx;
+    }
+  }
+</style>

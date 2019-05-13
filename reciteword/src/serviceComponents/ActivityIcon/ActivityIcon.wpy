@@ -1,0 +1,88 @@
+<template>
+  <view class='activity-icon-container'>
+    <image @tap='tapBtn' wx:if='{{obj.onlineType == 0 || obj.onlineType == 1}}' src='{{obj.activityLogo}}' class="shake"></image>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import api from '@/common/api'
+  import storage from '@/common/storage'
+  export default class ActivityIcon extends wepy.component {
+    data = {
+      obj: {}
+    }
+    methods = {
+      async show() {
+        let { icon } = await api.getActivityIcon()
+        if (!icon.activityData) return
+
+        let { type, activity } = icon.activityData
+        switch (icon.type) {
+          // 抽奖活动
+          case 1:
+            this.$parent.$parent.globalData.lotteryType = type
+            this.obj = Object.assign(activity, {type: icon.type}, {onlineType: type})
+            break
+          // 返现活动
+          case 2:
+            this.$parent.$parent.globalData.lotteryType = null
+            this.obj = {activityLogo: icon.icon, cash: true, activityId: icon.activityId, type: icon.type, onlineType: type}
+            break
+          // webview
+          case 3:
+            this.obj = {activityLogo: icon.icon, url: icon.url, type: icon.type, onlineType: type}
+            break
+        }
+      },
+      tapBtn: async () => {
+        wepy.reportAnalytics('index_activity_icon_click', {})
+        switch (this.obj.type) {
+          // 抽奖活动
+          case 1:
+            this.$parent.$navigate('/pages/lottery/lottery')
+            break
+          // 返现活动
+          case 2:
+            wepy.switchTab({url: '/pages/activity/list'})
+            break
+          // webview
+          case 3:
+            await storage.set('bannerObj', {pathUrl: this.obj.url})
+            this.$parent.$navigate('banner')
+            break
+        }
+        this.$parent.$parent.globalData.from = null
+      }
+    }
+  }
+</script>
+
+<style lang="less">
+  .activity-icon-container{
+    z-index: 7;
+    width: 130rpx;
+    height: 130rpx;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    .shake{
+      display: block;
+      width: 100%;
+      height: 100%;
+      animation: shake1 0.18s ease 0s 10 alternate;
+    }
+  }
+  .pageMainClass{
+  }
+  // .shake {
+  // }
+  @keyframes shake1 {
+    from {
+      transform: rotate(-10deg);
+    }
+    to {
+      transform: rotate(10deg);
+    }
+  }
+</style>

@@ -1,0 +1,101 @@
+<style lang='less'>
+  .img-text-btn-modal {
+    position: fixed;
+    z-index: 8;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    .img-text-btn-modal-body{
+      position: fixed;
+      z-index: 9;
+      top: 200rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 560rpx;
+      height: 610rpx;
+      padding: 0 40rpx;
+      box-sizing: border-box;
+      font-size: 32rpx;
+      background: #fff;
+      border-radius: 18rpx;
+      .close-container{
+        margin-top: 30rpx;
+        width: 100%;
+        // background: red;
+        height: 45rpx;
+        text-align: right;
+        .close{
+          width: 45rpx;
+          height: 100%;
+        }
+      }
+      .img{
+        width: 240rpx;
+        height: 180rpx;
+        display: block;
+        margin: 5rpx auto 0;
+      }
+      .text{
+        margin: 58rpx auto 50rpx;
+        display: block;
+        text-align: center;
+      }
+      .btn{
+        // width: 300rpx;
+        height: 100rpx;
+        background: #FFD600;
+        box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+        border-radius: 100rpx;
+        line-height: 100rpx;
+        font-size:32rpx;
+        &:after{
+          border: none;
+        }
+        // }
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class='img-text-btn-modal' wx:if='{{modalObj.show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class='img-text-btn-modal-body'>
+      <view class='close-container'>
+        <image class='close' src='../../images/xcx_wan_2@2x.png' @tap='close' wx:if='{{modalObj.canClose}}'></image>
+      </view>
+      <image src='{{modalObj.imgUrl}}' class='img'></image>
+      <text class='text'>{{modalObj.msg}}</text>
+      <!-- <view class='btn-container'> -->
+      <button class='btn' @tap='tapModalBtn'>{{modalObj.btnText}}</button>
+      <!-- </view> -->
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  export default class ImgTextBtnModal extends wepy.component {
+    data = {
+      modalObj: {}
+    }
+    methods = {
+      tap1() {},
+      move1() {},
+      showModal(modalObj) {
+        this.modalObj = Object.assign(modalObj, {show: true})
+      },
+      hideModal() {
+        this.modalObj = Object.assign(this.modalObj, {show: false})
+      },
+      close() {
+        this.$emit('close')
+        this.modalObj = Object.assign(this.modalObj, {show: false})
+      },
+      tapModalBtn() {
+        this.$emit('tapModalBtn', this.modalObj.next)
+      }
+    }
+  }
+</script>

@@ -1,0 +1,223 @@
+<style lang='less'>
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  display: -webkit-flex;
+  -webkit-flex-direction: column;
+  -webkit-align-items: center;
+  -webkit-justify-content: space-between;
+  box-sizing: border-box;
+}
+</style>
+
+<script>
+import wepy from 'wepy'
+// import { TEST_AB_APP_KEY } from './common/constant'
+import 'wepy-async-function'
+import 'promise-polyfill'
+import { setStore } from 'wepy-redux'
+import configStore from './store'
+// import api from './common/api'
+// import utils from './common/common'
+import storage from './common/storage'
+const store = configStore()
+setStore(store)
+
+
+const pageMappings = {
+  index: 'pages/index',
+  chooseBook: 'pages/chooseBook/chooseBook',
+  bookCategory: 'pages/chooseBook/chooseBookCategory',
+  bookItem: 'pages/chooseBook/chooseBookItem',
+  webview: 'pages/webview/index',
+  nopage: 'pages/nopage/index',
+  banner: 'pages/banner/banner',
+  auth: 'pages/auth',
+  answer: 'pages/answer',
+  test: 'pages/test/test',
+  signin: 'pages/subPages/signin/normal',
+  siginv2: 'pages/subPages/signin/siginv2',
+  wordslist: 'pages/subPages/wordslist/wordslist',
+  selectbookIndex: 'pages/subPages/selectbook/index',
+  selectbookList: 'pages/subPages/selectbook/booklist',
+  answerPractice: 'pages/subPages/answer/practice',
+  answerStudy: 'pages/subPages/answer/study'
+}
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      'pages/index',
+      'pages/chooseBook/chooseBook',
+      'pages/chooseBook/chooseBookCategory',
+      'pages/chooseBook/chooseBookItem',
+      'pages/webview/index',
+      'pages/nopage/index',
+      'pages/banner/banner',
+      'pages/auth',
+      'pages/answer',
+      'pages/test/test'
+    ],
+    subPackages: [
+      {
+        root: 'pages/subPages/signin',
+        pages: ['normal', 'siginv2']
+      },
+      {
+        root: 'pages/subPages/wordslist',
+        pages: ['wordslist']
+      },
+      {
+        root: 'pages/subPages/selectbook',
+        pages: ['index', 'booklist']
+      },
+      {
+        root: 'pages/subPages/answer',
+        pages: ['practice', 'study']
+      }
+    ],
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#fff',
+      navigationBarTitleText: '单词天天背',
+      navigationBarTextStyle: 'black'
+    },
+    // workers: "workers",
+    networkTimeout: {
+      request: 7000
+      // downloadFile: 2000
+      // request: 20000
+    },
+    navigateToMiniProgramAppIdList: ['wx3c3ce5876643ac0f']
+  }
+
+  globalData = {
+    userInfo: null,
+    a: 'javak',
+    test: 'test',
+    isNewUser: false,
+    isOpen: -1,
+    navigateBackFromDetail: false, // 从往期活动详情页跳转至我的活动页
+    callShareMenu: false, // 调起分享界面
+    callAddress: false, // 调起地址填写界面
+    lotteryType: null // 抽奖状态【判断新老用户跳转逻辑】
+  }
+  constructor () {
+    super()
+    this.use('promisify')
+    // 重写路由跳转
+    this.reWriteRoute()
+    // this.injectAttrs()
+  }
+  // 重写路由跳转
+  reWriteRoute() {
+    ['$navigate', '$redirect'].forEach(api => {
+      let sourceApi = wepy.page.prototype[api]
+      wepy.page.prototype[api] = function(path, params) {
+        path = path.includes('/') ? path : '/' + pageMappings[path]
+        sourceApi.call(this, path, params)
+      }
+    })
+  }
+  // injectAttrs() {
+  //   wepy.$error = {
+  //     compsName: 'ErrorModal',
+  //     methodName: 'show',
+  //     options: {
+  //       btnMsg: '重新加载',
+  //       msg: '连接服务器失败',
+  //       callback: 'errHandler'
+  //     },
+  //     // 适用场景：将报错信息转成code
+  //     hook: (error, options) => {
+  //       console.log('error]]]]]]]]]]]]]]')
+  //       console.log(error)
+  //       // if (error.includes('Yu')) {
+  //       //   return {...options, msg: '我需要矫正一下你12'}
+  //       // }
+  //       return options
+  //       // return {...options, msg: JSON.parse(error)}
+  //     }
+  //   }
+  // }
+  async checkNetwork() {
+    wepy.onNetworkStatusChange((res) => {
+      if (!res.isConnected) {
+        console.log('网络异常change----------')
+      } else {
+        console.log('网络恢复正常啦----------')
+      }
+    })
+  }
+  onLaunch() {
+    console.log('==============App onLaunch==============')
+    this.checkNetwork()
+  }
+  onShow(options) {
+    console.log('onshow app')
+    // testinAB.init(TEST_AB_APP_KEY)
+    // let _ = this
+    // testinAB.getVars(function(vars) {
+    //   var t = vars.get('shareTestin')
+    //   // 缓存ABTest参数
+    //   _.globalData.myTestin = t
+    // })
+    // test
+    // fundebug.init({
+    //   // 测试
+    //   apikey: '826f755e43b5159e66d4fe58650dffb3ff08cb94fabccd3fb014c3423c0c5d11'
+    //   // 正式
+    //   // apikey: '48391c8f15240fe1f2fee35d64d9638b3ac563959821566eef2b23634c9436c8'
+    // })
+    console.log('==============App onShow==============')
+    console.log('【App options】', options)
+    // 转发链接中的 发起人openId timestamp from
+    const {
+      vid: shareVid,
+      userId: shareUserId,
+      openId: shareOpenId,
+      stage: shareStage,
+      target: shareTarget,
+      timestamp: shareHelpTime,
+      from,
+      shareId,
+      prizeId: $activityId,
+      activityId
+      // 批量获取带参小程序码
+      // scene: queryScene
+    } = options.query
+    // 是否调起了转发
+    const callShareMenu = this.globalData.callShareMenu
+    const callAddress = this.globalData.callAddress
+    if (!callAddress) {
+      if (!callShareMenu) {
+        this.globalData = Object.assign(this.globalData, {
+          scene: options.scene,
+          activityId: $activityId || activityId,
+          shareHelpTime,
+          from,
+          shareOpenId,
+          shareStage,
+          shareTarget,
+          shareId,
+          shareUserId,
+          shareVid
+        })
+        console.log('【globalData】', this.globalData)
+      }
+      if (callShareMenu) {
+        this.globalData.callShareMenu = false
+      }
+    } else {
+      this.globalData.callAddress = false
+    }
+    if (options && options.query && options.query.scene) {
+      storage.set('scene', options.query.scene)
+    }
+    console.log('app onshow')
+  }
+}
+</script>

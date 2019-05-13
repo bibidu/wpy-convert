@@ -1,0 +1,51 @@
+
+// 修改当前题
+// export const MODIFY_CURRENT_QS = 'MODIFY_CURRENT_QS'
+
+export const QUERY_PART_QUESTIONS = 'QUERY_PART_QUESTIONS'
+
+export const ADD_PART_QUESTIONS = 'ADD_PART_QUESTIONS'
+
+export const UPDATE_QUESTION = 'UPDATE_QUESTION'
+
+export const ADD_QUESTION_RESULT_ITEM = 'ADD_QUESTION_RESULT_ITEM'
+
+export const MODIFY_QS_INDEX = 'MODIFY_QS_INDEX'
+
+export const INC_QS_INDEX = 'INC_QS_INDEX'
+
+export const UPDATE_PROGRESS = 'UPDATE_PROGRESS'
+
+export const TOGGLE_STATE = 'TOGGLE_STATE'
+
+export const SAVE_CACHE_PKGNAME = 'SAVE_CACHE_PKGNAME'
+
+export const SAVE_TARGET = 'SAVE_TARGET'
+
+export const SAVE_PART = 'SAVE_PART'
+
+export const CLEAR_QS_INDEX = 'CLEAR_QS_INDEX'
+
+export const INC_PART = 'INC_PART'
+
+export const RESET_QUESTION_RESULTS = 'RESET_QUESTION_RESULTS'
+
+export const SAVE_CACHE_AUDIOS = 'SAVE_CACHE_AUDIOS'
+
+export const UPDATE_QUESTION_AUDIO = 'UPDATE_QUESTION_AUDIO'
+
+export const MODIFY_CACHE_DAY = 'MODIFY_CACHE_DAY'
+
+export const MODIFY_QUESTION = 'MODIFY_QUESTION'
+
+
+
+
+// study
+// export const SAVE_CURRENT_QS = 'SAVE_CURRENT_QS'
+
+// 答题（复习模式）
+
+export const UPDATE_TARGET = 'UPDATE_TARGET'
+
+export const UPDATE_STAGE = 'UPDATE_STAGE'

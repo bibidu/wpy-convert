@@ -1,0 +1,558 @@
+<template>
+  <view class="answer-study-wrapper">
+    <!-- 顶部进度条 -->
+    <view style='position:fixed;z-index:6;top:0;left:50%;transform:translateX(-50%);'>
+      <HorizonProgress :progress.sync='progress' />
+    </view>
+    <!-- <view style="display:none;">
+      <Player @playOver.user='playOver' />
+    </view> -->
+    <!-- 单词简介 -->
+    <swiper @change='swiperChange' duration='140' vertical='true' current='{{swiperIndex}}' class='swiper'>
+      <swiper-item item-id='1'>
+        <view class='swiper-item'>
+          <view class='type' wx:if='{{question.title}}'>【{{question.title}}】</view>
+          <view class='word'>{{question.en}}</view>
+          <view class='wordb' wx:if='{{question.soundmark}}'>{{question.soundmark}}</view>
+          <image @tap="playV('block', null, {{question.cachedVoice}})" class='voice' style="margin:0 auto;display:block;" src="{{ mode === 'block' ? act : dft }}"></image>
+          <image src='../images/ttb_lian_2@2x.png' class='top-scroll-img'></image>
+        </view>
+      </swiper-item>
+      <swiper-item item-id='2'>
+        <view class='swiper-item2'>
+          <!-- 单词详情 -->
+          <scroll-view scroll-y style='height:100%;' scroll-top='{{scrollTop}}' class='scroll-view'>
+            <!-- 第一部分：单词内容 -->
+            <view class='word-wrapper'>
+              <view class='word-type'>
+                <view class='word'>{{question.en}}</view>
+                <view class='type'>【{{question.title}}】</view>
+              </view>
+              <!-- 单词多词性解释 -->
+              <repeat for='{{question.wordsSubList}}' item='subItem' index='subIndex'>
+                <view class='wordb-wrapper'>
+                  <view class='word-sex'>{{subItem.zh}}</view>
+                  <view class='wordb' style="margin-right:6rpx;">{{subItem.soundmark || ''}}</view>
+                  <!-- <view class='word-mean'>{{subItem.zh}}</view> -->
+                  <image @tap="playV('word', {{subIndex}}, {{subItem.voice}})" class='voice' src="{{(checkIndex === subIndex && mode === 'word') ? act : dft }}"></image>
+                </view>
+              </repeat>
+            </view>
+            <!-- 第二部分：详细例句 -->
+            <repeat for='{{question.wordsSiteList}}' item='detailItem' index='detailIndex'>
+              <view class='word-detail-item'>
+              <view class='title'>【{{question.site}}{{detailIndex + 1}}】</view>
+              <view class='word-title'>
+                <view class='word-mean'>{{detailItem.zh}}</view>
+                <view class='word-type' wx:if='{{detailItem.exampleTag}}'>({{detailItem.exampleTag}})</view>
+              </view>
+              <!-- 真题例句 -->
+              <view class='real-wrapper' wx:if='{{detailItem.enExample}}'>
+                <view class='real-qs'>
+                  真题例句
+                </view>
+                <view class='sentence-voice'>
+                  <view class='sentence-left'>
+                    <view class='sentence'>{{detailItem.enExample}}</view>
+                    <view class='sentence-mean'>
+                      {{detailItem.zhExample}}
+                    </view>
+                  </view>
+                  <image @tap="playV('example', {{detailIndex}}, {{detailItem.enExampleVoice}})" class='voice' src="{{(checkIndex === detailIndex && mode === 'example') ? act : dft }}"></image>
+                </view>
+                
+              </view>
+              <!-- 词组搭配 -->
+              <view class='real-wrapper' wx:if='{{detailItem.wordMatch.length > 0}}'>
+                <view class='real-qs'>
+                  词组搭配
+                </view>
+                <repeat for='{{detailItem.wordMatch}}' item='matchItem'>
+                  <view class='sentence-mean' style="font-size:30rpx;color:#484E5E;">
+                    <text>{{matchItem}}</text>
+                  </view>
+                </repeat>
+              </view>
+            </view>
+            </repeat>
+            <view style='height:280rpx;background:#fff;'></view>
+          </scroll-view>
+        </view>
+      </swiper-item>
+    </swiper>
+    
+    <!-- 底部悬浮按钮组 -->
+    <view class='bot-wrapper'>
+      <button class="btn {{qsIndex === 0 ? 'gray' : ''}}" @tap='prevQs'>上一词</button>
+      <button class='btn highlight' @tap='nextQs'>下一词</button>
+    </view>
+    <kcLoading :show.sync='showLoading' :transparent='transparent'></kcLoading>
+    <AnimateModal @enableMemory.user='enableMemory'/>
+    <TeachMask />
+    <NotifyTogModuleModal />
+    <!-- <ErrorModal /> -->
+    <kcNotification :show.sync='showWarnModal' :msg.sync='warnMsg' :btnMsg.sync='warnBtnMsg' @togglewarning.user='togglewarning'></kcNotification>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import common from '@/common/common'
+import { bunchDownload } from '@/common/download'
+import { setCached } from '@/common/storage'
+import HorizonProgress from '@/components/answer/horizonProgress' // 顶部进度条
+import kcLoading from '@/components/kcLoading'
+import AnimateModal from '@/components/answer/animateModal'
+import TeachMask from '@/components/answer/teachMask'
+import kcNotification from '@/components/kcNotification'
+import NotifyTogModuleModal from '@/components/answer/notifyTogModuleModal'
+
+
+import {
+  saveTarget,
+  updateQuestion,
+  clearQsIndex,
+  queryPartQuestions,
+  updateProgress,
+  studyStep,
+  cacheQs,
+  finishEntireStudy,
+  savePart,
+  saveCacheAudios
+} from '@/store/actions/practice'
+import { activePlayer, dftPlayer } from '@/common/constant'
+
+import { connect } from 'wepy-redux'
+
+let lock = true
+let audioCtx = null
+let cachedTarget = ''
+let cachedPart = ''
+// let showAnimateModal = false
+let studyInfo = {}
+
+@connect({
+  question: (state) => state.practice.question,
+  questions: (state) => state.practice.questions,
+  qsIndex: (state) => state.practice.qsIndex,
+  target: (state) => state.practice.target,
+  part: (state) => state.practice.part,
+  progress: (state) => state.practice.progress
+}, {
+  saveTarget,
+  updateQuestion,
+  clearQsIndex,
+  updateProgress,
+  studyStep,
+  cacheQs,
+  queryPartQuestions,
+  finishEntireStudy,
+  savePart,
+  // getQuestionWithCachedAudio,
+  saveCacheAudios
+})
+// @trycatch()
+export default class Study extends wepy.page {
+  config = {
+    navigationBarTitleText: '学习模式'
+  }
+  data = {
+    showLoading: false,
+    transparent: false,
+    // progress: 0,
+    swiperIndex: 0,
+    scrollTop: 0,
+    mode: '',
+    checkIndex: -1,
+    showWarnModal: false, // 异常提示框
+    warnMsg: null, // 异常提示框
+    warnBtnMsg: null, // 异常提示框
+    act: activePlayer,
+    dft: dftPlayer,
+    audioError: false
+  }
+  components = {
+    HorizonProgress,
+    // Player,
+    kcLoading,
+    NotifyTogModuleModal,
+    AnimateModal,
+    TeachMask,
+    kcNotification
+  }
+  methods = {
+    // playOver() {
+    //   this.mode = null
+    //   this.checkIndex = -1
+    // },
+    playV(mode, index, src) {
+      if (src && !src.timeStamp) {
+        this.mode = mode
+        this.checkIndex = index
+        this.methods.playerPop.bind(this)(src)
+        this.$apply()
+      }
+    },
+    playerPop(src) {
+      this.play(src)
+      // this.$invoke('Player', 'play', src)
+    },
+    swiperChange(e) {
+      const index = e.detail.current
+      this.swiperIndex = index
+    },
+    async nextQs() {
+      if (lock) return
+      lock = true
+
+      if (this.qsIndex < this.questions.length - 1) {
+        this.resetPageStyle()
+        this.methods.studyStep(1)
+        this.methods.playV.bind(this)('block', null, this.question.cachedVoice)
+        lock = false
+      } else {
+        await this.methods.finishEntireStudy()
+        // showAnimateModal = true
+        this.$invoke('AnimateModal', 'show', { unit: this.part })
+        this.$apply()
+      }
+    },
+    prevQs() {
+      if (this.qsIndex > 0) {
+        this.resetPageStyle()
+        this.methods.studyStep(-1)
+        this.stopV()
+      }
+    },
+    enableMemory() {
+      console.log('enableMemory...')
+      this.$redirect('answerPractice')
+    },
+    togglewarning() {
+      this.showLoading = true
+      this.onLoad({ target: cachedTarget, part: cachedPart })
+    }
+  }
+  resetPageStyle() {
+    this.swiperIndex = 0
+    if (this.scrollTop !== 0) {
+      this.scrollTop = 0
+    }
+  }
+  async downloadAudio() {
+    // console.log('开始下载音频')
+    // console.log(this.questions)
+    const questions = this.questions.filter(item => item.voice && !item.voice.includes('no_voice'))
+    if (questions.length > 0) {
+      await bunchDownload(
+        questions.map(item => ({id: item.id, voice: item.voice})),
+        questions.length,
+        ({ results }) => {
+          this.methods.saveCacheAudios(results)
+        }
+      )
+    }
+  }
+  initAudioPlayer() {
+    audioCtx = wepy.createInnerAudioContext()
+    audioCtx.autoplay = true
+    audioCtx.onPlay(() => {
+      this.$apply()
+      console.log('onPlay')
+      // this.playing = true
+      // this.$apply()
+    })
+    audioCtx.onEnded(() => {
+      console.log('onEnded')
+      // this.playing = false
+      this.mode = null
+      this.checkIndex = -1
+      this.$apply()
+    })
+    audioCtx.onError((err) => {
+      console.log('audioctx error')
+      // this.resolveException('音频加载异常')
+      console.log(err)
+      this.mode = null
+      this.checkIndex = -1
+      this.audioError = true
+      this.$apply()
+    })
+  }
+  play(src) {
+    if (src) {
+      console.log(src);
+      audioCtx.src = src
+      audioCtx.play()
+    }
+  }
+  stopV() {
+    audioCtx.stop()
+  }
+  // errHandler(error) {
+  //   console.log('errhandler')
+  //   console.log(error)
+  //   this.onLoad()
+  // }
+  onShow() {
+    // 记录开始学习时间
+    // showAnimateModal = false
+  }
+  async showTeachModal() {
+    await this.$invoke('NotifyTogModuleModal', 'showModal')
+  }
+  async onLoad({ target, part }) {
+    try {
+      // 记录开始学习时间
+      studyInfo = { onLoad: new Date().getTime() }
+      cachedTarget = target
+      cachedPart = part
+      this.showLoading = true
+      this.initAudioPlayer()
+      lock = false
+      part && this.methods.savePart(part)
+      target && this.methods.saveTarget(target)
+      await this.methods.queryPartQuestions(target)
+      await this.downloadAudio()
+      this.methods.updateQuestion()
+      this.showLoading = false
+      this.$apply()
+      // 引导弹窗
+      await this.showTeachModal()
+      // 新手引导图
+      // await this.$invoke('TeachMask', 'render')
+      this.resetPageStyle()
+      setTimeout(() => {
+        this.methods.playV.bind(this)('block', null, this.question.cachedVoice)
+      }, 0)
+    } catch (error) {
+      this.showLoading = false
+      this.resolveException('网络环境异常')
+    }
+  }
+  resolveException(msg) {
+    const warnMsg = common.getErrorCode(msg)
+    this.showWarnModal = true
+    this.warnMsg = warnMsg
+    this.warnBtnMsg = '重新加载'
+    this.$apply()
+  }
+  onHide() {
+    console.log('onHide...')
+    studyInfo = { ...studyInfo, onHide: new Date().getTime() }
+    // if (showAnimateModal) {
+    // this.$invoke('AnimateModal', 'hide')
+    //   this.methods.enableMemory.bind(this)()
+    // }
+  }
+  onUnload() {
+    console.log('onUnload...')
+    // 记录结束学习时间
+    setCached('studyInfo', {...studyInfo, onUnload: new Date().getTime(), type: 'study'})
+    // if (showAnimateModal) {
+    // this.$invoke('AnimateModal', 'hide')
+    //   this.methods.enableMemory.bind(this)()
+    // }
+  }
+}
+</script>
+<style lang="less" scoped>
+.voice{
+    width: 44rpx;
+    height: 34rpx;
+    padding: 10rpx;
+}
+
+  .top-scroll-img{
+    margin: 315rpx auto 0;
+    width: 600rpx;
+    height: 32rpx;
+  }
+.answer-study-wrapper{
+  .swiper{
+    position: fixed;
+    z-index: 5;
+    top: 88rpx;
+    bottom: 0;
+    width: 100%;
+    height: 1246rpx;
+    height: 100vh;
+    background: #fff;
+    .swiper-item{
+      height: 100%;
+      text-align: center;
+      .type{
+        text-align: left;
+        font-size: 26rpx;
+        color: #90949F;
+        margin: 14rpx 0 0 30rpx;
+      }
+      .word{
+        margin-top: 180rpx;
+        font-size: 80rpx;
+        color: #484E5E;
+        font-weight: bold;
+      }
+      .wordb{
+        margin: 10rpx 0 50rpx;
+        font-size: 30rpx;
+        color: #9A9FA8;
+      }
+    }
+    .swiper-item2{
+      height: 100%;
+      .scroll-view{
+        background: rgba(248,248,248,1);
+        .word-wrapper{
+          padding: 0 40rpx 50rpx;
+          box-sizing: border-box;
+          background: #fff;
+          .word-type{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .word{
+              font-size: 60rpx;
+              color: #484E5E;
+              font-weight: bold;
+            }
+            .type{
+              font-size: 26rpx;
+              color: #90949F;
+            }
+          }
+          .wordb-wrapper{
+            display: flex;
+            align-items: center;
+            margin-top: 20rpx;
+            .word-sex{
+              color: #484E5E;
+              font-size: 30rpx;
+              font-weight: bold;
+            }
+            .wordb{
+              margin-left: 20rpx;
+              font-size: 30rpx;
+              color: #9A9FA8;
+            }
+            .word-mean{
+              font-size: 30rpx;
+              color: #484E5E;
+              margin: 0 50rpx 0 40rpx;
+              font-weight: bold;
+            }
+          }
+        }
+
+        .word-detail-item{
+          box-sizing: border-box;
+          padding: 50rpx 40rpx 50rpx;
+          background: #fff;
+          margin-top: 20rpx;
+          .title{
+            font-size: 28rpx;
+            color: #9A9FA8;
+          }
+          .word-title{
+            padding: 30rpx 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2rpx dashed rgba(154,159,168,0.3954);
+            .word-mean{
+              margin-left: 16rpx;
+              font-size: 32rpx;
+              font-weight: bold;
+              color: #484E5E;
+              width:420rpx;
+              height:38rpx;
+              overflow: hidden;
+            }
+            .word-type{
+              font-size: 24rpx;
+              color: #B8BCC2;
+            }
+          }
+          .real-wrapper{
+            padding: 0 0 0 24rpx;
+            box-sizing: border-box;
+            .real-qs{
+              position: relative;
+              font-size: 28rpx;
+              color: #9A9FA8;
+              margin: 50rpx 0 20rpx;
+              &:before{
+                content: '';
+                position: absolute;
+                width: 14rpx;
+                height: 14rpx;
+                background: #9A9FA8;
+                border-radius: 50%;
+                left: -24rpx;
+                top: 50%;
+                transform: translateY(-50%);
+              }
+            }
+            .sentence-voice{
+              display: flex;
+              justify-content: space-between;
+              font-size: 30rpx;
+              .sentence-left{
+                flex: 1;
+                .sentence{
+                  color: #484E5E;
+                }
+                .sentence-mean{
+                  color: #484E5E;
+                  font-size: 30rpx;
+                  margin-top: 10rpx;
+                  text:first-child{
+                    display: inline-block;
+                    margin-right: 40rpx;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  .bot-wrapper{
+    position: fixed;
+    z-index: 6;
+    bottom: 80rpx;
+    left: 25rpx;
+    right: 25rpx;
+    height: 100rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .btn{
+      width: 315rpx;
+      height: 100rpx;
+      border-radius: 50rpx;
+      color: #000;
+      border:1px solid rgba(202,203,207,1);
+      // box-shadow:0px 4rpx 16rpx 0px rgba(210,210,210,0.41);
+      line-height: 100rpx;
+      font-size: 32rpx;
+      background: #fff;
+      &:after{
+        border: none;
+      }
+      &.highlight{
+        color: #fff;
+        border: none;
+        box-shadow:0px 4rpx 15rpx 0px rgba(255,154,38,0.2);
+        background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+      }
+    }
+    .gray{
+      color: #6B7379;
+      opacity: 30%;
+    }
+    
+  }
+}
+</style>

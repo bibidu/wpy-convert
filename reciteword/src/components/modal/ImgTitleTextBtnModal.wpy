@@ -1,0 +1,90 @@
+<style lang='less'>
+  .img-title-text-btn-modal {
+    position: fixed;
+    z-index: 8;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    .img-text-btn-modal-body{
+      position: fixed;
+      z-index: 9;
+      top: 200rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 560rpx;
+      height: 588rpx;
+      padding: 0 15rpx;
+      box-sizing: border-box;
+      font-size: 32rpx;
+      background: #fff;
+      border-radius: 18rpx;
+      text-align: center;
+      .img{
+        width: 240rpx;
+        height: 180rpx;
+        display: block;
+        margin: 80rpx auto 0;
+      }
+      .title{
+        display: block;
+        font-size: 36rpx;
+        margin: 10rpx 0 15rpx;
+      }
+      .text{
+        margin: 0 auto 77rpx;
+        display: block;
+        font-size: 26rpx;
+        color: #B1A79D;
+      }
+      .btn{
+        position: absolute;
+        bottom: 50rpx;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300rpx;
+        height: 100rpx;
+        background: #FFD600;
+        box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+        border-radius: 100rpx;
+        line-height: 100rpx;
+        font-size: 32rpx;
+        &:after{
+          border: none;
+        }
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class='img-title-text-btn-modal' wx:if='{{modalObj.show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class='img-text-btn-modal-body'>
+      <image src='{{modalObj.imgUrl}}' class='img'></image>
+      <text class='title'>{{modalObj.title}}</text>
+      <text class='text'>{{modalObj.msg}}</text>
+      <button class='btn' @tap='hideModal'>{{modalObj.btnText}}</button>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  export default class ImgTitleTextBtnModal extends wepy.component {
+    data = {
+      modalObj: {}
+    }
+    methods = {
+      tap1() {},
+      move1() {},
+      showModal(modalObj) {
+        this.modalObj = Object.assign(modalObj, {show: true})
+      },
+      hideModal() {
+        this.$emit('tapBtn')
+        this.modalObj = Object.assign(this.modalObj, {show: false})
+      }
+    }
+  }
+</script>

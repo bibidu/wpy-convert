@@ -1,0 +1,49 @@
+<template>
+  <view class="container">
+    <view class='h1'>小程序需要您的授权才能正常使用~</view>
+    <button open-type='getUserInfo' bindgetuserinfo='startAuth'>确定授权</button>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class Auth extends wepy.page {
+    config = {
+      navigationBarTitleText: '单词天天背'
+    }
+    methods = {
+      async startAuth(e) {
+        try {
+          await wepy.getUserInfo()
+          // wepy.switchTab({url: 'index'})
+          this.$redirect('index')
+        } catch (error) {
+          if (error.errMsg === 'getUserInfo:fail auth deny') {
+          }
+        }
+      }
+    }
+  }
+</script>
+<style lang="less">
+  .container{
+    .h1{
+      margin-top: 300rpx;
+      margin-bottom: 50rpx;
+    }
+    button{
+      margin-top: 0;
+      width: 690rpx;
+      height: 110rpx;
+      background: #FFD600;
+      box-shadow: 0 4rpx 19rpx 0 rgba(236,205,46,0.51);
+      border-radius: 100rpx;
+      font-size: 34rpx;
+      line-height: 110rpx;
+      &::after{
+        border: none;
+      }
+    }
+  }
+</style>

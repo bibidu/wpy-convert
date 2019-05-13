@@ -1,0 +1,547 @@
+<template>
+  <view class="wordslist">
+    <!-- 下拉选择框 -->
+    <picker bindchange="bindPickerChange" value="{{stage - 1}}" range="{{stageList}}">
+      <view class='day' wx:if='{{loaded}}'>
+        <text class='text'>Day{{stage}}</text>
+        <image class='direction' src='../images/xcx_jin_1@2x.png'></image>
+      </view>
+    </picker>
+    <view class='top-area' wx:if='{{loaded}}'>
+      <view class='tabs'>
+        <view @tap="tagTopTag('today')" class="{{checkTab === 'today' ? 'tab-check-item' : 'tab-item'}}">今日错词</view>
+        <view @tap="tagTopTag('all')" class="{{checkTab === 'all' ? 'tab-check-item' : 'tab-item'}}">所有单词</view>
+      </view>
+      <view class='meanSwitch' wx:if='{{wordslist.length > 0}}' @tap='toggleAllShow' id="{{allShow ? 'a8' : 'a9'}}">{{allShow ? '复习模式' : '默写模式'}}</view>
+    </view>
+    <!-- scroll-view => view -->
+        
+      <swiper @change='swiperChange' duration='100' current='{{swiperIndex}}' indicator-dots="{{indicatorDots}}" style='margin-top:248rpx;height:{{scrollHeight - 50}}px'>
+        <repeat for='{{swiperList}}'>
+        <swiper-item>
+      <scroll-view class="scroll-view" scroll-y style="height:100%;margin-bottom:10rpx">
+      <!-- 没有错词 -->
+        <view class='no-error' wx:if='{{loaded && item.length === 0}}'>
+          <image class='no-error-img' src='https://xcx-cdn.kaochong.com/recite/image/xcx_kong_1@2x.png'></image>
+          <text class='no-error-text'>今天背的全都对！选择日期复习其他天的错词吧～</text>
+        </view>
+        <!-- item -->
+        <repeat for='{{item}}' key='{{index}}'>
+          <view class='item'>
+            <view class='left'>
+              <view class='word' style="{{item.rightSign ? '' : 'color:#FF422A;'}}">{{item.en}}</view>
+            </view>
+            <view class='right'>
+              <block wx:if='{{item.special || (item.singleShow && allShow)}}' id='a11'>
+                <view class='desc' @tap='closeSingle({{index}})'>{{item.zh}}</view>
+                <view wx:if='{{!allShow}}' class='img-container' @tap='closeSingle({{index}})'>
+                  <image src='../images/yellow_eye_bold.png'></image>
+                </view>
+              </block>
+              <view class='outer-img-container' @tap='toggleSingle({{index}})' id='a10'>
+                <image class='single_eye' wx:if='{{!item.special && (!item.singleShow || !allShow)}}' src='../images/yellow_eye.png'></image>
+              </view>
+            </view>
+          </view>
+        </repeat>
+        </scroll-view>
+        <!-- item -->
+        </swiper-item>
+        </repeat>
+    </swiper>
+    <!-- 底部按钮 -->
+    <view class='bot-container'>
+      <button @tap="practice({{checkTab === 'today'}})" style='border-radius:0;' class='practice' id='a20' wx:if='{{wordslist.length > 0}}'>{{checkTab === 'today' ? '复习该阶段错词' : '复习该阶段单词'}}</button>
+    </view>
+    <!-- 数据为空 -->
+    <view class='blank_data' wx:if='{{loaded && !hasWords}}'>
+      <image src='https://xcx-cdn.kaochong.com/recite/image/xcx_kong_1@2x.png'></image>
+      <view>今日单词还未学完，稍后再来看看吧~</view>
+    </view>
+    <!-- loading -->
+    <kcLoading :show.sync='showLoading'></kcLoading>
+  <!-- </scroll-view> -->
+    <kcNotification :show.sync='showWarnModal' :msg.sync='warnMsg' :btnMsg.sync='warnBtnMsg' @togglewarning.user='togglewarning'></kcNotification>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import storage from '@/common/storage'
+  import api from '@/common/api'
+  import common from '@/common/common'
+
+  import kcLoading from '@/components/kcLoading'
+  import kcNotification from '@/components/kcNotification' // 通知提醒框
+  import DropMenu from '@/components/wordslist/dropMenu'
+  
+  import { connect } from 'wepy-redux'
+  import { updateStage, updateTarget } from '@/store/actions/review'
+  
+  let tap = {}
+  let allList = []
+  let errorList = []
+  let maxStudyStage = 10
+  let maxStage = 12
+  @connect({}, {
+    updateStage,
+    updateTarget
+  })
+  export default class WordsList extends wepy.page {
+    config = {
+      navigationBarTitleText: '单词天天背'
+    }
+    components = {
+      kcLoading,
+      kcNotification,
+      dropMenu: DropMenu
+    }
+
+    data = {
+      showWarnModal: false, // 异常提示框
+      warnMsg: null, // 异常提示框
+      warnBtnMsg: null, // 异常提示框
+      hasWords: false, // 是否是第一阶段且没学完
+      scrollHeight: 450,
+      swiperList: [],
+      wordslist: [], // 渲染的单词列表
+      stageList: [], // picker遍历的天数
+      allShow: false,
+      special: false,
+      stage: 1,
+      showLoading: true,
+      checkTab: 'today', // today/all
+      loaded: false,
+      swiperIndex: 0
+    }
+
+    computed = {
+    }
+    methods = {
+      bindPickerChange(e) {
+        const day = parseInt(e.detail.value) + 1
+        if (day !== this.stage) {
+          console.log('bindPickerChange')
+          console.log(day)
+          this.stage = day
+          this.getWordsList(day)
+        }
+      },
+      togglewarning() {
+        console.log('togglewaring')
+        this.onLoad({
+          stage: maxStage,
+          maxStudyStage
+        })
+      },
+      swiperChange(e) {
+        console.log(e)
+        const index = e.detail.current
+        if (index === 1) {
+          this.swiperIndex = 1
+          this.checkTab = 'all'
+          this.wordslist = allList
+        } else {
+          this.swiperIndex = 0
+          this.checkTab = 'today'
+          this.wordslist = errorList
+        }
+      },
+      // 切换tab
+      tagTopTag(tag) {
+        console.log('tagTopTag')
+        console.log(tag)
+        this.checkTab = tag
+        if (tag === 'today') {
+          this.swiperIndex = 0
+        } else {
+          this.swiperIndex = 1
+          this.judgeClickCount()
+        }
+      },
+      // 显示、隐藏全部释义
+      toggleAllShow() {
+        this.allShow = !this.allShow
+        if (this.allShow) {
+          this.wordslist.forEach((e, i) => {
+            e['special'] = false
+          })
+        }
+      },
+      // 点击空心黄色 切换单个显示隐藏
+      toggleSingle(index) {
+        console.log(index)
+        if (this.wordslist &&
+          this.wordslist[index]
+        ) {
+          this.wordslist[index]['special'] = true
+        }
+      },
+      // 点击实心黄色 隐藏单个
+      closeSingle(index) {
+        if (this.wordslist &&
+          this.wordslist[index]
+        ) {
+          this.wordslist[index]['special'] = false
+        }
+      },
+      yesterday() { // 上一天
+        if (this.stage > 1) {
+          this.getWordsList(this.stage - 1)
+        }
+      },
+      async tomorrow() { // 下一天
+        console.log(this.stage)
+        const indexInfo = await storage.get('userInfo')
+        if (this.stage >= indexInfo.wordbook.maxStudyStage) {
+          common.showWxModal('全部生词已学完')
+          return
+        }
+        if (this.stage + 1 < maxStage) {
+          this.getWordsList(this.stage + 1)
+        } else {
+          common.showWxModal('完成后一天的单词任务即可查看')
+        }
+      },
+      async practice(onlyError) { // 练习
+        console.log('点击的onlyError')
+        console.log(onlyError)
+        let pageInfo = await storage.get('userInfo')
+        this.methods.updateStage(this.stage)
+        this.methods.updateTarget(this.target)
+        this.$navigate('answer', {from: 'wordslist', stage: this.stage, target: pageInfo.userInfo.target, onlyError})
+      }
+    }
+    judgeClickCount() {
+      // 获取openId
+      if (!tap.count) {
+        tap.count = 0
+        tap.startTime = new Date().getTime()
+      }
+      tap.count = tap.count + 1
+      const now = new Date().getTime()
+      if (tap.count > 6) {
+        if (now - tap.startTime < 3000) {
+          storage.get('userInfo').then(res => {
+            const openId = res.userInfo.openId
+            common.showWxModal(openId, 5000)
+          })
+        }
+        tap = {}
+      }
+    }
+    async onLoad(options) {
+      this.showLoading = true
+      tap = {}
+      const {stage, _maxStudyStage} = options
+      if (stage === 'undefined') {
+        console.log('into')
+        this.loaded = true
+        this.showLoading = false
+        this.wordslist = []
+        return
+      }
+      // this.stage = stage
+      maxStage = stage
+      maxStudyStage = _maxStudyStage
+      let list = []
+      for (let i = 1; i < stage; i++) {
+        list.push('Day' + i)
+      }
+      this.stageList = list
+      this.setScrollHeight()
+      this.getWordsList(stage - 1)
+      this.$apply()
+    }
+    async getWordsList(stage) {
+      console.log('getWordsList')
+      console.log(stage)
+      try {
+        if (stage === 0) {
+          this.hasWords = false
+          this.$apply()
+          this.loaded = true
+          this.showLoading = false
+          return
+        }
+        this.hasWords = true
+        this.showLoading = true
+        let wordslist = await api.getWords({stage})
+        const allWords = common.prehandleWordsList(wordslist.data.list)
+        allList = allWords
+        errorList = allWords.filter(item => !item.rightSign)
+
+        // 初始是错词
+        this.wordslist = errorList
+        this.swiperList = [errorList, allList]
+        this.stage = stage
+        this.checkTab = 'today'
+        this.swiperIndex = 0
+        this.allShow = false
+        this.loaded = true
+        this.showLoading = false
+        this.$apply()
+      } catch (error) {
+        this.showLoading = false
+        this.resolveException()
+        console.log('getWordsList error')
+        console.log(error)
+      }
+    }
+    resolveException(msg) { // 异常处理
+      this.showWarnModal = true
+      this.warnMsg = msg || '网络失联了，请检查网络'
+      this.warnBtnMsg = '重新加载'
+      this.isOver = true
+      this.$apply()
+    }
+    async setScrollHeight() {
+      let res = await wepy.getSystemInfo()
+      this.scrollHeight = res.windowHeight - 140
+      this.$apply()
+    }
+    caclMoveDegree(x, y) {
+      if (y === 0) return true
+      console.log((y / x).toFixed(2))
+      if ((y / x).toFixed(2) < 0.3) {
+        return true
+      } else {
+        return false
+      }
+    }
+  }
+</script>
+<style lang="less">
+  .wordslist{
+    .day{
+      width: 150rpx;
+      position: fixed;
+      background: #fff;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 66rpx;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 36rpx;
+      color: #322A22;
+      font-weight:bold;
+      .text{
+        margin-right: 12rpx;
+      }
+      .direction{
+        width: 18.8rpx;
+        height: 12.4rpx;
+      }
+    }
+    .top{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      display: -webkit-flex;
+      -webkit-justify-content: center;
+      -webkit-align-items: center;
+      width: 100%;
+      color: #B1A79D;
+      box-sizing: border-box;
+      padding: 31rpx 50rpx;
+      position: relative;
+    }
+    .top-area{
+      position: fixed;
+      background: #fff;
+      top: 55rpx;
+      left: 0;
+      width: 100%;
+    }
+    .tabs{
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      font-size: 32rpx;
+      margin-top:34rpx;
+      .tab-item{
+        padding-bottom: 14rpx;
+      }
+      .tab-check-item{
+        padding-bottom: 14rpx;
+        position: relative;
+        &::after{
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 50rpx;
+          height: 4rpx;
+          border-radius: 100rpx;
+          background: #000;
+        }
+      }
+    }
+    .meanSwitch{
+      text-align: right;
+      font-size: 28rpx;
+      margin: 24rpx 40rpx 10rpx 0;
+      color: #FFD600;
+    }
+    .no-error{
+      padding-top: 100rpx;
+      text-align: center;
+      .no-error-img{
+        width: 340rpx;
+        height: 200rpx;
+        display: block;
+        margin: 0 auto;
+      }
+      .no-error-text{
+        display:block;
+        padding-top: 78rpx;
+        font-size: 28rpx;
+        color: #B1A79D;
+      }
+    }
+    .item{
+      margin:0 0 0 30rpx;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      display: -webkit-flex;
+      -webkit-align-items: center;
+      -webkit-justify-content: space-between;
+      // padding: 10rpx 0;
+      box-sizing: border-box;
+      border-bottom: 2rpx solid #EDEDED;
+      .left{
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        display: -webkit-flex;
+        -webkit-align-items: center;
+        -webkit-justify-content: flex-start;
+        // padding: 32rpx 0;
+        .word{
+          padding-left:50rpx;
+          font-size: 34rpx;
+          color: #554C44;
+          font-weight:bold;
+        }
+      }
+      .right{
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        display: -webkit-flex;
+        -webkit-justify-content: flex-end;
+        -webkit-align-items: center;
+        width: 100%;
+        height: 94rpx;
+        // padding: 32rpx 0;
+        .desc{
+          font-size: 24rpx;
+          color: #B1A79D;
+          flex:1;
+          -webkit-flex: 1;
+          text-align:right;
+          padding-right:20rpx;
+        }
+        .img-container{
+          // width: 80rpx;
+          padding-right: 50rpx;
+          padding-left: 10rpx;
+          display:flex;
+          align-items: center;
+          display:-webkit-flex;
+          -webkit-align-items: center;
+          height: 100%;
+          image{
+            width: 30rpx;
+            height: 20rpx;
+          }
+        }
+        .hideMode{
+          width:180rpx;
+        }
+        .outer-img-container{
+          box-sizing: border-box;
+          padding-left: 20rpx;
+          height:100%;
+          display:flex;
+          align-items:center;
+          display:-webkit-flex;
+          -webkit-align-items:center;
+          .single_eye{
+            width: 30rpx;
+            height: 20rpx;
+            margin-right:98rpx;
+          }
+        }
+      }
+    }
+    .bot-container{
+      position:fixed;
+      display: flex;
+      flex-direction: column;
+      display: -webkit-flex;
+      -webkit-flex-direction: column;
+      // height:90rpx;
+      width:100%;
+      left:0;
+      bottom: 0rpx;
+      color: #322A22;
+      .days{
+        display: flex;
+        justify-content:space-between;
+        display: -webkit-flex;
+        -webkit-justify-content:space-between;
+        padding: 0 30rpx;
+        box-sizing: border-box;
+        margin-bottom: 30rpx;
+        view{
+          color:#FFD600;
+          font-size: 28rpx;
+          &.gray{
+            color:#DADADA;
+          }
+        }
+      }
+      .practice{
+        // width: 440rpx;
+        width: 100%;
+        height: 100rpx;
+        border: none;
+        // border-radius: 100rpx;
+        background: #FFD600;
+        // margin-bottom: 30rpx;
+        font-size: 34rpx;
+        color: #322A22;
+        line-height: 100rpx;
+        // box-shadow: 0 6px 23px 0 rgba(236,205,46,0.51);
+        &::after{
+          border: none;
+        }
+      }
+    }
+    .blank_data{
+      position:fixed;
+      z-index: 3;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      text-align: center;
+      image{
+        width: 340rpx;
+        height: 200rpx;
+        margin-top: 300rpx;
+      }
+      view{
+        font-size: 28rpx;
+        color: #B1A79D;
+        margin-top: 78rpx;
+      }
+    }
+  }
+</style>

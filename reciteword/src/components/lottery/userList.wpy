@@ -1,0 +1,91 @@
+<style lang="less">
+  .userlist{
+    text-align: center;
+    width: 100%;
+    .title{
+      padding-top: 20rpx;
+      font-size: 28rpx;
+      color: #554C44;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      .title-image{
+        width: 20rpx;
+        height: 20rpx;
+      }
+      .text{
+        margin: 0 20rpx;
+      }
+    }
+    .flex-list{
+      display: flex;
+      flex-wrap: wrap;
+      .flex-item{
+        text-align: center;
+        margin-top: 40rpx;
+        width: 33%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        overflow: hidden;
+        .avatar{
+          width: 80rpx;
+          height: 80rpx;
+          border-radius: 50%;
+        }
+        .nickname{
+          margin: 15rpx 0 10rpx;
+          font-size: 24rpx;
+        }
+        .desc{
+          font-size: 20rpx;
+          color: #B1A79D;
+          text-overflow: ellipsis;
+          width: 100%;
+          height: 28rpx;
+        }
+      }
+    }
+  }
+</style>
+<template>
+  <view class="userlist" wx:if='{{show}}'>
+      <view class='title'>
+        <image src='../../images/xcx_jie_3@3x.png' class='title-image'></image>
+        <view class='text'>中奖者名单</view>
+        <image src='../../images/xcx_jie_3@3x.png' class='title-image'></image>
+      </view>
+      <view class='flex-list' style="{{list.length < 3 ? 'justify-content: center;' : ''}}">
+        <repeat for='{{list}}' key='key' index='index'>
+          <view class='flex-item'>
+            <image src="{{item.portrait || '../../images/xcx_ji_1@2x.png'}}" class='avatar'></image>
+            <view class='nickname'>{{item.nickname}}</view>
+            <view class='desc' wx:if='{{item.friendCount || item.friendCount === 0}}'>
+              <!-- 共有{{item.friendCount}}位朋友帮Ta提升了中奖概率 -->
+            </view>
+            <view class='desc' wx:else>
+              虚位以待
+            </view>
+          </view>
+        </repeat>
+      </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class userList extends wepy.component {
+    props = {
+      show: {
+        type: Boolean,
+        default: true
+      },
+      list: {
+        type: Array
+      }
+    }
+    methods = {
+    }
+  }
+</script>

@@ -1,0 +1,83 @@
+<style lang="less">
+  .reviewSuccessModal{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0,0,0,0.16);
+    z-index: 11;
+    .review-body{
+      width: 560rpx;
+      height: 380rpx;
+      border-radius: 10rpx;
+      margin: 367rpx auto;
+      background: #fff;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      .accomplished{
+        position: absolute;
+        z-index: 12;
+        width: 412rpx;
+        height: 130rpx;
+        top: -65rpx;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .review-text{
+        margin-top: 10rpx;
+      }
+      .bot-cloud{
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 12;
+        height: 106rpx;
+      }
+    }
+  }
+</style>
+<template>
+  <view class="reviewSuccessModal" wx:if='{{show}}' @tap.stop='tapContainer' @touchmove.stop='move1'>
+    <view class='review-body' @tap.stop='tap2' @touchmove.stop='move2'>
+      <image class='accomplished' src='https://xcx-cdn.kaochong.com/recite/image/xcx_fu_1@2x.png'></image>
+      <text class='review-text'>本阶段的错词复习完啦</text>
+      <text class='review-text'>继续加油哇</text>
+      <image class='bot-cloud' src='https://xcx-cdn.kaochong.com/recite/image/xcx_fu_2@2x.png'></image>
+    </view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class ReviewSuccessModal extends wepy.component {
+    props = {
+      show: {
+        type: Boolean,
+        default: false
+      }
+    }
+    methods = {
+      close() {
+        this.$emit('close')
+      },
+      retry() {
+        this.$emit('retry')
+      },
+      tapContainer() {
+        // console.log('tapContainer')
+        this.$emit('tapOver')
+      },
+      tap1() {
+      },
+      move1() {
+      },
+      move2() {
+      }
+    }
+  }
+</script>

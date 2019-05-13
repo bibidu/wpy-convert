@@ -1,0 +1,121 @@
+<template>
+  <view class='new-choose-category'>
+    <view class='cate-top' wx:if='{{show}}'>请选择你最感兴趣的分类</view>
+    <view class='cate-con'>
+      <repeat for='{{categories}}'>
+        <view class="cate-item {{categoryId === item.categoryId ? 'choose' : ''}}" @tap='select({{item.categoryId}})'>
+          <text>{{item.categoryName}}</text>
+          <view class='recommend' wx:if='{{item.tag}}'>{{item.tag}}</view>
+        </view>
+      </repeat>
+    </view>
+    <!-- loading -->
+    <kcLoading :show.sync='showLoading'></kcLoading>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import api from '@/common/api'
+  import kcLoading from '@/components/kcLoading'
+  export default class chooseBookCategory extends wepy.page {
+    config = {
+      navigationBarTitleText: '选择单词任务'
+    }
+    components = {
+      kcLoading
+    }
+    data = {
+      show: false,
+      showLoading: true,
+      categoryId: -1,
+      categories: []
+    }
+    methods = {
+      select(categoryId) {
+        this.categoryId = categoryId
+        this.$navigate('../chooseBook/chooseBookItem', { categoryId })
+      }
+    }
+    async onLoad() {
+      let tagList = ['核心500词', '核心500词', '核心1000词']
+      let { categories } = await api.getBookClassify()
+      this.categories = categories.map((item, index) => {
+        if (index < 3) return Object.assign({}, item, {tag: tagList[index]})
+        return item
+      })
+      this.show = true
+      this.showLoading = false
+      this.$apply()
+    }
+    async onShow() {
+      let { wordbook } = await api.indexV1()
+      if (wordbook && wordbook.target) {
+        wepy.reLaunch({url: '/pages/index'})
+      }
+    }
+  }
+</script>
+
+<style lang='less'>
+  .new-choose-category {
+    width: 100vw;
+    height: 100vh;
+    font-weight: bold;
+    .cate-top {
+      padding: 120rpx 0 100rpx 30rpx;
+      box-sizing: border-box;
+      font-size: 56rpx;
+      color: #322A22;
+    }
+    .cate-con {
+      width: 100%;
+      padding: 0 30rpx;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      .cate-item {
+        position: relative;
+        width: 330rpx;
+        height: 100rpx;
+        background: #FFFFFF;
+        box-shadow: 0 1rpx 40rpx 0 rgba(0, 0, 0, 0.10);
+        border-radius: 100rpx;
+        margin-bottom: 70rpx;
+        line-height: 100rpx;
+        text-align: center;
+        font-size: 30rpx;
+        color: #554C44;
+        .recommend{
+          position: absolute;
+          top:-34rpx;
+          right: 0;
+          height: 49rpx;
+          line-height: 49rpx;
+          background: #FFD600;
+          border-radius: 6rpx 6rpx 6rpx 0;
+          padding: 0 12rpx;
+          box-sizing: border-box;
+          font-size: 24rpx;
+          color: #fff;
+          &::before{
+            content: '';
+            position: absolute;
+            bottom: -14rpx;
+            left: 0rpx;
+            width: 0;
+            height: 0;
+            border-width: 10rpx;
+            border-style: solid;
+            border-radius:6rpx;
+            border-color: #FFD600 transparent transparent #FFD600;
+          }
+        }
+      }
+      .choose{
+        background: #FFD600;
+      }
+    }
+  }
+</style>

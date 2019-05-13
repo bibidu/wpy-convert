@@ -1,0 +1,110 @@
+<style lang="less">
+    .answer-meaning{
+        margin-top: 40rpx;
+        .meaning{
+          margin-right: 70rpx;
+          margin-bottom: 20rpx;
+          text-align: center;
+          font-size: 32rpx;
+          color: #484E5E;
+          // font-weight: bold;
+        }
+        .mean-wrapper{
+          margin: 50rpx 40rpx 0;
+          border-top:1rpx dashed rgba(154,159,168,0.3954);
+          .mean-item{
+            margin-top: 50rpx;
+            font-size: 30rpx;
+            color: #484E5E;
+            .title{
+                font-size: 24rpx;
+                color: #B8BCC2;
+            }
+            .content{
+                display: flex;
+                margin: 20rpx 0 10rpx;
+                .sentence{
+                  margin-right:35rpx;
+                  flex: 1;
+                }
+                .voice{
+                    width: 44rpx;
+                    height: 34rpx;
+                }
+            }
+            .meaning{
+                text-align: left;
+            }
+          }
+        }
+    }
+</style>
+<template>
+  <view class='answer-meaning'>
+    <view style="display:none;">
+      <Player @playOver.user='playOver' />
+    </view>
+    <repeat for='{{subList}}'>
+      <view class='meaning'>{{item.zh}}</view>
+    </repeat>
+    <scroll-view scroll-y style="height:520rpx;">
+      <view class='mean-wrapper'>
+        <repeat for='{{siteList}}'>
+          <view class='mean-item'>
+            <view class='title' wx:if='{{item.exampleTag}}'>({{item.exampleTag}})</view>
+            <view class='content' wx:if='{{item.enExample}}'>
+                <view class='sentence'>{{item.enExample}}</view>
+                <image @tap='playV({{index}}, {{item.enExampleVoice}})' class='voice' src="{{checkIndex === index ? act : dft }}"></image>
+            </view>
+            <view class='meaning' wx:if='{{item.zhExample}}'>{{item.zhExample}}</view>
+          </view>
+        </repeat>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+
+  import { activePlayer, dftPlayer } from '@/common/constant'
+  import Player from '@/components/answer/player'
+
+
+  @connect({
+    siteList (state) {
+      return state.practice.question.wordsSiteList
+    },
+    subList (state) {
+      let list = state.practice.question.wordsSubList || []
+      return list.slice(0, 2)
+    }
+  })
+  export default class AnswerMeaning extends wepy.component {
+    components = {
+      Player
+    }
+    data = {
+      checkIndex: -1,
+      act: activePlayer,
+      dft: dftPlayer
+    }
+    methods = {
+      stopMusic() {
+        // console.log('stopMusic')
+        // console.log(this)
+        this.checkIndex = null
+        this.$invoke('Player', 'stop')
+      },
+      playOver() {
+        this.checkIndex = -1
+      },
+      playV(index, src) {
+        console.log('playV')
+        console.log(src)
+        this.checkIndex = index
+        this.$invoke('Player', 'play', src)
+      }
+    }
+  }
+</script>

@@ -1,0 +1,101 @@
+<style lang="less">
+  .drop{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 8;
+    background: rgba(0,0,0,0.4);
+    .drop-menu{
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      // height: 528rpx;
+      background: #fff;
+      z-index: 9;
+      .drop-item{
+        height: 88rpx;
+        box-shadow: 0 1rpx 0 0 #E2E2E2;
+        font-size: 32rpx;
+        line-height: 88rpx;
+        text-align: center;
+        .lock{
+          margin-left: 7rpx;
+          width: 22rpx;
+          height: 26rpx;
+        }
+        #lock{
+          color: #E5E5E5;
+        }
+      }
+    }
+  }
+</style>
+<template>
+  <view class='drop' wx:if='{{show}}' @tap.stop='globalBg' @touchmove.stop='move'>
+    <view class='drop-menu' @tap.stop='tap1' @touchmove.stop='move1'>
+      <!-- <view class='drop-item'>
+        全部
+      </view> -->
+      <scroll-view scroll-y style='height:460rpx'>
+        <repeat for='{{list}}' key='key' index='index'>
+          <view class='drop-item' @tap='queryWords({{index + 1}})'>
+            <text id="{{index + 2 > currDay ? 'lock' : ''}}">{{item}}</text>
+            <image wx:if="{{index + 2 > currDay}}" class='lock' src='../../images/xcx_lie_1@2x.png'></image>
+          </view>
+        </repeat>
+      </scroll-view>
+    </view>    
+  </view>
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class DropMenu extends wepy.component {
+    props = {
+      show: {
+        type: Boolean,
+        default: true,
+        twoWay: true
+      },
+      currDay: {
+        type: Number
+      },
+      maxDay: {
+        type: Number
+      }
+    }
+
+    data = {
+      list: []
+    }
+    events = {
+    }
+
+    watch = {
+      maxDay(newValue) {
+        for (let i = 1; i <= newValue; i++) this.list.push(`Day${i}`)
+      }
+    }
+
+    methods = {
+      move() {
+      },
+      tap1() {
+      },
+      move1() {
+      },
+      queryWords(day) {
+        if (day < this.currDay) {
+          this.$emit('queryWords', day)
+          this.show = false
+        }
+      },
+      globalBg() {
+        this.$emit('close')
+      }
+    }
+  }
+</script>

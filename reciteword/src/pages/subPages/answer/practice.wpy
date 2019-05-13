@@ -1,0 +1,693 @@
+<template>
+  <view class="answer-practice-wrapper">
+    <!-- 顶部进度条 -->
+    <HorizonProgress :progress.sync='progress'></HorizonProgress>
+    <view class='word'>
+      <text>{{question.en}}</text>
+    </view>
+    <view class='wordb'>
+      {{question.soundmark}}
+    </view>
+    <!-- <view style="display:none"> -->
+      <!-- <Player @playOver.user='playOver1'></Player> -->
+    <!-- </view> -->
+    <!-- 小喇叭 -->
+    <block class='player'>
+      <image @tap='playAudioEvent' class='voice' src="{{playing ? 'https://xcx-cdn.kaochong.com/recite/image/ttb_lian_1@2x.gif' : 'https://xcx-cdn.kaochong.com/recite/image/ttb_lian_1@2x.png' }}"></image>
+    </block>
+    <!-- ABCD按钮组 -->
+    <block>
+      <view class='btn_group' hidden="{{state === 1}}">
+        <repeat for='{{question.options}}' key='{{index}}'>
+          <view class='btn_container' @tap='chooseOne({{index}})'>
+            <button :class="{bingo: index === realAnswer, error: index === youChoose}">
+              <view class='qs-option'>{{item.option}}</view>
+              <view class='qs-mean'>{{item.zh}}</view>
+            </button>
+          </view>
+        </repeat>
+      </view>
+    </block>
+    <!-- 释义 -->
+    <block>
+      <view hidden="{{state === 0}}">
+        <AnswerMeaning />
+      </view>
+    </block>
+    <!-- 底部按钮 -->
+    <button class="bot-btn" style="{{tapBotBtn ? 'background:#e7e7e7' : ''}}" @tap='continueNext'>
+      <text class='time'>{{restTime}}s</text>
+      <view class='text'>{{btnText}}</view>
+      <view class='pgs-line {{aniClassName}}'></view>
+    </button>
+    <kcLoading :show.sync='showLoading' :transparent='transparent'></kcLoading>
+    <!-- <ErrorModal /> -->
+    <kcNotification :show.sync='showWarnModal' :msg.sync='warnMsg' :btnMsg.sync='warnBtnMsg' @togglewarning.user='togglewarning'></kcNotification>
+    <NotifyRestPartModal />
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { setCached, getCached, removeCached } from '@/common/storage'
+// import { bindEvent, removeAllEvent } from '@/common/dep'
+import api from '@/common/api'
+import { bunchDownload } from '@/common/download'
+// bunchDownload
+// import {
+// } from '@/common/constant'
+import common from '@/common/common'
+import HorizonProgress from '@/components/answer/horizonProgress' // 顶部进度条
+// import Player from '@/components/answer/player' // 小喇叭播放控件
+import AnswerMeaning from '@/components/answer/answerMeaning'
+import kcNotification from '@/components/kcNotification'
+import kcLoading from '@/components/kcLoading'
+import NotifyRestPartModal from '@/components/answer/notifyRestPartModal'
+
+
+import {
+  // getQuestionWithCachedAudio,
+  updateQuestion,
+  queryPartQuestions,
+  toggleState,
+  replyAnswer,
+  saveTarget,
+  savePart,
+  incPart,
+  clearQsIndex,
+  replyAnswerFinal,
+  saveCacheAudios,
+  confuseQuestion
+} from '@/store/actions/practice'
+
+// import { yesSrc, noSrc } from '@/common/constant'
+// import { bunchDownload, stopDownload } from '@/common/download'
+import { getStore, connect } from 'wepy-redux'
+// import trycatch from 'wepy-trycatch'
+const { dispatch } = getStore()
+
+let lockChoose = true
+// let cacheName = ''
+// let questions = []
+// let questionResults = []
+// let qsIndex = 0
+// let cacheYes = ''
+// let cacheNo = ''
+let repeat = false
+let timer = null
+let audioCtx = null
+let exit = false
+// let cachedTarget = null
+// let cachedPart = null
+// let cachedFinalTest = null
+// 缓存onLoad[options]
+let options = null
+let first = false
+// let cacheAudios = []
+// let lock = true
+// let cacheAudios = []
+// let part = 0
+let studyInfo = {}
+
+const togRules = {
+  0: {
+    time: 500,
+    next: 1,
+    aniClassName: 'tenAnimate',
+    restTime: 10,
+    name: 'answer'
+  },
+  1: {
+    time: 500,
+    next: 0,
+    aniClassName: 'twentyAnimate',
+    restTime: 20,
+    name: 'detail'
+  },
+  final: {
+    time: 500,
+    next: '',
+    aniClassName: 'tenAnimate',
+    restTime: 10,
+    name: 'finalTest'
+  }
+}
+// @trycatch()
+@connect({
+  question (state) {
+    return state.practice.question
+  },
+  questions (state) {
+    return state.practice.questions
+  },
+  questionResults (state) {
+    return state.practice.questionResults
+  },
+  qsIndex (state) {
+    return state.practice.qsIndex
+  },
+  progress (state) {
+    return state.practice.progress
+  },
+  state (state) {
+    return state.practice.state
+  },
+  cacheName (state) {
+    return state.practice.cacheName
+  },
+  target: (state) => state.practice.target,
+  part: (state) => state.practice.part
+}, {
+  // updateQuestion,
+  // queryPartQuestions,
+  // toggleState,
+  // updateProgress,
+  // replyAnswer,
+  // saveTarget,
+  // savePart,
+  // incPart,
+  // clearQsIndex
+})
+export default class Practice extends wepy.page {
+  config = {
+    navigationBarTitleText: '练习模式'
+  }
+  components = {
+    HorizonProgress,
+    // Player,
+    AnswerMeaning,
+    kcLoading,
+    NotifyRestPartModal,
+    kcNotification
+  }
+  mixins = []
+  computed = {
+    btnText() {
+      if (this.questions && (this.qsIndex === this.questions.length) && this.state === 1) {
+        if (this.part > this.$parent.globalData.part) return '去打卡'
+        if (this.part === this.$parent.globalData.part && !this.questionResults.length) return '去打卡'
+        return '进入下一组学习'
+      }
+      if (this.state === 0) {
+        return '我不确定'
+      } else {
+        return '继续背'
+      }
+    }
+  }
+  data = {
+    transparent: false,
+    // state: 0, // 0 答题阶段  1 释义阶段 【固定】
+    options: null,
+    // countdown: 10, // 倒计时的时间【固定】
+    playing: false, // 是否正在播放【固定】
+    // progress: 0, // 进度条
+    loading: false, // 显示透明遮罩(防重复点击),
+    youChoose: null,
+    realAnswer: null,
+    restTime: 50,
+    noQs: false,
+    aniClassName: '',
+    tapBotBtn: false,
+    btnText: '',
+    finalTest: false,
+    showWarnModal: false, // 异常提示框
+    warnMsg: null, // 异常提示框
+    warnBtnMsg: null, // 异常提示框
+    // stopAudio: false,
+    // questions: [],
+    // qsIndex: 0,
+    // questionResults: [],
+    showLoading: true
+  }
+
+  methods = {
+    async chooseOne(index) {
+      if (lockChoose) return
+      lockChoose = true
+
+      this.aniClassName = ''
+      if (this.finalTest) {
+        let hasOver = this.caclFinalRst(index)
+        !hasOver && this.togFinalState()
+      } else {
+        await this.judgeRight(index) // 停止倒计时并判断是否正确、播放音效、显示答题样式、计算进度条、统计错误次数
+        this.togState(this.state)
+      }
+    },
+    togglewarning() {
+      this.showLoading = true
+      first = true
+      this.onShow()
+    },
+    continueNext() {
+      if (lockChoose) return
+      lockChoose = true
+
+      this.tapBotBtn = true
+      // 我不确定
+      if (this.state === 0) {
+        lockChoose = false
+        return this.methods.chooseOne.bind(this)(-1)
+      }
+      // 继续背
+      if (this.state === 1) {
+        this.resetStyle()
+        // 最后一题直接上报、跳转打卡
+        if (!repeat && this.qsIndex > this.questions.length - 1) {
+          return this.submitPartError()
+        }
+        this.togState(this.state, () => {
+          if (!repeat) {
+            dispatch(updateQuestion())
+          } else {
+            dispatch(confuseQuestion())
+          }
+        })
+      }
+    },
+    playAudioEvent() {
+      this.play(this.question.cachedVoice)
+    }
+  }
+  getRest(entireList, partList) {
+    return entireList.filter(item => !(partList.some(part => part === item)))
+  }
+  resetStyle() {
+    this.realAnswer = null
+    this.youChoose = null
+  }
+  async submitPartError() {
+    let misWordIds = [...new Set(this.questionResults)]
+    await api.submitNewVersionError({
+      misWordIds: misWordIds,
+      rightWordIds: this.getRest(this.questions.map(item => item.id), misWordIds),
+      part: this.part
+    })
+    console.log('========删除该阶段的词')
+    removeCached(this.cacheName)
+    if (this.finalTest) {
+      removeCached('v2-continue-study')
+      return this.$redirect('siginv2')
+    }
+    if (this.part === this.$parent.globalData.part) {
+      if (!this.questionResults.length) {
+        removeCached('v2-continue-study')
+        return this.$redirect('siginv2')
+      }
+    }
+    if (this.part > this.$parent.globalData.part) {
+      removeCached('v2-continue-study')
+      return this.$redirect('siginv2')
+    }
+    // lock = true
+    // 继续下一组学习
+    dispatch(incPart(1))
+    dispatch(clearQsIndex())
+    this.showEntryNextModal()
+  }
+  async showEntryNextModal() {
+    let { wordbook } = getCached('userInfo')
+    const restPart = wordbook.part - this.part + 1
+    if (restPart < 0) {
+      return this.$redirect('answerStudy')
+    }
+    await this.$invoke('NotifyRestPartModal', 'show', { restPart: restPart || 1 })
+    this.$redirect('answerStudy')
+  }
+  // 判断对错并缓存结果
+  async cacheQsResult(userChoose, rightChoose) {
+    let flag = userChoose === rightChoose
+    repeat = !flag
+    return flag
+  }
+  // 最终测试
+  // 延迟开启进度条动画、初始化倒计时、按钮解锁、播放下一题音频
+  renderFinalNextQs(aniClassName, delay, restTime) {
+    // this.aniClassName = ''
+    this.restTime = restTime
+    setTimeout(() => {
+      // this.resetStyle()
+      this.tapBotBtn = false
+      dispatch(updateQuestion())
+      this.resetStyle()
+      this.aniClassName = aniClassName
+      this.play(this.question.cachedVoice)
+      lockChoose = false
+      this.$apply()
+      this.start()
+    }, delay)
+  }
+  start() {
+    timer && clearInterval(timer)
+    if (exit) return
+    timer = setInterval(() => {
+      this.restTime--
+      this.$apply()
+      if (this.restTime === 0) {
+        clearInterval(timer)
+        this.methods.chooseOne.bind(this)()
+      }
+    }, 1000)
+  }
+  // 延迟开启进度条动画、初始化倒计时、按钮解锁、播放音频
+  /**
+   * @params[aniClassName]: 进度条keyframe类名
+   * @params[delay]: 延迟时间
+   * @params[restTime]: 倒计时时间
+   * @params[name]: answer[答题状态]/detail[释义状态]
+   */
+  renderPgs(aniClassName, delay, restTime, name) {
+    this.aniClassName = ''
+    this.restTime = restTime
+    this.tapBotBtn = false
+    setTimeout(() => {
+      this.aniClassName = aniClassName
+      // 自动播放音频
+      this.playAudio(this.question.cachedVoice)
+
+      lockChoose = false
+      this.$apply()
+      start.call(this)
+    }, delay)
+
+    function start() {
+      timer && clearInterval(timer)
+      if (exit) return
+      timer = setInterval(() => {
+        this.restTime--
+        this.$apply()
+        if (this.restTime === 0) {
+          clearInterval(timer)
+          this.state === 0 && this.methods.continueNext.bind(this)()
+        }
+      }, 1000)
+    }
+  }
+  // 最终测试（切换状态）
+  togFinalState(first) {
+    const { aniClassName, time, restTime } = togRules['final']
+
+    if (first) {
+      return this.renderFinalNextQs(aniClassName, time, restTime)
+    }
+    setTimeout(() => {
+      this.renderFinalNextQs(aniClassName, time, restTime)
+    }, restTime)
+  }
+  // 切换状态
+  togState(curState, fn) {
+    if (curState === undefined) {
+      const firstSetting = togRules[0]
+      const { aniClassName, restTime, name } = firstSetting
+      return this.renderPgs(aniClassName, 0, restTime, name)
+    }
+    const { time, next } = togRules[curState]
+    setTimeout(() => {
+      dispatch(toggleState(next))
+      const { restTime, aniClassName, name } = togRules[next]
+      fn && typeof fn === 'function' && fn()
+      // 先执行fn用于更新下一题数据，再执行renderPgs（方法内包含播放下一词音频）
+      this.renderPgs(aniClassName, time, restTime, name)
+      this.$apply()
+    }, time)
+  }
+  // 更新结果样式
+  updateStyle(userChoose, rightChoose) {
+    this.realAnswer = rightChoose - 1
+    this.youChoose = userChoose - 1
+  }
+  // 最终测试（答题）
+  caclFinalRst(myAnswer) {
+    let userChoose = myAnswer + 1
+    let rightChoose = this.question.realAnswer
+    let isRight = userChoose === rightChoose
+
+    // 最后一题
+    if (this.qsIndex >= this.questions.length - 1) {
+      this.submitPartError()
+      return true
+    }
+    dispatch(replyAnswerFinal(isRight))
+    // 播放正误音效
+    let gd = this.$parent.globalData
+    this.playAudio(isRight ? gd.cacheYes : gd.cacheNo)
+    // 更新结果样式
+    this.updateStyle(userChoose, rightChoose)
+    return false
+  }
+  async judgeRight(myAnswer) {
+    const getMusic = (isRight) => {
+      let gd = this.$parent.globalData
+      return isRight ? gd.cacheYes : gd.cacheNo
+    }
+    let [userChoose, rightChoose] = [myAnswer + 1, this.question.realAnswer]
+
+    // 缓存题目正误及错题id
+    let isRight = await this.cacheQsResult(userChoose, rightChoose)
+    dispatch(replyAnswer(isRight))
+    // 播放正误音效
+    this.playAudio(getMusic(isRight))
+    // 更新结果样式
+    this.updateStyle(userChoose, rightChoose)
+    this.$apply()
+  }
+  playAudio(src) {
+    // this.$invoke('Player', 'play', src)
+    this.play(src)
+  }
+  onUnload() {
+    console.log('onUnload')
+    console.log('==========onUnload==========')
+    // 记录结束学习时间
+    setCached('studyInfo', {...studyInfo, onUnload: new Date().getTime(), type: 'practice'})
+    exit = true
+    timer && clearInterval(timer)
+  }
+  onHide() {
+    console.log('==========onHide==========')
+    console.log('onHide')
+    studyInfo = {...studyInfo, onHide: new Date().getTime()}
+    exit = true
+    timer && clearInterval(timer)
+    // this.$invoke('AnswerMeaning', 'stopMusic')
+  }
+  async downloadAudio() {
+    // console.log('下音频')
+    const questions = this.questions.filter(item => item.voice && !item.voice.includes('no_voice'))
+    if (questions.length > 0) {
+      await bunchDownload(
+        questions.map(item => ({id: item.id, voice: item.voice})),
+        questions.length,
+        ({ results }) => {
+          // console.log(results)
+          // cacheAudios = results
+          dispatch(saveCacheAudios(results))
+          console.log('下载成功')
+        }
+      )
+    }
+  }
+  play(src) {
+    if (src) {
+      this.$invoke('AnswerMeaning', 'stopMusic')
+      audioCtx.src = src
+      audioCtx.play()
+      this.$apply()
+    }
+  }
+  initAudioPlayer() {
+    audioCtx = wepy.createInnerAudioContext()
+    audioCtx.autoplay = true
+    audioCtx.onPlay(() => {
+      this.playing = true
+      this.$apply()
+    })
+    audioCtx.onEnded(() => {
+      this.playing = false
+      this.$apply()
+    })
+    audioCtx.onError(() => {
+      console.log('audioctx error')
+      this.playing = false
+      this.$apply()
+    })
+  }
+  resolveException(msg) {
+    const warnMsg = common.getErrorCode(msg)
+    this.showWarnModal = true
+    this.warnMsg = warnMsg
+    this.warnBtnMsg = '重新加载'
+    this.$apply()
+  }
+  async onShow() {
+    try {
+      let { target, part, finalTest } = options
+      exit = false
+      if (first) {
+        first = false
+        lockChoose = true
+        // lock = false
+        this.showLoading = true
+        this.$apply()
+        this.initAudioPlayer()
+        this.finalTest = parseInt(finalTest)
+        target && dispatch(saveTarget(target))
+        part && dispatch(savePart(part))
+        // 获取、加载初始题目
+        await dispatch(queryPartQuestions(target))
+        await this.downloadAudio()
+        dispatch(updateQuestion())
+        // 加载题目
+        if (this.finalTest) {
+          this.togFinalState(1)
+        } else {
+          this.togState()
+        }
+        this.showLoading = false
+        this.$apply()
+      } else {
+        this.start()
+      }
+    } catch (error) {
+      this.showLoading = false
+      this.resolveException('网络环境异常')
+    }
+  }
+  // onLoad({ target, part, finalTest }) {
+  onLoad(_options) {
+    // 记录开始学习时间
+    studyInfo = { onLoad: new Date().getTime() }
+    first = true
+    options = _options
+  }
+}
+</script>
+<style lang="less" scoped>
+  .voice{
+    display: block;
+    margin: 10rpx auto 0;
+    width: 44rpx;
+    height: 34rpx;
+    padding: 10rpx;
+  }
+  .answer-practice-wrapper {
+    height: 100%;
+    .word {
+      font-weight: bold;
+      font-size: 80rpx;
+      color: #322a22;
+      text-align: center;
+    }
+    .wordb {
+      font-size: 30rpx;
+      font-weight: bold;
+      color: #9A9FA8;
+      text-align: center;
+      margin-bottom: 25rpx;
+    }
+    .player{
+      margin: 50rpx auto 0;
+      height: 40rpx;
+    }
+    .btn_group {
+      width: 630rpx;
+      margin: 90rpx auto;
+      .btn_container {
+        position: relative;
+        color: #484E5E;
+        button {
+          width: 100%;
+          height: 100rpx;
+          border-radius: 100rpx;
+          border: 1px solid rgba(202,203,207,0.5);
+          background: #fff;
+          font-size: 30rpx;
+          color: #484E5E;
+          text-align: left;
+          line-height: 100rpx;
+          box-sizing: border-box;
+          margin-bottom: 40rpx;
+          display: flex;
+          font-weight: bold;
+          &::after {
+            border: none;
+          }
+          &.error {
+            color: #fff;
+            background: #FD5942;
+            border: none;
+          }
+          &.bingo {
+            color: #fff;
+            background: #48D76C;
+            border: none;
+          }
+          &.nosure {
+            color: #fff;
+          }
+        }
+        .qs-option{
+          padding: 0 70rpx;
+        }
+        .qs-mean{
+          flex: 1;
+        }
+      }
+    }
+    // .bot-highlight{
+    //   background: #e7e7e7;
+    // }
+    .bot-btn{
+      position: absolute;
+      bottom: 64rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 630rpx;
+      height: 100rpx;
+      background:rgba(248,248,248,1);
+      border-radius:50rpx;
+      font-size: 30rpx;
+      text-align: center;
+      line-height: 100rpx;
+      &:after{
+        border: none;
+      }
+      .time{
+        position: absolute;
+        left: 70rpx;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #48D76C;
+      }
+      .text{
+        color: #484E5E;
+        font-weight: bold;
+      }
+      .pgs-line{
+        position: absolute;
+        height: 2rpx;
+        bottom: 0rpx;
+        background: #48D76C;
+        width: 0%;
+        
+      }
+      .tenAnimate{
+        animation: keyf 11s linear;
+        animation-fill-mode: forwards; 
+      }
+      .twentyAnimate{
+        animation: keyf 21s linear;
+        animation-fill-mode: forwards; 
+      }
+    }
+  }
+  @keyframes keyf {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+</style>

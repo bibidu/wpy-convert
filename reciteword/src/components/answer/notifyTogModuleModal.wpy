@@ -1,0 +1,104 @@
+<style lang='less'>
+  .notify-tog-module-modal {
+    position: fixed;
+    z-index: 8;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    .img-text-btn-modal-body{
+      position: fixed;
+      z-index: 9;
+      top: 200rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 560rpx;
+      height: 588rpx;
+      padding: 0 70rpx;
+      box-sizing: border-box;
+      font-size: 32rpx;
+      background: #fff;
+      border-radius: 18rpx;
+      .img{
+        width: 326rpx;
+        height: 200rpx;
+        display: block;
+        margin: 80rpx auto 0;
+      }
+      .title{
+        display: block;
+        font-size: 36rpx;
+        margin: 40rpx 0 15rpx;
+      }
+      .text{
+        margin: 0 auto 77rpx;
+        display: block;
+        font-size: 30rpx;
+        color: #484E5E;
+      }
+      .btn{
+        text-align: center;
+        position: absolute;
+        bottom: 50rpx;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 360rpx;
+        height: 100rpx;
+        line-height: 100rpx;
+        font-size: 32rpx;
+        background:linear-gradient(180deg,rgba(255,191,56,1) 0%,rgba(255,158,56,1) 100%);
+        box-shadow:0px 4rpx 15rpx 0px rgba(255,154,38,0.2);
+        border-radius:50rpx;
+        color: #fff;
+        &:after{
+          border: none;
+        }
+      }
+    }
+  }
+</style>
+
+<template>
+  <view class='notify-tog-module-modal' wx:if='{{show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class='img-text-btn-modal-body'>
+      <image src='../../images/ttb_nei_1.png' class='img'></image>
+      <text class='title'>{{modalObj.title}}</text>
+      <text class='text'>如果想切换到之前的学习模式，可以去首页切换~</text>
+      <button class='btn' @tap='hideModal'>马上体验</button>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { setCached, getCached } from '@/common/storage'
+
+  let _resolve = null
+  export default class NotifyTogModuleModal extends wepy.component {
+    data = {
+      show: false
+    }
+    methods = {
+      tap1() {},
+      move1() {},
+      showModal() {
+        return new Promise(resolve => {
+          const hasCached = getCached('v2-answer-teach')
+          if (hasCached) {
+            resolve()
+          } else {
+            setCached('v2-answer-teach', 1)
+            this.show = true
+            _resolve = resolve
+          }
+        })
+      },
+      hideModal() {
+        this.$emit('tapBtn')
+        _resolve()
+        this.show = false
+      }
+    }
+  }
+</script>

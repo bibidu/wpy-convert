@@ -1,0 +1,258 @@
+<template>
+  <view class="mask" wx:if='{{show}}' @tap.stop='tap1' @touchmove.stop='move1'>
+    <view class="modal-wrap" style="height:{{status===2?hasMobile&&!edit?'766rpx':'938rpx':'736rpx'}}">
+      <image class='close' @tap='close' src='../images/xcx_wan_2@2x.png'></image>
+      <view class='modal-body'>
+        <view class='modal-title'>{{title}}</view>
+        <view class='time'>{{time}}</view>
+        <image class='prize' src='{{prizeImg}}'></image>
+        <view class='prize-name'>{{prizeInfo}} X {{prizeCount}}</view>
+        <view class='list'>— 中奖者名单 —</view>
+        <view class='name-list'>
+          <repeat for='{{listArr}}' key='index'>
+            <view class='list-item'>
+              <image class='avatar' src="{{item.portrait || '../images/xcx_ji_1@2x.png'}}"></image>
+              <view class='nickname'>{{item.nickname || '虚位以待'}}</view>
+            </view>
+          </repeat>
+        </view>
+        <view wx:if='{{status === 2}}'>
+          <view class='list editlist' wx:if='{{hasMobile&&!edit}}' @tap='editMobile'>修改已提交的手机号 >></view>
+          <view class='list' wx:if='{{!(hasMobile&&!edit)}}'>— 填写手机号 —</view>
+          <view class='input-wrap' wx:if='{{!hasMobile || edit}}'>
+            <input type="number" class='input' placeholder='请填写手机号' maxlength='11' value='{{mobile}}' @input='changeMobile' style="border:2rpx solid {{color}};border-right:none;" />
+            <view class='submit' @tap='submit'>提交</view>
+          </view>
+          <view class='tip' wx:if='{{!hasMobile || edit}}'>*方便后续联系发放奖品</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import api from '../common/api'
+import storage from '../common/storage'
+export default class prizeModal extends wepy.component {
+  data = {
+    mobile: '',
+    color: '#E2E2E2',
+    edit: false //  是否正在修改手机号
+  }
+  props = {
+    status: {
+      type: Number,
+      default: 0  //  0即将开奖  1未中奖 2中奖
+    },
+    show: {
+      type: Boolean,
+      default: false,
+      twoWay: true
+    },
+    list: {
+      type: Array,
+      default: []
+    },
+    //  奖品图片
+    prizeImg: {
+      type: String,
+      default: '../images/xcx_wei_1@2x.png'
+    },
+    //  奖品信息
+    prizeInfo: {
+      type: String,
+      default: 'OPPO R5515'
+    },
+    prizeCount: {
+      type: Number,
+      default: 1
+    }
+  }
+  computed = {
+    listArr() {
+      let defaultList = []
+      for (var i = 0; i < this.prizeCount; i++) {
+        defaultList.push({})
+      }
+      return this.status === 0 ? defaultList : this.list
+    },
+    title() {
+      return this.status === 0 ? '即将开奖，请等待' : this.status === 1 ? '今日未中奖，明日再战～' : '运气真好，中奖啦！'
+    },
+    time() {
+      return this.status === 2 ? '请等待微信客服联系' : ''
+    },
+    async hasMobile() {
+      if (this.status !== 2) {
+        return false
+      } else {
+        // const info = wepy.getStorageSync('userInfo')
+        const info = await storage.get('userInfo')
+        const openID = info.userInfo.openId
+        const item = this.list.filter(i => i.openId === openID)
+        return item[0] && item[0].phone && item[0].phone.length === 11
+      }
+    }
+  }
+  methods = {
+    tap1() {
+    },
+    move1() {
+    },
+    close() {
+      this.hasMobile = true
+      this.edit = false
+      this.show = false
+    },
+    async editMobile() {
+      this.edit = true
+      // const info = wepy.getStorageSync('userInfo')
+      const info = await storage.get('userInfo')
+      const openID = info.userInfo.openId
+      const item = this.list.filter(i => i.openId === openID)
+      this.mobile = item[0] ? item[0].phone : ''
+    },
+    submit() {
+      if (this.isPhoneAvailable(this.mobile)) {
+        this.color = '#E2E2E2'
+        const self = this
+        api.prizeSubmitPhone({'phone': this.mobile}).then(function (state) {
+          self.hasMobile = true
+          self.edit = false
+          self.show = false
+          self.$apply()
+        }).catch(function (reason) {
+          console.log('填写手机号失败')
+        })
+      } else {
+        this.color = '#F22222'
+        console.log('错误的手机号码')
+      }
+    },
+    changeMobile(e) {
+      this.mobile = e.detail.value
+    }
+  }
+  isPhoneAvailable(phoneStr) {
+    console.log(phoneStr)
+    let reg = /^[1][3,4,5,6,7,8][0-9]{9}$/
+    let res = reg.test(phoneStr)
+    console.log(res)
+    return res
+  }
+}
+</script>
+
+<style lang="less">
+.mask {
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  position: fixed;
+  z-index: 100;
+  .modal-wrap {
+    width: 629rpx;
+    height: 736rpx;
+    background: #fff;
+    z-index: 110;
+    border-radius: 18rpx;
+    padding: 70rpx 70rpx 0 70rpx;
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    .close {
+      width: 50rpx;
+      height: 50rpx;
+      position: absolute;
+      top: 20rpx;
+      right: 20rpx;
+    }
+    .modal-title {
+      font-size: 36rpx;
+      color: #322A22;
+      font-weight: bold;
+    }
+    .time {
+      font-size: 24rpx;
+      color: #FD8D02;
+      margin: 20rpx 0 40rpx 0;
+    }
+    .prize {
+      width: 140rpx;
+      height: 150rpx;
+      margin-bottom: 18rpx;
+    }
+    .prize-name {
+      font-size: 36rpx;
+      color: #554C44;
+      line-height: 36rpx;
+      font-weight: bold;
+      margin-bottom: 59rpx;
+    }
+    .list {
+      font-size: 24rpx;
+      color: #B1A79D;
+      margin-bottom: 30rpx;
+    }
+    .editlist {
+      color: #1E90FF;
+    }
+    .name-list {
+      display: flex;
+      justify-content: center;
+      width: 489rpx;
+      margin-bottom: 50rpx;
+      .list-item {
+        flex: 1;
+        display: flex;
+        max-width: 163rpx;
+        flex-direction: column;
+        align-items: center;
+        .avatar {
+          width: 80rpx;
+          height: 80rpx;
+          margin-bottom: 10rpx;
+        }
+        .nickname {
+          width: 100%;
+          overflow: hidden;
+          font-size: 26rpx;
+          color: #554C44;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+    .input-wrap {
+      width: 478rpx;
+      height: 80rpx;
+      font-size: 28rpx;
+      .input {
+        width: 336rpx;
+        height: 76rpx;
+        float: left;
+        border-radius: 40rpx 0 0 40rpx;
+      }
+      .submit {
+        width: 140rpx;
+        height: 80rpx;
+        border-radius: 0 40rpx 40rpx 0;
+        float: left;
+        background: #FFD600;
+        line-height: 80rpx;
+        color: #322A22;
+      }
+    }
+    .tip {
+      font-size: 24rpx;
+      color: rgba(177,167,157,0.4);
+      margin-top: 20rpx;
+    }
+  }
+}
+
+</style>

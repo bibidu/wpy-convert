@@ -1,0 +1,34 @@
+<template>
+  <view class="container">
+    <web-view src="https://www.kaochong.com/act/star?c=littleapp"></web-view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  // import storage from '@/common/storage'
+
+  export default class Ad extends wepy.page {
+    config = {
+      navigationBarTitleText: '单词天天背'
+    }
+    data = {
+      src: ''
+    }
+    methods = {
+    }
+    async onLoad() {
+    }
+    onReady() {
+      // this.modifyTitle('单词天天背')
+    }
+    // 修改顶部标题栏文案
+    modifyTitle(title) {
+      wepy.setNavigationBarTitle({title})
+    }
+  }
+</script>
+<style lang="less">
+  .container{
+  }
+</style>
