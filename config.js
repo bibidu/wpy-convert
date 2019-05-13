@@ -8,6 +8,7 @@ const path = require('path')
 module.exports = {
   project: {
     entry: path.resolve(__dirname, 'reciteword'),
-    output: path.resolve(__dirname, 'dist_reciteword')
+    output: path.resolve(__dirname, 'dist_reciteword'),
+    sourceEntry: '/src'
   }
 }

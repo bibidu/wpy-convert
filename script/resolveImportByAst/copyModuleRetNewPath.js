@@ -1,8 +1,8 @@
 /*
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
- * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-13 19:03:18
+ * @Last Modified by: mikey.zhaopeng
+ * @Last Modified time: 2019-05-13 21:00:21
  */
 
 const path = require('path')
@@ -59,7 +59,7 @@ function replaceAlias(path) {
  * 
  * @return {*} 新路径
  */
-module.exports = function copyModuleRetNewPath(importPath, filePath = '/Users/duxianzhang/Desktop/own/wpy-revert/reciteword/src/pages/answer.wpy') {
+module.exports = function copyModuleRetNewPath(importPath, filePath = '/Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/pages/answer.wpy') {
   // test
   cacheWepyrc()
 
@@ -79,6 +79,9 @@ module.exports = function copyModuleRetNewPath(importPath, filePath = '/Users/du
   } else {
     source = path.resolve(entry, importPath)
     end = source.replace(entry, output)
+    // console.log('----');
+    // console.log(path.dirname(filePath));
+    // console.log(source);
     newPathUsePath = path.relative(path.dirname(filePath), source)
     console.log(`[personal module] ${path.basename(importPath)}`);
   }
@@ -92,7 +95,7 @@ module.exports = function copyModuleRetNewPath(importPath, filePath = '/Users/du
   if (source.includes('wepy')) {
     console.log(123);
     const t = require(source + '/package.json')
-    console.log(t);
+    console.log(t.main);
   }
 
   // test

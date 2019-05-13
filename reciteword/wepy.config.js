@@ -1,6 +1,6 @@
 const path = require('path');
 var prod = process.env.NODE_ENV === 'production';
-const LessPluginAutoPrefix = require('less-plugin-autoprefix');
+// const LessPluginAutoPrefix = require('less-plugin-autoprefix');
 module.exports = {
   wpyExt: '.wpy',
   eslint: true,
@@ -18,7 +18,9 @@ module.exports = {
   compilers: {
     less: {
       compress: prod,
-      plugins: [new LessPluginAutoPrefix({browsers: ['Android >= 2.3', 'Chrome > 20', 'iOS >= 6']})]
+      plugins: [
+        // new LessPluginAutoPrefix({browsers: ['Android >= 2.3', 'Chrome > 20', 'iOS >= 6']})
+      ]
     },
     /*sass: {
       outputStyle: 'compressed'

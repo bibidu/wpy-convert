@@ -17,21 +17,26 @@ wpy1.x 转换 原生小程序代码
 工具函数
   -utils
     -index.js [...] 工具方法集合
+    
     -logger.js [log/warn/error] 输出日志
+
     -file.js [...] 文件方法集合
       -[method]selectExtFiles.js 传入文件路径、文件后缀, 返回文件夹内所有该后缀文件
       -[method]writeFileWithDir.js 传入文件路径、写入内容, 创建文件夹并写入
-    -cache.js 缓存AST等公用信息
-    -ast.js 封装解析constants|refs|componnets等部分的方法集合
 
-template
+    -cache.js 缓存wepyrc/config等公用信息
+
+
+-template
   -tpl2obj.js
     input: 'wepy.template标签内容'
     output: '一个表示template内容的对象'
 
   -mapping
     -index.js [replaceWpyAttrName] 映射方法集合
+
     -rules.js 映射规则
+
     -match.js 映射方法
       input: '原值, 映射规则'
       output: '替换后的值'
@@ -40,13 +45,14 @@ template
     input: '经过转换的template内容的对象',
     output: '原生小程序的wxml及一个描述（该描述用于表示template与script的事件关系，格式待定）'
 
-style
+-style
   -less2css.js
     input: 'wepy.style[包含引入外链css和less]'
     output: 'less编译后的css代码'
 
-script
+-script
   -index.js [...] 暴露解析script方法
+
   -analysisScript.js 根据AST解析script内容
     input: scriptCode: String
     output: AST解析并编译成原生小程序后的代码(过程中会一并处理import相关的npm文件创建、删除components对象等)
@@ -66,5 +72,15 @@ script
 
     -copyModuleRetNewPath.js 复制npm/自定义模块文件并返回新路径
 
+-traverse
+  -index.js 遍历文件并输出到dist_
 
+-init
+  -index.js 初始化编译环境
+    -cacheWepyrc 缓存wepy.config.js
+
+
+-index.js 入口
+
+-config.js 定义源代码入口reciteword、编译代码出口dist_reciteword、源代码路径src等
 ```
