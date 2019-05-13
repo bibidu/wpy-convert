@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:06:48 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-05 18:55:47
+ * @Last Modified time: 2019-05-13 16:08:32
  */
 const logger = require('./logger')
 
@@ -28,7 +28,7 @@ const logger = require('./logger')
   }
   const splitExpArr = expression.split('.').slice(1)
   return splitExpArr.reduce((prev, curr) => {
-    if (prev === undefined) return def
+    if (!prev) return def
     return prev[curr]
   }, source)
  }
@@ -47,8 +47,17 @@ const logger = require('./logger')
    return code.replace(startReg, '').replace(endReg, '')
  }
 
+ /**
+  * 首字母大写
+  * @param {*} str 
+  */
+function upperStart(str) {
+  return str.replace(/^\w/, e => e.toUpperCase())
+}
+
 module.exports = {
   logger,
   safeGet,
-  trim
+  trim,
+  upperStart
 }

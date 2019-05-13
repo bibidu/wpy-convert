@@ -1,5 +1,5 @@
 # wpy-convert
-wpy转换任意小程序框架代码
+wpy1.x 转换 原生小程序代码
 
 ```
 编译工厂
@@ -23,7 +23,7 @@ wpy转换任意小程序框架代码
       -[method]writeFileWithDir.js 传入文件路径、写入内容, 创建文件夹并写入
     -cache.js 缓存AST等公用信息
     -ast.js 封装解析constants|refs|componnets等部分的方法集合
-    
+
 template
   -tpl2obj.js
     input: 'wepy.template标签内容'
@@ -47,9 +47,24 @@ style
 
 script
   -index.js [...] 暴露解析script方法
-  -resolveRefs.js 通过AST解析引入的外链模块信息
-  -resolveConstants.js 通过AST解析临时变量信息
-  -resolveClass.js 通过AST解析class内信息(可能继续分拆, 待定)
+  -analysisScript.js 根据AST解析script内容
+    input: scriptCode: String
+    output: AST解析并编译成原生小程序后的代码(过程中会一并处理import相关的npm文件创建、删除components对象等)
+
+  -createMpRootFunc.js 创建小程序根函数(App({}) | Page({}) | Component({}))
+    input: AST.bodys
+    output: Function: AST
+
+  -resolveCompsByAst.js 解析script中components(components={Auth: AuthModel})
+    input: AST.bodys
+    output: components: Object
+
+  -resolveImportByAst
+    -index.js 解析script中引入第三方模块(import|require)
+      input: null
+      output: AST.visitor: Object(包含各种规范的引入方式visitor)
+
+    -copyModuleRetNewPath.js 复制npm/自定义模块文件并返回新路径
 
 
 ```

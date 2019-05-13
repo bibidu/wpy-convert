@@ -1,7 +1,7 @@
 {
   "name": "wpy-revert",
   "version": "1.0.0",
-  "description": "wpy转换任意小程序框架代码",
+  "description": "wpy1.x 转换 原生小程序代码",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -18,7 +18,10 @@
   },
   "homepage": "https://github.com/duxianzhang/wpy-convert#readme",
   "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-polyfill": "^6.26.0",
+    "babel-types": "^6.26.0",
     "chalk": "^2.4.2",
     "less": "^3.9.0",
     "parse5": "^5.1.0"
