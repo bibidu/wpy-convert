@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:19:33 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-05 18:29:53
+ * @Last Modified time: 2019-05-14 13:26:02
  */
 
 const less = require('less')
@@ -19,7 +19,7 @@ function compile(lessCode) {
   return new Promise((resolve, reject) => {
     try {
         less.render(lessCode, (err, rst) => {
-          if (err) return errorHandler(error)
+          if (err) return errorHandler(err)
 
           const compiled = safeGet(rst, 'rst.css', null)
           if (!compiled) {

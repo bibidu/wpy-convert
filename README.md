@@ -84,3 +84,25 @@ wpy1.x 转换 原生小程序代码
 
 -config.js 定义源代码入口reciteword、编译代码出口dist_reciteword、源代码路径src等
 ```
+
+* todolist
+
+`analysisScript中fileType输出undefined`
+
+`config.js 中确实usingComponents`
+
+`npm目录递归创建未实现`
+
+`project.config.js未创建`
+
+`代码目录结构未调整`
+
+`problem未解决`
+
+* problem
+
+`当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'`
+
+`less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错`
+
+`ImportDeclaration/VariableDeclaration会同时发生`

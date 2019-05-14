@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-06 10:41:52 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-06 16:15:26
+ * @Last Modified time: 2019-05-14 12:47:05
  */
 
 //  替换wpy的事件语法糖
@@ -18,7 +18,7 @@ const wpyMethodInTplSugarReg = {
 const wpyAttrMapping = [
   {
     key: {
-      reg: /\:(\w+)\.sync/,
+      reg: /^\:(\w+)\.sync/,
       replace: '$1',
       example: ':name.sync -> name'
     },
@@ -30,7 +30,7 @@ const wpyAttrMapping = [
   },
   {
     key: {
-      reg: /\:(\w+)/,
+      reg: /^\:(\w+)/,
       replace: '$1',
       example: ':name -> name'
     },

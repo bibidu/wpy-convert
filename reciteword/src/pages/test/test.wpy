@@ -1,12 +1,3 @@
-<style>
-.punchCanvas{
-  position: absolute;
-  top: 0;
-  left: 0;
-  width:750rpx;
-  height:1234rpx;
-}
-</style>
 
 <template>
   <view class="answer-study-wrapper" @tap='tapme'>

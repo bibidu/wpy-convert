@@ -1,8 +1,8 @@
 /*
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
- * @Last Modified by: mikey.zhaopeng
- * @Last Modified time: 2019-05-13 21:00:21
+ * @Last Modified by: kc.duxianzhang
+ * @Last Modified time: 2019-05-14 18:28:53
  */
 
 const path = require('path')
@@ -59,7 +59,8 @@ function replaceAlias(path) {
  * 
  * @return {*} 新路径
  */
-module.exports = function copyModuleRetNewPath(importPath, filePath = '/Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/pages/answer.wpy') {
+// '/Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/pages/answer.wpy'
+module.exports = function copyModuleRetNewPath(importPath, filePath) {
   // test
   cacheWepyrc()
 
@@ -69,35 +70,19 @@ module.exports = function copyModuleRetNewPath(importPath, filePath = '/Users/mr
   const { entry, output } = config.project
   let source
   let end
-  let newPathUsePath
+  let newPath
 
   if (isNpm(importPath)) {
     source = path.resolve(entry, './node_modules/' + importPath)
     end = source.replace(entry, output).replace('node_modules', 'src/npm')
-    newPathUsePath = path.relative(path.dirname(filePath), source.replace('node_modules', 'src/npm'))
-    console.log(`[npm module] ${path.basename(importPath)}`);
+    newPath = path.relative(path.dirname(filePath), source.replace('node_modules', 'src/npm'))
+    // console.log(`[npm module] ${path.basename(importPath)}`);
   } else {
     source = path.resolve(entry, importPath)
     end = source.replace(entry, output)
-    // console.log('----');
-    // console.log(path.dirname(filePath));
-    // console.log(source);
-    newPathUsePath = path.relative(path.dirname(filePath), source)
-    console.log(`[personal module] ${path.basename(importPath)}`);
+    newPath = path.relative(path.dirname(filePath), source)
+    // console.log(`[personal module] ${path.basename(importPath)}`);
   }
-
-  // test
-  // console.log('创建npm的文件来源');
-  // console.log(source);
-  // console.log('创建npm的文件路径');
-  // console.log(end);
-
-  if (source.includes('wepy')) {
-    console.log(123);
-    const t = require(source + '/package.json')
-    console.log(t.main);
-  }
-
-  // test
-  return newPathUsePath
+  
+  return newPath
 }

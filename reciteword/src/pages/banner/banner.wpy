@@ -11,24 +11,8 @@
 
   export default class Banner extends wepy.page {
     config = {
-      navigationBarTitleText: '单词天天背'
-    }
-    data = {
-      src: ''
-    }
-    methods = {
-    }
-    async onLoad(options) {
-      let { pathUrl } = await storage.get('bannerObj')
-      this.src = pathUrl
-      this.$apply()
-    }
-    onReady() {
-      this.modifyTitle('单词天天背')
-    }
-    // 修改顶部标题栏文案
-    modifyTitle(title) {
-      wepy.setNavigationBarTitle({title})
+      navigationBarTitleText: '单词天天背',
+      backgroundColor: '#fff',
     }
   }
 </script>

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-06 07:04:55 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-06 10:36:31
+ * @Last Modified time: 2019-05-14 13:45:35
  */
 const parser = require('parse5')
 
@@ -14,6 +14,8 @@ const parser = require('parse5')
  * @return {Object} doc 表示template内容的对象
  */
 module.exports = function tpl2obj(tplCode) {
+  if (!tplCode) return
+
   // 删去换行节点
   tplCode = removeShiftNode(tplCode)
 

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:06:48 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-13 16:08:32
+ * @Last Modified time: 2019-05-14 17:18:50
  */
 const logger = require('./logger')
 
@@ -24,7 +24,8 @@ const logger = require('./logger')
   */
  function safeGet(source, expression, def = undefined) {
   if (typeof source !== 'object' || !expression.includes('.')) {
-    return source
+    return def
+    // return source
   }
   const splitExpArr = expression.split('.').slice(1)
   return splitExpArr.reduce((prev, curr) => {
@@ -33,6 +34,16 @@ const logger = require('./logger')
   }, source)
  }
 
+ /**
+  * JSON.stringify封装
+  * 
+  * @param {*} str 
+  */
+ function stringify(str) {
+  const lineBlock = 4
+  return JSON.stringify(str, null, lineBlock)
+ }
+ 
  /**
   * 去除文本首位空格
   * @param {*} code 
@@ -59,5 +70,6 @@ module.exports = {
   logger,
   safeGet,
   trim,
-  upperStart
+  upperStart,
+  stringify
 }
