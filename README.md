@@ -1,12 +1,13 @@
-# 前言
+### 前言
 本项目意在将1.x的 **wepy** 项目无缝转换到 **原生小程序** (支持component)
 
-# 思路
+### 思路
 compile(main task) + runtime(lightweight)
 
-# 技术栈
+### 技术栈
 AST + RegExp + parse5
 
+### 目录结构
 ```
 编译工厂
   -compiler
@@ -93,26 +94,26 @@ AST + RegExp + parse5
 
 ### todolist
 
-- [ ] analysisScript中fileType输出undefined
+- [x] analysisScript中fileType输出undefined
 
-- [ ] project.config.js未创建
+- [x] project.config.js未创建
 
-- [ ] 没有创建原生小程序函数, 如Page({}) | Component({})
+- [x] 没有创建原生小程序函数, 如Page({}) | Component({})
 
-- [ ] config.js 中确实usingComponents
+- [x] config.js 中确实usingComponents
 
-- [x] 去除wpy编译js后的export代码
+- [ ] 去除wpy编译js后的export代码
 
-- [x] npm目录递归创建未实现
+- [ ] npm目录递归创建未实现
 
-- [x] 代码目录结构未调整
+- [ ] 代码目录结构未调整
 
-- [x] problem未解决
+- [ ] problem未解决
 
 ### problem
 
-- [x] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
+- [ ] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
 
-- [x] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
-- [x] ImportDeclaration/VariableDeclaration会同时发生
+- [ ] ImportDeclaration/VariableDeclaration会同时发生
