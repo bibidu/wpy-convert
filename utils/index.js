@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:06:48 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 17:18:50
+ * @Last Modified time: 2019-05-14 21:15:19
  */
 const logger = require('./logger')
 
@@ -30,7 +30,7 @@ const logger = require('./logger')
   const splitExpArr = expression.split('.').slice(1)
   return splitExpArr.reduce((prev, curr) => {
     if (!prev) return def
-    return prev[curr]
+    return prev[curr] || def
   }, source)
  }
 

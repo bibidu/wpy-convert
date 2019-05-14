@@ -2,13 +2,14 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 18:56:33
+ * @Last Modified time: 2019-05-14 23:20:36
  */
 
 
 const fs = require('fs')
 const {
-  logger
+  logger,
+  stringify
 } = require('../utils')
 
 const splitSTSC = require('../splitSTSC')
@@ -34,14 +35,14 @@ module.exports = function traverseFiles() {
   const fileArr = opt
     .filter(i => i.isFile)
     .filter(i => i.ext === '.wpy')
-    .filter(i => i.fileName.includes('banner'))
+    // .filter(i => i.fileName.includes('chooseBookItem'))
     // .slice(0, 1)
-  console.log('fileArr');
-  console.log(fileArr);
+  // console.log('fileArr');
+  // console.log(fileArr);
 
   
   fileArr.forEach(async item => {
-    logger.attention(`当前编译文件: ${item.filePath}`)
+    logger.attention(`当前编译文件: ${item.filePath.split('reciteword')[1]}`)
 
     const isApp = item.fileName === 'app.wpy'
     const isWpy = item.ext === '.wpy'
@@ -62,7 +63,9 @@ module.exports = function traverseFiles() {
     const {
       script: compiledScript,
       config: configInScript,
-      fileType
+      fileType,
+      usingComponents,
+      mpRootFunc
     } = compileScript(rst.script, item)
     const compiledStyle = await less2css(rst.style)
 
@@ -73,7 +76,7 @@ module.exports = function traverseFiles() {
       },
       script: {
         filePath: cachedPath.replace(item.ext, '.js'),
-        content: compiledScript
+        content: compiledScript + '\n' + mpRootFunc
       },
       style: {
         filePath: cachedPath.replace(item.ext, '.wxss'),
@@ -81,11 +84,13 @@ module.exports = function traverseFiles() {
       },
       config: {
         filePath: cachedPath.replace(item.ext, '.json'),
-        content: configInScript
+        content: stringify({
+          ...configInScript,
+          usingComponents: usingComponents
+        })
       }
     }
 
-    console.log(fileType);
     /* 创建文件 */
     Object.keys(distPath).forEach(tag => {
       const { filePath, content } = distPath[tag]

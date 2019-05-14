@@ -2,21 +2,21 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 18:58:26
+ * @Last Modified time: 2019-05-14 23:19:53
  */
 
 const babel = require('babel-core')
 const types = require('babel-types')
 
-const resolveConfigByAst = require('./resolveConfigByAst')
-const resolveCompsByAst = require('./resolveCompsByAst')
+// const resolveConfigByAst = require('./resolveConfigByAst')
+// const resolveCompsByAst = require('./resolveCompsByAst')
 const createMpRootFunc = require('./createMpRootFunc')
 
 
 const copyModuleRetNewPath = require('./resolveImportByAst/copyModuleRetNewPath')
 const {
   safeGet,
-  stringify
+  upperStart
 } = require('../utils')
 
 /**
@@ -40,6 +40,9 @@ function analysisScriptByAst(compiledCode, file) {
   const { filePath } = file
   let exportDefaultName
   let config = {}
+  let components = {}
+  let newCompsPaths = {}
+  let mpRootFunc
   let fileType
 
   const visitor = {
@@ -77,23 +80,21 @@ function analysisScriptByAst(compiledCode, file) {
           && safeGet(dec, 'dec.init.callee.name') === 'require'
         ) {
           module = dec.init.arguments[0].value
-          // console.log('VariableDeclaration ', module);
           dec.init.arguments[0].value = copyModuleRetNewPath(module, filePath)
+
+          /* 保存k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
+          const key = dec.id.name
+          newCompsPaths[key.replace(/^\_/, '')] = dec.init.arguments[0].value
         }
       })
     },
 
     CallExpression(path) {
       const { object, property } = path.node.callee
-      // console.log('object');
-      // console.log(object && object.name);
-      // console.log(property && property.name);
       if (safeGet(object, 'object.name') === 'Object' && safeGet(property, 'property.name') === 'defineProperty') {
         const params = path.node.arguments
         Array.from(params).forEach(param => {
-          // console.log('param.type');
-          // console.log(param.type);
-          // console.log(param.value);
+          /* 解析config属性 */
           if (param.type === 'StringLiteral' && param.value === 'config') {
             
             const configureProperties = (
@@ -112,6 +113,25 @@ function analysisScriptByAst(compiledCode, file) {
               config[prop.key.name] = prop.value.value
             })
           }
+
+          /* 解析components属性 */
+          if (param.type === 'StringLiteral' && param.value === 'components') {
+            const configureProperties = (
+              Array.from(params).find(
+                i => i.type === 'ObjectExpression'
+              ) || {}
+            ).properties
+
+            const properties = Array.from(configureProperties).find(
+              i => i.key.name === 'value'
+            )
+            
+            Array.from(
+              safeGet(properties, 'properties.value.properties', [])
+            ).forEach(prop => {
+              components[prop.key.name] = prop.value.value || prop.key.name
+            })
+          }
         })
       }
     },
@@ -124,9 +144,14 @@ function analysisScriptByAst(compiledCode, file) {
       ) {
         if (expression.right.name) {
           // 保存该文件的默认导出类, eg: export.default = Banner
-          exportDefaultName = expression.right.name
-          console.log('exportDefaultName');
-          console.log(exportDefaultName);
+          let t
+          if (t = safeGet(expression, 'expression.right.name')) {
+            // AST中不存在的属性可能会是string类型的undefined
+            if (t === 'undefined') {
+              return
+            }
+            exportDefaultName = t
+          }
         }
       }
       if (
@@ -134,21 +159,18 @@ function analysisScriptByAst(compiledCode, file) {
         && expression.type === 'CallExpression'
         && safeGet(expression, 'expression.callee.name') === 'require'
       ) {
+        console.log('into 121131313');
         module = path.node.expression.arguments[0].value
-        // console.log('ExpressionStatement ', module);
         path.node.expression.arguments[0].value = copyModuleRetNewPath(module, filePath)
       }
     },
     
     VariableDeclarator(path) {
-      console.log(78);
-      console.log(path.node.id.name);
-      console.log(exportDefaultName);
-      if (path.node.id.name === exportDefaultName) {
-        console.log('13131');
-        console.log('VariableDeclarator .', exportDefaultName)
-        console.log(path.node.arguments[0].property.name);
-        fileType = path.node.arguments[0].property.name
+      if (safeGet(path, 'path.node.id.name')) {
+        const args = safeGet(path, 'path.node.init.superClass')
+        if (args && args.object.name === 'wepy') {
+          fileType = args.property.name
+        }
       }
     },
 
@@ -167,11 +189,29 @@ function analysisScriptByAst(compiledCode, file) {
         { visitor },
     ]
   })
+
+  /* 替换components的编译后路径 */
+  replaceCompsPath(components, newCompsPaths)
+
   return {
     script: t.code,
-    config: stringify(config),
-    fileType: fileType
+    config: config,
+    fileType: fileType,
+    usingComponents: components,
+    mpRootFunc: `${upperStart(fileType)}(${exportDefaultName})`
   }
+}
+
+/**
+ * 替换components的编译后路径
+ * 
+ * @param {*} components 
+ * @param {*} newCompsPaths 
+ */
+function replaceCompsPath(components, newCompsPaths) {
+  Object.keys(components).forEach(comp => {
+    components[comp] = newCompsPaths[comp]
+  })
 }
 
 module.exports = analysisScriptByAst

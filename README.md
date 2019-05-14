@@ -1,5 +1,11 @@
-# wpy-convert
-wpy1.x 转换 原生小程序代码
+# 前言
+本项目意在将1.x的 **wepy** 项目无缝转换到 **原生小程序** (支持component)
+
+# 思路
+compile(main task) + runtime(lightweight)
+
+# 技术栈
+AST + RegExp + parse5
 
 ```
 编译工厂
@@ -85,24 +91,28 @@ wpy1.x 转换 原生小程序代码
 -config.js 定义源代码入口reciteword、编译代码出口dist_reciteword、源代码路径src等
 ```
 
-* todolist
+### todolist
 
-`analysisScript中fileType输出undefined`
+- [ ] analysisScript中fileType输出undefined
 
-`config.js 中确实usingComponents`
+- [ ] project.config.js未创建
 
-`npm目录递归创建未实现`
+- [ ] 没有创建原生小程序函数, 如Page({}) | Component({})
 
-`project.config.js未创建`
+- [ ] config.js 中确实usingComponents
 
-`代码目录结构未调整`
+- [x] 去除wpy编译js后的export代码
 
-`problem未解决`
+- [x] npm目录递归创建未实现
 
-* problem
+- [x] 代码目录结构未调整
 
-`当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'`
+- [x] problem未解决
 
-`less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错`
+### problem
 
-`ImportDeclaration/VariableDeclaration会同时发生`
+- [x] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
+
+- [x] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+
+- [x] ImportDeclaration/VariableDeclaration会同时发生
