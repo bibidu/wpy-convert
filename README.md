@@ -101,7 +101,19 @@ AST + RegExp + parse5
 
 - [ ] config.js 中确实usingComponents
 
-- [x] 去除wpy编译js后的export代码
+- [ ] 去除wpy编译js后的export代码(无需删除)
+
+- [ ] app.json没有usingComponents
+
+- [ ] delete config and component in xx.js
+
+- [x] methods平铺
+
+- [x] component生命周期方法名修改
+
+- [x] $invoke/$apply的实现
+
+- [x] $navigate等路由方法的实现
 
 - [x] npm目录递归创建未实现
 
@@ -116,3 +128,6 @@ AST + RegExp + parse5
 - [x] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
 - [x] ImportDeclaration/VariableDeclaration会同时发生
+
+### 坑
+- [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)

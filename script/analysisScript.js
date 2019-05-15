@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 23:19:53
+ * @Last Modified time: 2019-05-15 08:49:39
  */
 
 const babel = require('babel-core')
@@ -69,6 +69,7 @@ function analysisScriptByAst(compiledCode, file) {
     //   }
     // },
 
+    
     // const utils = require('../../common/utils')
     VariableDeclaration(path) {
       const { declarations, kind } = path.node
@@ -112,6 +113,7 @@ function analysisScriptByAst(compiledCode, file) {
             ).forEach(prop => {
               config[prop.key.name] = prop.value.value
             })
+            path.remove()
           }
 
           /* 解析components属性 */
@@ -131,6 +133,7 @@ function analysisScriptByAst(compiledCode, file) {
             ).forEach(prop => {
               components[prop.key.name] = prop.value.value || prop.key.name
             })
+            path.remove()
           }
         })
       }
@@ -159,10 +162,17 @@ function analysisScriptByAst(compiledCode, file) {
         && expression.type === 'CallExpression'
         && safeGet(expression, 'expression.callee.name') === 'require'
       ) {
-        console.log('into 121131313');
         module = path.node.expression.arguments[0].value
         path.node.expression.arguments[0].value = copyModuleRetNewPath(module, filePath)
       }
+
+      /* 去除export语句 ·不需要删除 */
+      // if (
+      //   expression
+      //   && safeGet(expression, 'expression.left.object.name') === 'exports'
+      // ) {
+      //   path.remove()
+      // }
     },
     
     VariableDeclarator(path) {
@@ -183,10 +193,11 @@ function analysisScriptByAst(compiledCode, file) {
     ],
     plugins: [  
         ["transform-decorators-legacy"],
+        
+        { visitor },
 
         ["transform-class-properties", { "spec": true }],
 
-        { visitor },
     ]
   })
 

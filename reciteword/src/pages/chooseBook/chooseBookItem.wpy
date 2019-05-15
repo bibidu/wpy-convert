@@ -25,47 +25,8 @@
 
 <script>
   import wepy from 'wepy'
-  import api from '@/common/api'
-  import kcLoading from '@/components/kcLoading'
 
   export default class chooseBookItem extends wepy.page {
-    config = {
-      navigationBarTitleText: '选择单词任务'
-    }
-    components = {
-      kcLoading
-    }
-    data = {
-      show: false,
-      showLoading: true,
-      bookId: -1,
-      target: -1,
-      books: []
-    }
-    methods = {
-      chooseBook(target) {
-        this.target = target
-        console.log('select', target)
-      },
-      async toAnswer() {
-        if (this.target !== -1) {
-          this.showLoading = true
-          await api.target({ target: this.target })
-          this.showLoading = false
-          this.$apply()
-          wepy.reLaunch({url: '/pages/index'})
-        }
-      }
-    }
-    async onLoad(options) {
-      let { categoryId } = options
-      let { books } = await api.getBookByCate({categoryId: parseInt(categoryId)})
-      this.show = true
-      this.books = books
-      this.showLoading = false
-      this.$apply()
-    }
-    async onShow() {}
   }
 </script>
 
