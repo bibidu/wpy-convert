@@ -1,12 +1,13 @@
-# 前言
+### 前言
 本项目意在将1.x的 **wepy** 项目无缝转换到 **原生小程序** (支持component)
 
-# 思路
+### 思路
 compile(main task) + runtime(lightweight)
 
-# 技术栈
+### 技术栈
 AST + RegExp + parse5
 
+### 目录结构
 ```
 编译工厂
   -compiler
@@ -93,14 +94,15 @@ AST + RegExp + parse5
 
 ### todolist
 
-- [ ] analysisScript中fileType输出undefined
+- [x] analysisScript中fileType输出undefined
 
-- [ ] project.config.js未创建
+- [x] project.config.js未创建
 
-- [ ] 没有创建原生小程序函数, 如Page({}) | Component({})
+- [x] 没有创建原生小程序函数, 如Page({}) | Component({})
 
-- [ ] config.js 中确实usingComponents
+- [x] config.js 中确实usingComponents
 
+<<<<<<< HEAD
 - [ ] 去除wpy编译js后的export代码(无需删除)
 
 - [ ] app.json没有usingComponents
@@ -114,20 +116,27 @@ AST + RegExp + parse5
 - [x] $invoke/$apply的实现
 
 - [x] $navigate等路由方法的实现
+=======
+- [ ] 去除wpy编译js后的export代码
+>>>>>>> 99dd5c23dc47db50013df2b4a64e797794a36d29
 
-- [x] npm目录递归创建未实现
+- [ ] npm目录递归创建未实现
 
-- [x] 代码目录结构未调整
+- [ ] 代码目录结构未调整
 
-- [x] problem未解决
+- [ ] problem未解决
 
 ### problem
 
-- [x] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
+- [ ] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
 
-- [x] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
+<<<<<<< HEAD
 - [x] ImportDeclaration/VariableDeclaration会同时发生
 
 ### 坑
 - [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)
+=======
+- [ ] ImportDeclaration/VariableDeclaration会同时发生
+>>>>>>> 99dd5c23dc47db50013df2b4a64e797794a36d29
