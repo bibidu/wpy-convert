@@ -102,19 +102,19 @@ AST + RegExp + parse5
 
 - [x] config.js 中确实usingComponents
 
-- [ ] 去除wpy编译js后的export代码(无需删除)
+- [x] 去除wpy编译js后的export代码(无需删除)
 
-- [ ] app.json没有usingComponents
+- [x] app.json没有usingComponents
 
-- [ ] delete config and component in xx.js
+- [x] delete config and component in xx.js
 
-- [x] methods平铺
+- [ ] methods平铺
 
-- [x] component生命周期方法名修改
+- [ ] component生命周期方法名修改
 
-- [x] $invoke/$apply的实现
+- [ ] $invoke/$apply的实现
 
-- [x] $navigate等路由方法的实现
+- [ ] $navigate等路由方法的实现
 
 - [ ] npm目录递归创建未实现
 
@@ -124,7 +124,7 @@ AST + RegExp + parse5
 
 ### problem
 
-- [ ] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
+- [x] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
 
 - [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-15 08:50:18
+ * @Last Modified time: 2019-05-16 09:01:31
  */
 
 
@@ -35,7 +35,8 @@ module.exports = function traverseFiles() {
   const fileArr = opt
     .filter(i => i.isFile)
     // .filter(i => i.ext === '.wpy')
-    // .filter(i => i.fileName.includes('app'))
+    .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
+    // .filter(i => i.fileName.includes('chooseBookCategory'))
     // .slice(0, 1)
   // console.log('fileArr');
   // console.log(fileArr);
@@ -96,9 +97,7 @@ module.exports = function traverseFiles() {
 
     // app.json中usingComponents无效
     if (fileType === 'app') {
-      console.log('oh no');
       delete distPath.config.content.usingComponents
-      console.log(distPath.config);
     }
 
     /* 创建文件 */

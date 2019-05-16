@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-15 08:49:39
+ * @Last Modified time: 2019-05-16 07:42:38
  */
 
 const babel = require('babel-core')
@@ -46,31 +46,6 @@ function analysisScriptByAst(compiledCode, file) {
   let fileType
 
   const visitor = {
-    // ExportDefaultDeclaration(path) {
-    //   if (path.node && path.node.declaration.type === 'ClassDeclaration') {
-    //     const classInner = path.node.declaration
-    //     const { object, property } = classInner.superClass
-
-    //     verifyFilePrefix(object)
-
-    //     fileType = property.name
-        
-    //     if (classInner.body.type === 'ClassBody') {
-    //       const bodys = classInner.body.body
-    //       console.log('fileType');
-    //       console.log(fileType);
-    //       // [解析声明的config] 获取引入config信息
-    //       fileType !== 'component' && resolveConfigByAst(bodys)
-    //       // [解析声明的components] 获取引入component信息
-    //       fileType === 'page' && resolveCompsByAst(bodys)
-    //       // [创建根函数] 替换class为小程序根函数
-    //       path.replaceWith(createMpRootFunc(types, classInner))
-    //     }
-    //   }
-    // },
-
-    
-    // const utils = require('../../common/utils')
     VariableDeclaration(path) {
       const { declarations, kind } = path.node
       let module

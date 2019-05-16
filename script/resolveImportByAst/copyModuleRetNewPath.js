@@ -2,14 +2,20 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 21:44:45
+ * @Last Modified time: 2019-05-16 08:54:07
  */
 
 const path = require('path')
 const config = require('../../config')
-
+const wepyrc = require(config.project.entry + '/wepy.config.js')
+const resolveNpm = require('../../npm')
+const {
+  npmEntry2opt
+} = require('../../npm/utils')
+const {
+  projectEntry2opt
+} = require('../../utils/utils')
 let project = {}
-let wepyrc = {}
 
 /**
  * 是否是npm模块
@@ -24,17 +30,6 @@ function isNpm(moduleName) {
   return Object.keys(dependencies).indexOf(moduleName) > -1
 }
 
-/**
- * 缓存wepy.config.js文件
- */
-function cacheWepyrc() {
-  try {
-    wepyrc = require(config.project.entry + '/wepy.config.js')
-  } catch (error) {
-    console.log(error);
-    console.log(`未找到wepy.config.js`);
-  }
-}
 
 /**
  * 替换别名
@@ -61,28 +56,30 @@ function replaceAlias(path) {
  */
 // '/Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/pages/answer.wpy'
 module.exports = function copyModuleRetNewPath(importPath, filePath) {
-  // test
-  cacheWepyrc()
 
   // 替换别名
   importPath = replaceAlias(importPath)
   
-  const { entry, output } = config.project
+  const { entry } = config.project
   let source
   let end
   let newPath
 
   if (isNpm(importPath)) {
     source = path.resolve(entry, './node_modules/' + importPath)
-    end = source.replace(entry, output).replace('node_modules', 'src/npm')
-    newPath = path.relative(path.dirname(filePath), source.replace('node_modules', 'src/npm'))
-    // console.log(`[npm module] ${path.basename(importPath)}`);
+    end = npmEntry2opt(projectEntry2opt(source))
+    newPath = path.relative(path.dirname(filePath), npmEntry2opt(source))
+    
+    /* 解析项目中npm模块 */
+    resolveNpm(source, end)
   } else {
     source = path.resolve(entry, importPath)
-    end = source.replace(entry, output)
+    end = projectEntry2opt(source)
     newPath = path.relative(path.dirname(filePath), source)
-    // console.log(`[personal module] ${path.basename(importPath)}`);
   }
   
+  /* npm/wepy --> ./npm/wepy */
+  newPath = newPath.charAt(0) !== '.' ? `./${newPath}` : newPath
+
   return newPath
 }

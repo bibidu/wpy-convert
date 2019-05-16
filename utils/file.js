@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 21:13:43 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-13 22:12:55
+ * @Last Modified time: 2019-05-16 09:03:04
  */
 
 const fs = require('fs')
@@ -45,6 +45,8 @@ const fileUtils = {
   createAndWriteFile(filePath, content) {
     const dir = path.dirname(filePath)
     fileUtils.mkdirsSync(dir)
+    // TODO: 判断文件是否存在 存在则无需重复写入
+    filePath.includes('npm') && console.log(`[写入] ${filePath}`);
     fs.writeFileSync(filePath, content)
   },
 
