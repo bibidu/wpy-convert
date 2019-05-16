@@ -2,11 +2,12 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 07:42:38
+ * @Last Modified time: 2019-05-17 00:09:48
  */
 
 const babel = require('babel-core')
 const types = require('babel-types')
+const generate = require('babel-generator').default
 
 // const resolveConfigByAst = require('./resolveConfigByAst')
 // const resolveCompsByAst = require('./resolveCompsByAst')
@@ -86,9 +87,18 @@ function analysisScriptByAst(compiledCode, file) {
             Array.from(
               safeGet(properties, 'properties.value.properties', [])
             ).forEach(prop => {
-              config[prop.key.name] = prop.value.value
+              // config[prop.key.name] = prop.value.value
+
+              // const configCode = generate(prop, {}).code
+              const configKey = generate(prop.key, {}).code
+              const configValue = generate(prop.value, {
+                compact: true,
+                jsonCompatibleStrings: true,
+                comments: true,
+              }).code
+              config[configKey] = new Function(`return ${configValue}`)()
             })
-            path.remove()
+            // path.remove()
           }
 
           /* 解析components属性 */
@@ -179,6 +189,7 @@ function analysisScriptByAst(compiledCode, file) {
   /* 替换components的编译后路径 */
   replaceCompsPath(components, newCompsPaths)
 
+  // console.log(t.code);
   return {
     script: t.code,
     config: config,

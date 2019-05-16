@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 09:01:31
+ * @Last Modified time: 2019-05-17 00:11:27
  */
 
 
@@ -34,8 +34,9 @@ module.exports = function traverseFiles() {
   
   const fileArr = opt
     .filter(i => i.isFile)
-    // .filter(i => i.ext === '.wpy')
-    .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
+    .filter(i => i.ext === '.wpy')
+    // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
+    // .filter(i => i.fileName.includes('app'))
     // .filter(i => i.fileName.includes('chooseBookCategory'))
     // .slice(0, 1)
   // console.log('fileArr');
@@ -49,8 +50,10 @@ module.exports = function traverseFiles() {
     const isWpy = item.ext === '.wpy'
 
     // 输出目录
-    const cachedPath = item.filePath.replace(entry, output)
-
+    const cachedPath = item.filePath
+      .replace(entry, output)
+      /* 去除src目录 */
+      .replace(sourceEntry, '')
 
     /* 非wpy文件无需编译, 拷贝到dist目录即可 */
     if (!isWpy) {

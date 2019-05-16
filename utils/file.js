@@ -2,11 +2,15 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 21:13:43 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 09:03:04
+ * @Last Modified time: 2019-05-16 23:06:23
  */
 
 const fs = require('fs')
 const path = require('path')
+const config = require('../config')
+// const {
+//   logger
+// } = require('./')
  
 const fileUtils = {
   isFile(path) {
@@ -45,9 +49,10 @@ const fileUtils = {
   createAndWriteFile(filePath, content) {
     const dir = path.dirname(filePath)
     fileUtils.mkdirsSync(dir)
-    // TODO: 判断文件是否存在 存在则无需重复写入
-    filePath.includes('npm') && console.log(`[写入] ${filePath}`);
-    fs.writeFileSync(filePath, content)
+    if (!fs.existsSync(filePath)) {
+      console.log(`[写入] ${filePath.replace(config.project.output, '')}`)
+      fs.writeFileSync(filePath, content)
+    }
   },
 
   mkdirsSync(dirname) {

@@ -89,7 +89,7 @@
         wepy.removeStorageSync('v2-continue-study'),
         wepy.removeStorageSync(`v2-qs-${target}`)
       ])
-      // TODO: 刷新当前页数据
+      // 刷新当前页数据
       await this.renderData()
       this.loading = false
       this.$apply()

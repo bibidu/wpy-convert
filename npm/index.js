@@ -2,12 +2,14 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 09:02:44
+ * @Last Modified time: 2019-05-16 22:52:30
  */
 
 const path = require('path')
 const fs = require('fs')
 const babel = require('babel-core')
+
+const config = require('../config')
 const {
   logger,
 } = require('../utils')
@@ -19,13 +21,33 @@ const {
   projectEntry2opt
 } = require('../utils/utils')
 
-module.exports = function resolveNpm(source, end) {
+/**
+ * 是否是npm模块
+ * 
+ * @param {*} moduleName 
+ * @param {*} currDependencies 
+ */
+function isNpm(moduleName, currDependencies) {
+  const entry = config.project.entry
+  const _project = require(entry + '/package.json')
+  project = _project
+  const dependencies = currDependencies || _project.dependencies
+  return Object.keys(dependencies).indexOf(moduleName) > -1
+}
+
+/**
+ * 解析npm模块
+ * 
+ * @param {*} source 
+ * @param {*} end 
+ */
+function resolveNpm(source, end) {
 
   // 获取入口文件信息
-  const entry = grabNpmEntryInfo(source)
+  const { entry, pkg } = grabNpmEntryInfo(source)
   
   // 读取入口文件引入项、遍历复制文件
-  traverseRequire(entry)
+  traverseRequire({ entry, pkg })
 }
 
 /**
@@ -38,7 +60,10 @@ function grabNpmEntryInfo(modulePath) {
   const pkg = require(modulePath + '/package.json')
   const main = pkg.main || 'index.js'
 
-  return path.join(modulePath, main)
+  return {
+    entry: path.join(modulePath, main),
+    pkg: pkg
+  }
 }
 
 /**
@@ -46,7 +71,7 @@ function grabNpmEntryInfo(modulePath) {
  * 
  * @param {*} entry 
  */
-function traverseRequire(entry) {
+function traverseRequire({ entry, pkg }) {
   const distPath = npmEntry2opt(projectEntry2opt(entry))
   let content = fs.readFileSync(entry)
   if (!content) {
@@ -57,11 +82,30 @@ function traverseRequire(entry) {
   content = content.toString()
   // 获取文件依赖
   let relativeDeps = grabDependencies(content)
-  const absoluteDeps = relativeDeps
-    .map(dep => path.join(path.dirname(entry), dep))
-    /* 添加引用文件后缀 */
-    .map(dep => addExt(dep))
-  // TODO: 继续递归
+
+  
+  let absoluteDeps = []
+  let current
+  for (let i = 0; i < relativeDeps.length; i++) {
+    current = relativeDeps[i]
+    const [ moduleName, ...rest ] = current.split('/')
+    
+    if (isNpm(moduleName, pkg.dependencies || {})) {
+      current = path.resolve(config.project.entry, './node_modules/' + moduleName)
+      if (rest.length) {
+        absoluteDeps.push(addExt(current + rest.reduce((p, c) => p + c, '/')))
+        continue
+      }
+      resolveNpm(current)
+      continue
+    }
+    current = path.join(path.dirname(entry), current)
+    absoluteDeps.push(addExt(current))
+  }
+
+  absoluteDeps.forEach(dep => {
+    traverseRequire({ entry: dep, pkg: pkg })
+  })
 }
 
 /**
@@ -95,6 +139,24 @@ function grabDependencies(code) {
 function addExt(path) {
   const reg = /\.\w+$/
   const defaultSuffix = '.js'
+  
+  if (!reg.test(path)) {
+    const addJsSuffixPath = path + '.js'
+    if (!fs.existsSync(addJsSuffixPath)) {
+      path = path + '/index.js'
+      if (fs.existsSync(path)) {
+        return path
+      }
+      return logger.error(`auto add suffix fail: ${path}`)
+    }
+    return addJsSuffixPath
+  } else {
+    return path
+  }
+}
 
-  return reg.test(path) ? path : path + defaultSuffix
+
+module.exports = {
+  resolveNpm,
+  isNpm
 }

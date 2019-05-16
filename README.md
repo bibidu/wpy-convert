@@ -108,6 +108,10 @@ AST + RegExp + parse5
 
 - [x] delete config and component in xx.js
 
+- [ ] component json文件应有component: true
+
+- [ ] 打包后的npm不应该放到src目录下
+
 - [ ] methods平铺
 
 - [ ] component生命周期方法名修改

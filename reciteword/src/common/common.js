@@ -327,7 +327,6 @@ function getIndexStyleWithTime() {
   return INDEX_BG_TITLE[3]
 }
 // 添加A B C D
-// TODO: use addOptionSingle realize thisx
 function addOption(list) {
   const ens = ['A', 'B', 'C', 'D']
   return list.map(item => {

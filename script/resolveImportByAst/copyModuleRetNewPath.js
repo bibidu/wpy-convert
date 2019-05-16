@@ -8,7 +8,10 @@
 const path = require('path')
 const config = require('../../config')
 const wepyrc = require(config.project.entry + '/wepy.config.js')
-const resolveNpm = require('../../npm')
+const {
+  resolveNpm,
+  isNpm
+} = require('../../npm')
 const {
   npmEntry2opt
 } = require('../../npm/utils')
@@ -17,18 +20,7 @@ const {
 } = require('../../utils/utils')
 let project = {}
 
-/**
- * 是否是npm模块
- * 
- * @param {*} moduleName 
- */
-function isNpm(moduleName) {
-  const entry = config.project.entry
-  const _project = require(entry + '/package.json')
-  project = _project
-  const dependencies = _project.dependencies
-  return Object.keys(dependencies).indexOf(moduleName) > -1
-}
+
 
 
 /**

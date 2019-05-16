@@ -19,6 +19,7 @@
   "homepage": "https://github.com/duxianzhang/wpy-convert#readme",
   "devDependencies": {
     "babel-core": "^6.26.3",
+    "babel-generator": "^6.26.1",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-decorators-legacy": "^1.3.5",
     "babel-polyfill": "^6.26.0",
