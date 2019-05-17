@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-17 15:47:12
+ * @Last Modified time: 2019-05-18 00:40:49
  */
 
 const path = require('path')
@@ -153,10 +153,14 @@ function grabDependencies({entry, source, distPath, pkg, content}) {
             path.dirname(distPath),
             path.dirname(innerNpmDistDir)
           )
+          // arguments[0].value = path.join(
+          //   relativePath,
+          //   rest.reduce((p, c) => p + c, '/'),
+          //   pkg.main
+          // )
           arguments[0].value = path.join(
             relativePath,
-            rest.reduce((p, c) => p + c, '/'),
-            pkg.main
+            rest.length ? rest.reduce((p, c) => p + c, '/') : '',
           )
         }
       }

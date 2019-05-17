@@ -134,6 +134,8 @@ AST + RegExp + parse5
 
 - [ ] ImportDeclaration/VariableDeclaration会同时发生
 
+- [ ] npm模块require引入./connect无法自动识别为./connect/index.js, 需提前进行编译转换
+
 - [ ] npm模块内引入其他npm模块的路径也应修改路径
 
 - [x] 生成的npm新路径未添加main上的路径
