@@ -8,9 +8,9 @@
 		"newFeature": true
 	},
 	"compileType": "miniprogram",
-	"appid": "wx9880b31b2ef48196",
-	"projectname": "reciteword",
-	"miniprogramRoot": "./dist",
+	"appid": "wxbe7eb3b6c02e42c2",
+	"projectname": "wpy-revier=demo",
+	"miniprogramRoot": "/",
 	"condition": {
 		"search": {
 			"current": -1,

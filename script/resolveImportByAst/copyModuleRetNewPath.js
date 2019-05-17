@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 08:54:07
+ * @Last Modified time: 2019-05-17 15:05:03
  */
 
 const path = require('path')
@@ -38,6 +38,12 @@ function replaceAlias(path) {
   return path
 }
 
+
+function getNpmPkg(npmPath) {
+  const pkg = require(npmPath + '/package.json')
+  return pkg
+}
+
 /**
  * 创建响应文件并更改调用路径
  * 
@@ -57,10 +63,16 @@ module.exports = function copyModuleRetNewPath(importPath, filePath) {
   let end
   let newPath
 
-  if (isNpm(importPath)) {
+  if (isNpm(importPath).flag) {
     source = path.resolve(entry, './node_modules/' + importPath)
     end = npmEntry2opt(projectEntry2opt(source))
+    const { main } = getNpmPkg(source)
+
     newPath = path.relative(path.dirname(filePath), npmEntry2opt(source))
+    // 添加main指向的路径
+    newPath = path.join(newPath, main)
+    // npm/wepy --> ./npm/wepy
+    newPath = newPath.charAt(0) !== '.' ? `./${newPath}` : newPath
     
     /* 解析项目中npm模块 */
     resolveNpm(source, end)
@@ -70,8 +82,7 @@ module.exports = function copyModuleRetNewPath(importPath, filePath) {
     newPath = path.relative(path.dirname(filePath), source)
   }
   
-  /* npm/wepy --> ./npm/wepy */
-  newPath = newPath.charAt(0) !== '.' ? `./${newPath}` : newPath
+  
 
   return newPath
 }

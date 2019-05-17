@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 22:52:30
+ * @Last Modified time: 2019-05-17 15:47:12
  */
 
 const path = require('path')
@@ -27,12 +27,18 @@ const {
  * @param {*} moduleName 
  * @param {*} currDependencies 
  */
-function isNpm(moduleName, currDependencies) {
+function isNpm(current, currDependencies) {
+  const [ moduleName, ...rest ] = current.split('/')
+
   const entry = config.project.entry
   const _project = require(entry + '/package.json')
   project = _project
   const dependencies = currDependencies || _project.dependencies
-  return Object.keys(dependencies).indexOf(moduleName) > -1
+  const flag = Object.keys(dependencies).indexOf(moduleName) > -1
+
+  return {
+    flag, moduleName, rest
+  }
 }
 
 /**
@@ -46,8 +52,8 @@ function resolveNpm(source, end) {
   // 获取入口文件信息
   const { entry, pkg } = grabNpmEntryInfo(source)
   
-  // 读取入口文件引入项、遍历复制文件
-  traverseRequire({ entry, pkg })
+  // 读取入口文件引入项、遍历复制文件、npm模块绝对路径
+  traverseRequire({ entry, pkg, source })
 }
 
 /**
@@ -71,26 +77,33 @@ function grabNpmEntryInfo(modulePath) {
  * 
  * @param {*} entry 
  */
-function traverseRequire({ entry, pkg }) {
+function traverseRequire({ entry, pkg, source }) {
   const distPath = npmEntry2opt(projectEntry2opt(entry))
+  /* 去除原src目录 */
+    .replace(config.project.sourceEntry, '')
   let content = fs.readFileSync(entry)
   if (!content) {
     return logger.error(`traverseRequire method: file should not be null in entry ${entry}`)
   }
-  /* 写入npm模块文件到dist */
-  fileUtils.createAndWriteFile(distPath, content)
   content = content.toString()
-  // 获取文件依赖
-  let relativeDeps = grabDependencies(content)
+  // 获取文件依赖并替换其中npm模块路径
+  let {
+    dependencies: relativeDeps,
+    code: newContent
+  } = grabDependencies({entry, source, distPath, pkg, content})
 
+  /* 写入npm模块文件到dist */
+  fileUtils.createAndWriteFile(distPath, newContent)
+  // fileUtils.createAndWriteFile(distPath, content)
   
   let absoluteDeps = []
   let current
   for (let i = 0; i < relativeDeps.length; i++) {
     current = relativeDeps[i]
-    const [ moduleName, ...rest ] = current.split('/')
     
-    if (isNpm(moduleName, pkg.dependencies || {})) {
+    
+    const { flag, moduleName, rest } = isNpm(current, pkg.dependencies || {})
+    if (flag) {
       current = path.resolve(config.project.entry, './node_modules/' + moduleName)
       if (rest.length) {
         absoluteDeps.push(addExt(current + rest.reduce((p, c) => p + c, '/')))
@@ -104,31 +117,60 @@ function traverseRequire({ entry, pkg }) {
   }
 
   absoluteDeps.forEach(dep => {
-    traverseRequire({ entry: dep, pkg: pkg })
+    traverseRequire({
+      entry: dep,
+      pkg: pkg,
+      source: source
+    })
   })
 }
 
 /**
- * 获取文件依赖
+ * 获取文件依赖并替换其中npm模块路径
  * 
- * @param {*} code 
+ * @param {*} entry 
+ * @param {*} content 
  */
-function grabDependencies(code) {
+function grabDependencies({entry, source, distPath, pkg, content}) {
   let dependencies = []
   const visitor = {
-    CallExpression(path) {
-      const { callee, arguments } = path.node
+    CallExpression(_path) {
+      const { callee, arguments } = _path.node
       if (callee.name === 'require') {
-        dependencies.push(arguments[0].value)
+        const depName = arguments[0].value
+        dependencies.push(depName)
+
+        const { flag, moduleName, rest } = isNpm(depName, pkg.dependencies || {})
+        if (flag) {
+          const project = config.project
+
+          const innerNpmDir = project.entry + '/node_modules/' + moduleName
+          const entryInfo = grabNpmEntryInfo(innerNpmDir)
+          const innerNpmDistDir = entryInfo.entry
+            .replace(project.entry, project.output)
+            .replace('node_modules', 'npm')
+          const relativePath = path.relative(
+            path.dirname(distPath),
+            path.dirname(innerNpmDistDir)
+          )
+          arguments[0].value = path.join(
+            relativePath,
+            rest.reduce((p, c) => p + c, '/'),
+            pkg.main
+          )
+        }
       }
     }
   }
-  babel.transform(code, {
+  let t = babel.transform(content, {
     plugins: [
         { visitor },
     ]
   })
-  return dependencies
+  return {
+    dependencies,
+    code: t.code
+  }
 }
 
 /**

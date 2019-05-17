@@ -1,49 +1,49 @@
 <style lang="less">
-  @import '../../common/common.less';
+  // @import '../../common/common.less';
   .round-progress{
     position: absolute;
     top: 0;
     height:100%;
-    .circle-container{
-      width: @CIRCLE_WIDTH;
-      height: @CIRCLE_WIDTH;
-      border-radius: 50%;
-      border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
-      box-sizing: border-box;
-      position: absolute;
-      top: @TOP;
-      left: @LEFT;
-    }
-    #cir{
-      top: @TOP;
-      left: @LEFT;
-      box-sizing: border-box;
-      position: absolute;
-      width: @CIRCLE_WIDTH;
-      height: @CIRCLE_WIDTH;
-      border-radius: 50%;
-      border: @CIRCLE_BORDER solid #F0F0F0;
-    }
-    .left{
-      clip: rect(0, 18rpx, 36rpx, 0);
-    }
-    .right{
-      clip: rect(0, 36rpx, 36rpx, 18rpx);
-    }
-    .stable-right{
-      width: @CIRCLE_WIDTH;
-      height: @CIRCLE_WIDTH;
-      border-radius: 50%;
-      border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
-      position: absolute;
-      top: @TOP;
-      left: @LEFT;
-      box-sizing: border-box;
-      clip: rect(0, 36rpx, 36rpx, 18rpx);
-    }
-    .warn-style{
-      color: @CIRCLE_WARN_COLOR;
-    }
+    // .circle-container{
+    //   width: @CIRCLE_WIDTH;
+    //   height: @CIRCLE_WIDTH;
+    //   border-radius: 50%;
+    //   border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
+    //   box-sizing: border-box;
+    //   position: absolute;
+    //   top: @TOP;
+    //   left: @LEFT;
+    // }
+    // #cir{
+    //   top: @TOP;
+    //   left: @LEFT;
+    //   box-sizing: border-box;
+    //   position: absolute;
+    //   width: @CIRCLE_WIDTH;
+    //   height: @CIRCLE_WIDTH;
+    //   border-radius: 50%;
+    //   border: @CIRCLE_BORDER solid #F0F0F0;
+    // }
+    // .left{
+    //   clip: rect(0, 18rpx, 36rpx, 0);
+    // }
+    // .right{
+    //   clip: rect(0, 36rpx, 36rpx, 18rpx);
+    // }
+    // .stable-right{
+    //   width: @CIRCLE_WIDTH;
+    //   height: @CIRCLE_WIDTH;
+    //   border-radius: 50%;
+    //   border: @CIRCLE_BORDER solid @CIRCLE_COLOR;
+    //   position: absolute;
+    //   top: @TOP;
+    //   left: @LEFT;
+    //   box-sizing: border-box;
+    //   clip: rect(0, 36rpx, 36rpx, 18rpx);
+    // }
+    // .warn-style{
+    //   color: @CIRCLE_WARN_COLOR;
+    // }
   }
 </style>
 <template>

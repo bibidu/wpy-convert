@@ -2,11 +2,12 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-17 00:11:27
+ * @Last Modified time: 2019-05-17 15:31:03
  */
 
 
 const fs = require('fs')
+const path = require('path')
 const {
   logger,
   stringify
@@ -30,14 +31,22 @@ module.exports = function traverseFiles() {
   let opt = []
   const { entry, output, sourceEntry } = cache.config.project
 
+  // test
+  const distPath = path.resolve(__dirname, '../dist_reciteword')
+  if (fs.existsSync(distPath)) {
+    fileUtils.delDir(distPath)
+    console.log(`[删除] 移除旧目录`);
+  }
+  // test
+
   fileUtils.readDirAllFiles(entry + sourceEntry, opt, { exclude })
   
   const fileArr = opt
     .filter(i => i.isFile)
-    .filter(i => i.ext === '.wpy')
+    // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('app'))
-    // .filter(i => i.fileName.includes('chooseBookCategory'))
+    .filter(i => i.fileName.includes('app'))
+    // .filter(i => i.fileName.includes('prizeModal'))
     // .slice(0, 1)
   // console.log('fileArr');
   // console.log(fileArr);
@@ -72,12 +81,21 @@ module.exports = function traverseFiles() {
       mpRootFunc
     } = compileScript(rst.script, item)
     const compiledStyle = await less2css(rst.style)
-    const compiledConfig = 
-      fileType === 'app' ? configInScript :
-      {
+
+    let compiledConfig
+    if (fileType === 'app') {
+      compiledConfig = configInScript
+    } else if (fileType === 'page') {
+      compiledConfig = {
         ...configInScript,
         usingComponents: usingComponents
       }
+    } else if (fileType === 'component') {
+      compiledConfig = {
+        ...configInScript,
+        component: true
+      }
+    }
 
     const distPath = {
       template: {
@@ -109,8 +127,6 @@ module.exports = function traverseFiles() {
 
       /* 无需写入文件的所有情况 */
       const ignoreCases = [
-        // component中config属性无效
-        tag === 'config' && fileType === 'component',
         // app中template标签无效
         tag === 'template' && fileType === 'app'
       ]

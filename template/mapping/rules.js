@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-06 10:41:52 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 12:47:05
+ * @Last Modified time: 2019-05-17 13:00:04
  */
 
 //  替换wpy的事件语法糖
@@ -72,6 +72,14 @@ const wpyTagMapping = [
       reg: /^repeat$/,
       replace: 'block',
       example: 'repeat -> block'
+    },
+    value: {}
+  },
+  {
+    key: {
+      reg: /^img$/,
+      replace: 'image',
+      example: 'img -> image'
     },
     value: {}
   }

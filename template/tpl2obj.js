@@ -2,9 +2,10 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-06 07:04:55 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 13:45:35
+ * @Last Modified time: 2019-05-17 14:29:23
  */
-const parser = require('parse5')
+// const parser = require('parse5')
+const parser = require('../utils/parse5')
 
 
 /**

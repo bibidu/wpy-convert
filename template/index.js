@@ -2,9 +2,10 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-14 12:06:43 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 13:40:07
+ * @Last Modified time: 2019-05-17 14:31:26
  */
-const parser = require('parse5')
+// const parser = require('parse5')
+const parser = require('../utils/parse5')
 
 const tpl2obj = require('./tpl2obj')
 const {
@@ -22,11 +23,28 @@ module.exports = function compileTemplate(code) {
     let revertToObj = tpl2obj(code)
     traverseReplace(revertToObj)
     let rst = parser.serialize(revertToObj)
-    return rst
+    /* 转义 */
+    return transfer(rst)
   } catch (error) {
     console.log('error.');
     console.log(error);
   }
+}
+
+/**
+ * 将parse5.serilize后的html文本 转义
+ * 
+ * @param {string} content 需转义的文本
+ * @return {string} content 转义后的文本
+ */
+function transfer(content) {
+  const pmap = ['<', '&', '"'];
+  const amap = ['\\&lt\\;', '\\&amp\\;', '\\&quot\\;'];
+  amap.forEach((item, index) => {
+    const reg = new RegExp(item, 'g')
+    content = content.replace(reg, pmap[index])
+  })
+  return content
 }
 
 /**

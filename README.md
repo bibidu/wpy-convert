@@ -108,9 +108,9 @@ AST + RegExp + parse5
 
 - [x] delete config and component in xx.js
 
-- [ ] component json文件应有component: true
+- [x] component json文件应有component: true
 
-- [ ] 打包后的npm不应该放到src目录下
+- [x] 打包后的npm不应该放到src目录下
 
 - [ ] methods平铺
 
@@ -120,7 +120,7 @@ AST + RegExp + parse5
 
 - [ ] $navigate等路由方法的实现
 
-- [ ] npm目录递归创建未实现
+- [x] npm目录递归创建未实现
 
 - [ ] 代码目录结构未调整
 
@@ -133,6 +133,15 @@ AST + RegExp + parse5
 - [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
 - [ ] ImportDeclaration/VariableDeclaration会同时发生
+
+- [ ] npm模块内引入其他npm模块的路径也应修改路径
+
+- [x] 生成的npm新路径未添加main上的路径
+
+- [x] parse5.serilize后进行html转义
+
+- [x] parse5.serilize后自闭合标签的结尾斜杠丢失, 如<input /> --> <input >
+  通过修改parse5.serilize|parseFragment解决, 代码见/utils/parse5.js
 
 ### 坑
 - [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)

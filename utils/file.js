@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 21:13:43 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-16 23:06:23
+ * @Last Modified time: 2019-05-17 13:10:04
  */
 
 const fs = require('fs')
@@ -52,6 +52,22 @@ const fileUtils = {
     if (!fs.existsSync(filePath)) {
       console.log(`[写入] ${filePath.replace(config.project.output, '')}`)
       fs.writeFileSync(filePath, content)
+    }
+  },
+
+  delDir(path){
+    let files = []
+    if (fs.existsSync(path)){
+      files = fs.readdirSync(path)
+      files.forEach((file, index) => {
+        let curPath = path + "/" + file
+        if (fs.statSync(curPath).isDirectory()) {
+            fileUtils.delDir(curPath)
+        } else {
+            fs.unlinkSync(curPath)
+        }
+      });
+      fs.rmdirSync(path)
     }
   },
 
