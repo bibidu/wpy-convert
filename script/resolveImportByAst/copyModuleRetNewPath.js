@@ -2,10 +2,11 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-17 15:05:03
+ * @Last Modified time: 2019-05-18 07:21:56
  */
 
 const path = require('path')
+const fs = require('fs')
 const config = require('../../config')
 const wepyrc = require(config.project.entry + '/wepy.config.js')
 const {
@@ -58,7 +59,7 @@ module.exports = function copyModuleRetNewPath(importPath, filePath) {
   // 替换别名
   importPath = replaceAlias(importPath)
   
-  const { entry } = config.project
+  const { entry, sourceEntry } = config.project
   let source
   let end
   let newPath
@@ -76,13 +77,40 @@ module.exports = function copyModuleRetNewPath(importPath, filePath) {
     
     /* 解析项目中npm模块 */
     resolveNpm(source, end)
-  } else {
-    source = path.resolve(entry, importPath)
-    end = projectEntry2opt(source)
-    newPath = path.relative(path.dirname(filePath), source)
-  }
-  
-  
 
-  return newPath
+    return newPath
+  } else {
+    // /Users/duxianzhang/Desktop/own/wpy-revert/reciteword/src/store/index.js
+    source = addExt(path.resolve(path.join(entry, sourceEntry, importPath)))
+    // /Users/duxianzhang/Desktop/own/wpy-revert/dist_reciteword/src/store/index.js
+    // end = projectEntry2opt(source)
+
+    const newRelativePath = path.join(path.relative(path.dirname(filePath), path.dirname(source)), path.basename(source))
+    return newRelativePath.charAt(0) !== '.' ? `./${newRelativePath}` : newRelativePath
+  }
+}  
+
+/**
+ * 添加path的后缀名
+ * 
+ * @param {*} path 
+ */
+function addExt(path) {
+  const reg = /\.\w+$/
+  const defaultSuffix = '.js'
+  
+  if (!reg.test(path)) {
+    const addJsSuffixPath = path + '.js'
+    if (!fs.existsSync(addJsSuffixPath)) {
+      path = path + '/index.js'
+      console.log(path);
+      if (fs.existsSync(path)) {
+        return path
+      }
+      return logger.error(`auto add suffix fail: ${path}`)
+    }
+    return addJsSuffixPath
+  } else {
+    return path
+  }
 }

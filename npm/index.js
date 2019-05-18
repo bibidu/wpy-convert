@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 00:40:49
+ * @Last Modified time: 2019-05-18 07:52:08
  */
 
 const path = require('path')
@@ -112,8 +112,35 @@ function traverseRequire({ entry, pkg, source }) {
       resolveNpm(current)
       continue
     }
-    current = path.join(path.dirname(entry), current)
-    absoluteDeps.push(addExt(current))
+    console.log('[isNpm:]', current, flag);
+    console.log(entry);
+    console.log(addExt(path.resolve(path.dirname(entry), current)));
+    const newAbsolutePath = addExt(path.resolve(path.dirname(entry), current))
+    console.log();
+    let relativeSymbol = path.relative(path.dirname(entry), path.dirname(newAbsolutePath))
+    relativeSymbol = relativeSymbol.charAt(0) === '.' ? `${relativeSymbol}/` : `./${relativeSymbol}`
+    // TODO: wepy-async-function/index.js require('./global') -> ast转换并写入global
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    // TODO: 
+    console.log(relativeSymbol + path.basename(newAbsolutePath));
+    // console.log(relativeSymbol + path.basename(newAbsolutePath));
+
+    // console.log(path.relative(entry, newAbsolutePath) + path.basename(newAbsolutePath));
+    // console.log('current');
+    // console.log(entry);
+    // console.log(current);
+    // console.log(addExt(path.resolve(path.dirname(entry), current)));
+    // current = path.join(path.dirname(entry), current)
+    current = relativeSymbol + path.basename(newAbsolutePath)
+    absoluteDeps.push(current)
   }
 
   absoluteDeps.forEach(dep => {
