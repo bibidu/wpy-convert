@@ -2,12 +2,13 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 06:40:01
+ * @Last Modified time: 2019-05-18 23:35:02
  */
 
 
 const fs = require('fs')
 const path = require('path')
+const babelCompiler = require('../compiler/babel-compiler')
 const {
   logger,
   stringify
@@ -43,11 +44,12 @@ module.exports = function traverseFiles() {
   
   const fileArr = opt
     .filter(i => i.isFile)
+    // .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    .filter(i => i.fileName.includes('app'))
+    // .filter(i => i.fileName.includes('app'))
     // .filter(i => i.fileName.includes('prizeModal'))
-    // .slice(0, 1)
+    // .slice(0, 5)
   // console.log('fileArr');
   // console.log(fileArr);
 
@@ -57,6 +59,7 @@ module.exports = function traverseFiles() {
 
     const isApp = item.fileName === 'app.wpy'
     const isWpy = item.ext === '.wpy'
+    const isJs = item.ext === '.js'
 
     // 输出目录
     const cachedPath = item.filePath
@@ -67,7 +70,11 @@ module.exports = function traverseFiles() {
     /* 非wpy文件无需编译, 拷贝到dist目录即可 */
     if (!isWpy) {
       // console.log('[copy] 复制文件');
-      return fileUtils.createAndWriteFile(cachedPath, fs.readFileSync(item.filePath))
+      return fileUtils.createAndWriteFile(
+        cachedPath, 
+        isJs ? babelCompiler(fs.readFileSync(item.filePath)).code
+          : fs.readFileSync(item.filePath)
+      )
     }
     // console.log('[copy] 编译文件');
     let rst = splitSTSC(item)

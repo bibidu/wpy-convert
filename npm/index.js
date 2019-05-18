@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 07:52:08
+ * @Last Modified time: 2019-05-18 22:48:40
  */
 
 const path = require('path')
@@ -112,34 +112,9 @@ function traverseRequire({ entry, pkg, source }) {
       resolveNpm(current)
       continue
     }
-    console.log('[isNpm:]', current, flag);
-    console.log(entry);
-    console.log(addExt(path.resolve(path.dirname(entry), current)));
-    const newAbsolutePath = addExt(path.resolve(path.dirname(entry), current))
-    console.log();
-    let relativeSymbol = path.relative(path.dirname(entry), path.dirname(newAbsolutePath))
-    relativeSymbol = relativeSymbol.charAt(0) === '.' ? `${relativeSymbol}/` : `./${relativeSymbol}`
-    // TODO: wepy-async-function/index.js require('./global') -> ast转换并写入global
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    // TODO: 
-    console.log(relativeSymbol + path.basename(newAbsolutePath));
-    // console.log(relativeSymbol + path.basename(newAbsolutePath));
-
-    // console.log(path.relative(entry, newAbsolutePath) + path.basename(newAbsolutePath));
-    // console.log('current');
-    // console.log(entry);
-    // console.log(current);
-    // console.log(addExt(path.resolve(path.dirname(entry), current)));
-    // current = path.join(path.dirname(entry), current)
-    current = relativeSymbol + path.basename(newAbsolutePath)
+    
+    const withExpPath = autoAddExtAccordRelativePath(entry, current)
+    current = path.resolve(path.dirname(entry), path.dirname(withExpPath)) + '/' + path.basename(withExpPath)
     absoluteDeps.push(current)
   }
 
@@ -171,25 +146,22 @@ function grabDependencies({entry, source, distPath, pkg, content}) {
         if (flag) {
           const project = config.project
 
-          const innerNpmDir = project.entry + '/node_modules/' + moduleName
-          const entryInfo = grabNpmEntryInfo(innerNpmDir)
-          const innerNpmDistDir = entryInfo.entry
-            .replace(project.entry, project.output)
-            .replace('node_modules', 'npm')
-          const relativePath = path.relative(
-            path.dirname(distPath),
-            path.dirname(innerNpmDistDir)
-          )
-          // arguments[0].value = path.join(
-          //   relativePath,
-          //   rest.reduce((p, c) => p + c, '/'),
-          //   pkg.main
-          // )
-          arguments[0].value = path.join(
-            relativePath,
-            rest.length ? rest.reduce((p, c) => p + c, '/') : '',
-          )
+          // 1.当前npm文件的绝对路径
+          const npmAbsolute = entry
+          // 2.引入的npm模块的绝对路径
+          let importNpmAbsolute = project.entry + '/node_modules/' + depName
+          importNpmAbsolute = moduleName === depName ? grabNpmEntryInfo(importNpmAbsolute).entry : importNpmAbsolute + '/t.js'
+          // 3.求上面两者的dirname然后relative
+          const relativeA2B = path.relative(path.dirname(npmAbsolute), path.dirname(importNpmAbsolute))
+          // autoAddExtAccordRelativePath传1、3得到结果
+          const rst = autoAddExtAccordRelativePath(npmAbsolute, relativeA2B)
+          arguments[0].value = rst
+          return
         }
+        // npm模块引入的非npm模块文件路径， 如wepy-async-function引入 ./global
+        const beforePath = arguments[0].value
+        const afterPath = autoAddExtAccordRelativePath(entry, beforePath)
+        arguments[0].value = afterPath
       }
     }
   }
@@ -203,7 +175,19 @@ function grabDependencies({entry, source, distPath, pkg, content}) {
     code: t.code
   }
 }
-
+/**
+ * 
+ * @param {*} entry /User/mr.du/Desktip/recite/node_modules/wepy-redux/lib/index.js
+ * @param {*} relativePath ./store
+ * 
+ * @return {string} ./store.js | ./store/index.js
+ */
+function autoAddExtAccordRelativePath(entry, relativePath) {
+  const newPath = addExt(path.resolve(path.dirname(entry), relativePath))
+  let withDotPath = path.relative(path.dirname(entry), path.dirname(newPath)) || '.'
+  withDotPath = withDotPath.charAt(0) === '.' ? `${withDotPath}/` : `./${withDotPath}/`
+  return withDotPath + path.basename(newPath)
+}
 /**
  * 添加path的后缀名
  * 
@@ -231,5 +215,6 @@ function addExt(path) {
 
 module.exports = {
   resolveNpm,
-  isNpm
+  isNpm,
+  autoAddExtAccordRelativePath
 }

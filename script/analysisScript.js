@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-17 00:09:48
+ * @Last Modified time: 2019-05-18 23:22:41
  */
 
 const babel = require('babel-core')
@@ -61,7 +61,12 @@ function analysisScriptByAst(compiledCode, file) {
 
           /* 保存k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
           const key = dec.id.name
-          newCompsPaths[key.replace(/^\_/, '')] = dec.init.arguments[0].value
+          newCompsPaths[key.replace(/^\_/, '')] = (dec.init.arguments[0].value).replace('.wpy', '')
+          
+          /* 移除引入的wpy.component */
+          if (module.includes('components/')) {
+            path.remove()
+          }
         }
       })
     },

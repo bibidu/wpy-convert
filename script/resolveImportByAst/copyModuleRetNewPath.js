@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 07:21:56
+ * @Last Modified time: 2019-05-18 23:19:32
  */
 
 const path = require('path')
@@ -11,11 +11,15 @@ const config = require('../../config')
 const wepyrc = require(config.project.entry + '/wepy.config.js')
 const {
   resolveNpm,
-  isNpm
+  isNpm,
+  autoAddExtAccordRelativePath
 } = require('../../npm')
 const {
   npmEntry2opt
 } = require('../../npm/utils')
+const {
+  logger
+} = require('../../utils')
 const {
   projectEntry2opt
 } = require('../../utils/utils')
@@ -80,6 +84,10 @@ module.exports = function copyModuleRetNewPath(importPath, filePath) {
 
     return newPath
   } else {
+    importPath = addExt(importPath.charAt(0) === '.' ? path.resolve(path.dirname(filePath), importPath) : importPath)
+    const relativeDot = path.relative(path.dirname(filePath), importPath)
+    let t = autoAddExtAccordRelativePath(filePath, relativeDot)
+    return t
     // /Users/duxianzhang/Desktop/own/wpy-revert/reciteword/src/store/index.js
     source = addExt(path.resolve(path.join(entry, sourceEntry, importPath)))
     // /Users/duxianzhang/Desktop/own/wpy-revert/dist_reciteword/src/store/index.js
@@ -102,6 +110,9 @@ function addExt(path) {
   if (!reg.test(path)) {
     const addJsSuffixPath = path + '.js'
     if (!fs.existsSync(addJsSuffixPath)) {
+      if (fs.existsSync(path + '.wpy')) {
+        return path + '.wpy'
+      }
       path = path + '/index.js'
       console.log(path);
       if (fs.existsSync(path)) {
@@ -110,7 +121,6 @@ function addExt(path) {
       return logger.error(`auto add suffix fail: ${path}`)
     }
     return addJsSuffixPath
-  } else {
-    return path
   }
+  return path
 }
