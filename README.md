@@ -130,13 +130,7 @@ AST + RegExp + parse5
 
 - [x] 当前文件的编译后路径错误, 如import Player from '@componnets/answer/player' -> import Player from 'player'
 
-- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
-
-- [ ] ImportDeclaration/VariableDeclaration会同时发生
-
-- [ ] npm模块require引入./connect无法自动识别为./connect/index.js, 需提前进行编译转换
-
-- [ ] npm模块内引入其他npm模块的路径也应修改路径
+- [x] npm模块require引入./connect无法自动识别为./connect/index.js, 需提前进行编译转换
 
 - [x] 生成的npm新路径未添加main上的路径
 
@@ -144,6 +138,19 @@ AST + RegExp + parse5
 
 - [x] parse5.serilize后自闭合标签的结尾斜杠丢失, 如<input /> --> <input >
   通过修改parse5.serilize|parseFragment解决, 代码见/utils/parse5.js
+
+- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+
+- [ ] ImportDeclaration/VariableDeclaration会同时发生
+
+- [ ] npm模块内引入其他npm模块的路径也应修改路径
+
+- [ ] 自定义js|wpy文件 -->  babel编译 --> 替换别名 --> 分析require --> 
+
+- [ ] 开发者js -> 需先编译 -> visitor修改引入npm模块 -> 再次递归(由于从node_modules作入口已经写过递归查询引用并创建,故出于代码复用考虑不将本次递归重新写到上一步的vistor遍历劫持中) -- 通过在复用的递归代码中加入npm=>node_modules -->
+
+- [ ] 接上。npm中的文件无论是本npm还是其他npm文件都无需编译、替换别名，而开发者js中的文件如果是npm则无需编译，非npm都需要编译、替换！！需要重新组织编译的代码结构
+
 
 ### 坑
 - [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)

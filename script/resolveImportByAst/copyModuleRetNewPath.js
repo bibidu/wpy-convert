@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 23:19:32
+ * @Last Modified time: 2019-05-19 13:16:24
  */
 
 const path = require('path')
@@ -118,7 +118,7 @@ function addExt(path) {
       if (fs.existsSync(path)) {
         return path
       }
-      return logger.error(`auto add suffix fail: ${path}`)
+      return logger.error(`auto add suffix fail1: ${path}`)
     }
     return addJsSuffixPath
   }

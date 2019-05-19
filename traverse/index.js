@@ -2,17 +2,28 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 23:35:02
+ * @Last Modified time: 2019-05-19 17:54:34
  */
 
 
 const fs = require('fs')
 const path = require('path')
+const config = require('../config')
+const wepyrc = require(config.project.entry + '/wepy.config.js')
 const babelCompiler = require('../compiler/babel-compiler')
 const {
   logger,
-  stringify
+  stringify,
+  safeGet
 } = require('../utils')
+
+const {
+  traverseRequire,
+  autoAddExtAccordRelativePath,
+  addExt,
+  isNpm,
+  resolveNpmFromDevModule
+} = require('../npm')
 
 const splitSTSC = require('../splitSTSC')
 const cache = require('../utils/cache')
@@ -24,6 +35,20 @@ const compileScript = require('../script')
 
 const exclude = []
 
+
+function hasProjectAlias(module) {
+  const alias = Object.keys(wepyrc.resolve.alias)
+  for (let i = 0; i < alias.length; i++) {
+    if (module.includes(alias[i])) {
+      return {
+        flag: true,
+        alias: alias[i],
+        aliasValue: wepyrc.resolve.alias[alias[i]]
+      }
+    }
+  }
+  return { flag: false }
+}
 /**
  * 遍历文件并输出到dist_
  * 
@@ -44,12 +69,12 @@ module.exports = function traverseFiles() {
   
   const fileArr = opt
     .filter(i => i.isFile)
-    // .filter(i => i.ext === '.js')
+    .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('app'))
+    .filter(i => i.fileName.includes('aaa'))
     // .filter(i => i.fileName.includes('prizeModal'))
-    // .slice(0, 5)
+    .slice(0, 5)
   // console.log('fileArr');
   // console.log(fileArr);
 
@@ -70,11 +95,55 @@ module.exports = function traverseFiles() {
     /* 非wpy文件无需编译, 拷贝到dist目录即可 */
     if (!isWpy) {
       // console.log('[copy] 复制文件');
-      return fileUtils.createAndWriteFile(
-        cachedPath, 
-        isJs ? babelCompiler(fs.readFileSync(item.filePath)).code
-          : fs.readFileSync(item.filePath)
-      )
+
+      // test
+      if (isJs) {
+        return traverseRequire({
+          entry: item.filePath,
+          fileContent: babelCompiler(fs.readFileSync(item.filePath), {
+            // TODO: ast修改require中的别名
+            VariableDeclaration(_path) {
+              const { declarations, kind } = _path.node
+              let module
+              declarations.forEach(dec => {
+                if (
+                  safeGet(dec, 'dec.init.type') === 'CallExpression'
+                  && safeGet(dec, 'dec.init.callee.name') === 'require'
+                ) {
+                  module = dec.init.arguments[0].value
+                  const { flag: hasAlias, alias, aliasValue } = hasProjectAlias(module)
+                  if (hasAlias) {
+                    const importAbsolutePath = addExt(module.replace(alias, aliasValue))
+                    let importRelativePath = path.relative(path.dirname(item.filePath), path.dirname(importAbsolutePath)) || '.'
+                    dec.init.arguments[0].value = importRelativePath + '/' + path.basename(importAbsolutePath)
+                    console.log('[ALIAS]');
+                    console.log(importAbsolutePath);
+                    console.log(importRelativePath);
+                    console.log(dec.init.arguments[0].value);
+                    return
+                  }
+                  const { flag: npm } = isNpm(module)
+                  if (npm) {
+                    let t = resolveNpmFromDevModule({
+                      npmModuleName: module,
+                      entry: item.filePath
+                    })
+                    dec.init.arguments[0].value = t
+                  }
+                }
+              })
+            },
+          }).code
+        })
+      }
+      // test
+      return fileUtils.createAndWriteFile(cachedPath, fs.readFileSync(item.filePath))
+
+      // return fileUtils.createAndWriteFile(
+      //   cachedPath, 
+      //   isJs ? babelCompiler(fs.readFileSync(item.filePath)).code
+      //     : fs.readFileSync(item.filePath)
+      // )
     }
     // console.log('[copy] 编译文件');
     let rst = splitSTSC(item)
