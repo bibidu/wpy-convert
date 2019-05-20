@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-19 13:16:24
+ * @Last Modified time: 2019-05-19 21:05:30
  */
 
 const path = require('path')
@@ -29,7 +29,8 @@ let project = {}
 
 
 /**
- * 替换别名
+ * 
+ * @param {*} path require引入的模块名
  */
 function replaceAlias(path) {
   const aliases = wepyrc.resolve.alias
@@ -49,28 +50,36 @@ function getNpmPkg(npmPath) {
   return pkg
 }
 
+
 /**
  * 创建响应文件并更改调用路径
  * 
- * @param {*} importPath 文件引入第三方模块的路径
- * @param {*} filePath 文件所在路径 
+ * @param {*} moduleName require引入第三方模块的路径
+ * @param {*} filePath 当前文件所在绝对路径 
  * 
  * @return {*} 新路径
  */
 // '/Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/pages/answer.wpy'
-module.exports = function copyModuleRetNewPath(importPath, filePath) {
+module.exports = function copyModuleRetNewPath(moduleName, filePath) {
 
-  // 替换别名
-  importPath = replaceAlias(importPath)
+  moduleName = replaceAlias(moduleName)
   
   const { entry, sourceEntry } = config.project
   let source
   let end
   let newPath
 
-  if (isNpm(importPath).flag) {
-    source = path.resolve(entry, './node_modules/' + importPath)
-    end = npmEntry2opt(projectEntry2opt(source))
+  console.log('=============');
+  console.log(moduleName);
+  // /Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/app.wpy
+  console.log(filePath);
+  if (isNpm(moduleName).flag) {
+
+
+    revertNpmInDevModule(filePath, moduleName)
+
+    // /Users/mr.du/Desktop/owns/wpy-revert/reciteword/node_modules/wepy-redux
+    source = path.resolve(entry, './node_modules/' + moduleName)
     const { main } = getNpmPkg(source)
 
     newPath = path.relative(path.dirname(filePath), npmEntry2opt(source))
@@ -78,18 +87,22 @@ module.exports = function copyModuleRetNewPath(importPath, filePath) {
     newPath = path.join(newPath, main)
     // npm/wepy --> ./npm/wepy
     newPath = newPath.charAt(0) !== '.' ? `./${newPath}` : newPath
+
+    console.log('source ', source);
+    // ./npm/wepy-redux/lib/index.js
+    console.log('newPath ', newPath);
     
     /* 解析项目中npm模块 */
-    resolveNpm(source, end)
+    resolveNpm(source)
 
     return newPath
   } else {
-    importPath = addExt(importPath.charAt(0) === '.' ? path.resolve(path.dirname(filePath), importPath) : importPath)
-    const relativeDot = path.relative(path.dirname(filePath), importPath)
+    moduleName = addExt(moduleName.charAt(0) === '.' ? path.resolve(path.dirname(filePath), moduleName) : moduleName)
+    const relativeDot = path.relative(path.dirname(filePath), moduleName)
     let t = autoAddExtAccordRelativePath(filePath, relativeDot)
     return t
     // /Users/duxianzhang/Desktop/own/wpy-revert/reciteword/src/store/index.js
-    source = addExt(path.resolve(path.join(entry, sourceEntry, importPath)))
+    source = addExt(path.resolve(path.join(entry, sourceEntry, moduleName)))
     // /Users/duxianzhang/Desktop/own/wpy-revert/dist_reciteword/src/store/index.js
     // end = projectEntry2opt(source)
 
@@ -114,7 +127,6 @@ function addExt(path) {
         return path + '.wpy'
       }
       path = path + '/index.js'
-      console.log(path);
       if (fs.existsSync(path)) {
         return path
       }

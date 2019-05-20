@@ -2,21 +2,26 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 21:13:43 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-17 13:10:04
+ * @Last Modified time: 2019-05-19 20:47:22
  */
 
 const fs = require('fs')
 const path = require('path')
 const config = require('../config')
-// const {
-//   logger
-// } = require('./')
+
+
  
 const fileUtils = {
   isFile(path) {
     return fs.existsSync(path) && fs.statSync(path).isFile()
   },
   
+  /**
+   * @param {*} entry 总文件入口(绝对路径)
+   * @param {*} options 
+   * 
+   * @return {*} output 所有文件信息
+   */
   readDirAllFiles(entry, output, options = {}) {
     if (fileUtils.isFile(entry)) {
       return output.push({
