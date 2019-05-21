@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-21 10:16:19
+ * @Last Modified time: 2019-05-21 11:21:35
  */
 const fs = require('fs')
 const path = require('path')
@@ -23,6 +23,7 @@ const {
   stringify,
   safeGet
 } = require('../utils')
+const copyModuleRetNewPath = require('../script/copyModuleRetNewPath')
 
 /**
  *
@@ -33,8 +34,14 @@ function traverseJs({ entry }) {
 
   /* 收集引用模块的相对路径(带后缀) */
   let requireRelativePathArr = []
+  let content
 
-  let compiled = babelCompiler(fs.readFileSync(entry), {
+  try {
+    content = fs.readFileSync(entry)
+  } catch (error) {
+    console.log(`[readFileSync] entry: ${entry}`);
+  }
+  let compiled = babelCompiler(content, {
     // TODO: ast修改require中的别名
     VariableDeclaration(_path) {
       const { declarations, kind } = _path.node
@@ -53,6 +60,7 @@ function traverseJs({ entry }) {
           
 
           const { flag } = isNpmModuleName(module)
+
           if (isNpm = flag) {
             modifiedRequirePath = revertNpmInModule(entry, module)
           } else if (hasAlias) {
@@ -80,6 +88,7 @@ function traverseJs({ entry }) {
     logger.error(`compiled is undefined- entry: ${entry}`)
   }
   const distFilePath = entry.replaceRoot().replaceSourceCode()
+
   fileUtils.createAndWriteFile(distFilePath, compiled.code)
 
   /* 遍历引用文件路径 */
@@ -104,11 +113,15 @@ function traverseRequireInJs({entry, requireRelativePathArr}) {
       path.dirname(relativePath)
     ) + '/' + path.basename(relativePath)
     requireAbsPathArr.push(absPath)
+
   }
   
+  // console.log('requireAbsPathArr');
+  // console.log(requireAbsPathArr);
   // 遍历引入的js模块
   requireAbsPathArr.forEach(abs => traverseJs({ entry: abs }))
-  // TODO: npm模块进行遍历
+  // npm模块进行遍历
+  requireNpmModuleNameArr.forEach(npmModuleName => copyModuleRetNewPath(entry, npmModuleName))
 }
 
 module.exports = traverseJs

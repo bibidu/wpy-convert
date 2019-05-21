@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-21 10:10:23
+ * @Last Modified time: 2019-05-21 11:24:56
  */
 
 
@@ -58,7 +58,7 @@ module.exports = function traverseFiles() {
     // .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('app'))
+    .filter(i => i.fileName.includes('index'))
     // .filter(i => i.fileName.includes('prizeModal'))
     // .slice(0, 3)
   // console.log('fileArr');

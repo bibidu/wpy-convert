@@ -112,6 +112,8 @@ AST + RegExp + parse5
 
 - [x] 打包后的npm不应该放到src目录下
 
+- [x] npm目录递归创建未实现
+
 - [ ] methods平铺
 
 - [ ] component生命周期方法名修改
@@ -119,8 +121,6 @@ AST + RegExp + parse5
 - [ ] $invoke/$apply的实现
 
 - [ ] $navigate等路由方法的实现
-
-- [x] npm目录递归创建未实现
 
 - [ ] 代码目录结构未调整
 
@@ -139,19 +139,20 @@ AST + RegExp + parse5
 - [x] parse5.serilize后自闭合标签的结尾斜杠丢失, 如<input /> --> <input >
   通过修改parse5.serilize|parseFragment解决, 代码见/utils/parse5.js
 
+- [x] npm模块内引入其他npm模块的路径也应修改路径
+
+- [x] store内index.js编译后丢失(abs2relative路径解析错误)
+
 - [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
 - [ ] ImportDeclaration/VariableDeclaration会同时发生
 
-- [ ] npm模块内引入其他npm模块的路径也应修改路径
-
-- [ ] 自定义js|wpy文件 -->  babel编译 --> 替换别名 --> 分析require --> 
-
-- [ ] 开发者js -> 需先编译 -> visitor修改引入npm模块 -> 再次递归(由于从node_modules作入口已经写过递归查询引用并创建,故出于代码复用考虑不将本次递归重新写到上一步的vistor遍历劫持中) -- 通过在复用的递归代码中加入npm=>node_modules -->
-
-- [ ] 接上。npm中的文件无论是本npm还是其他npm文件都无需编译、替换别名，而开发者js中的文件如果是npm则无需编译，非npm都需要编译、替换！！需要重新组织编译的代码结构
-
+- [ ] 解析npm包时，未安装该npm包依赖的其它npm包, (如redux-actions依赖invariant、reduce-reducers等)
 
 ### 坑
 - [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)
 
+
+### 可能导致编译失败的原因
+
+*** 引用的npm模块未在package.json声明

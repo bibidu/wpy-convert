@@ -1,8 +1,8 @@
 import wepy from 'wepy'
-import { ROOT_URL } from '@/common/constant'
-import base from '@/common/api/base'
-import audio from '../audio'
-import wechat from './wechat.js'
+// import { ROOT_URL } from '@/common/constant'
+// import base from '@/common/api/base'
+// import audio from '../api'
+// import wechat from './wechat.js'
 
 let clearStorageSync = wx.removeStorageSync
 

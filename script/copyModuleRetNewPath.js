@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-20 16:46:33
+ * @Last Modified time: 2019-05-21 11:45:06
  */
 
 const path = require('path')
@@ -82,6 +82,7 @@ module.exports = function copyModuleRetNewPath(filePath, moduleName) {
     resolveNpm(source)
 
   } else {
+    console.log('我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了');
     // moduleName = addExt(moduleName.charAt(0) === '.' ? path.resolve(path.dirname(filePath), moduleName) : moduleName)
     // const relativeDot = path.relative(path.dirname(filePath), moduleName)
     // let t = autoAddExtAccordRelativePath(filePath, relativeDot)

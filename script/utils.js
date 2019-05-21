@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 21:15:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-20 16:44:59
+ * @Last Modified time: 2019-05-21 16:15:33
  */
 const fs = require('fs')
 const path = require('path')
@@ -45,6 +45,7 @@ function getNpmModule(npmModuleName) {
   let pkg
   let npmAbsPath
   let npmEntryAbsPath
+  let npmPathPrefix
 
   const { entry } = config.project
   const npmRootFile = npmModuleName.includes('/')
@@ -54,9 +55,12 @@ function getNpmModule(npmModuleName) {
     npmModuleName = npmModuleName.split('/')[0]
   }
 
-  const pkgPath = `${entry}/node_modules/${npmModuleName}/package.json`
+  // npm路径前缀
+  npmPathPrefix = `${entry}/node_modules/${npmModuleName}/`
+
+  const pkgPath = `${npmPathPrefix}package.json`
   pkg = require(pkgPath)
-  npmEntryAbsPath = `${entry}/node_modules/${npmModuleName}/${pkg.main}`
+  npmEntryAbsPath = `${npmPathPrefix}${pkg.main}`
   npmAbsPath = npmAbsPath || npmEntryAbsPath
   
   return {
@@ -111,6 +115,7 @@ function appendFileSuffix(filePath, priority) {
  * 
  */
 function revertNpmInModule(moduleAbsPath, npmModuleName, allNpm) {
+  let replacedRelativePath
   let { npmAbsPath } = getNpmModule(npmModuleName)
   if (!allNpm) {
     // 转换成dist目录的路径
@@ -124,7 +129,13 @@ function revertNpmInModule(moduleAbsPath, npmModuleName, allNpm) {
     path.dirname(npmAbsPath)
   )
   relativeSymbol = relativeSymbol.charAt(0) === '.' ? relativeSymbol : `./${relativeSymbol}`
-  return relativeSymbol + '/' + path.basename(npmAbsPath)
+  replacedRelativePath = relativeSymbol + '/' + path.basename(npmAbsPath)
+
+  // 继续递归该npm依赖的其它npm包
+  // 遍历npmAbsPath 找寻require 若本地 则直接取 若npm 则传入entry前缀
+  // 入口： geNpmModule得到的pkg
+
+  return replacedRelativePath
 }
 
 /**
@@ -184,7 +195,9 @@ function abs2relative(absolutePath, requireAbsolutePath) {
   if (relativeSymbol.charAt(0) === '.')
     return `${relativeSymbol}/${path.basename(requireAbsolutePath)}`
   
-  return `/${relativeSymbol}/${path.basename(requireAbsolutePath)}`
+    // [F] fix bug: when relativeSymbol is not start with dot, eg. reducer.
+    // need append './'
+  return `./${relativeSymbol}/${path.basename(requireAbsolutePath)}`
 }
 
 /**
