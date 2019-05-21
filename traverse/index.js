@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-19 23:32:15
+ * @Last Modified time: 2019-05-21 10:10:23
  */
 
 
@@ -35,16 +35,6 @@ const compileScript = require('../script')
 
 const exclude = []
 
-
-
-// 获取输出文件目录
-const getDistDir = () => path.resolve(__dirname, '../dist_reciteword')
-
-// String.prototype.replaceRoot = function() { return this.replace(config.project.entry, config.project.output)}
-// String.prototype.replaceSourceCode = function() { return this.replace(config.project.sourceEntry, '')}
-// String.prototype.replaceNodeModules = function() { return this.replace('node_modules', 'npm')}
-
-
 /**
  * 遍历文件并输出到dist_
  * 
@@ -54,7 +44,7 @@ module.exports = function traverseFiles() {
   const { entry, output, sourceEntry } = cache.config.project
 
   // test
-  const distPath = getDistDir()
+  const distPath = path.resolve(__dirname, '../dist_reciteword')
   if (fs.existsSync(distPath)) {
     fileUtils.delDir(distPath)
     console.log(`[删除] 移除旧目录`);
@@ -65,118 +55,111 @@ module.exports = function traverseFiles() {
   
   const fileArr = opt
     .filter(i => i.isFile)
-    .filter(i => i.ext === '.js')
+    // .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    .filter(i => i.fileName.includes('aaa'))
+    // .filter(i => i.fileName.includes('app'))
     // .filter(i => i.fileName.includes('prizeModal'))
     // .slice(0, 3)
   // console.log('fileArr');
   // console.log(fileArr);
 
   
-  fileArr.forEach(async item => {
-    logger.attention(`当前编译文件: ${item.filePath.split('reciteword')[1]}`)
+  fileArr.forEach(async file => {
+    logger.attention(`当前编译文件: ${file.filePath.split('reciteword')[1]}`)
 
-    const isApp = item.fileName === 'app.wpy'
-    const isWpy = item.ext === '.wpy'
-    const isJs = item.ext === '.js'
+    let fileType
+    switch(file.ext) {
+      case '.wpy':
+        fileType = 'wpy'
+        break
+      case '.js':
+        fileType = 'js'
+        break
+      default:
+        fileType = '.unknow.ext'
+    }
 
     // 输出目录
-    const cachedPath = item.filePath.replaceRoot().replaceSourceCode()
-    // const cachedPath = item.filePath
-    //   .replace(entry, output)
-    //   /* 去除src目录 */
-    //   .replace(sourceEntry, '')
-    
-    /* 非wpy文件无需编译, 拷贝到dist目录即可 */
-    if (!isWpy) {
-      // console.log('[copy] 复制文件');
-      // test
-      if (isJs) {
-        // return traverseRequire({
-        //   entry: item.filePath,
-        //   fileContent: 
-        return traverseJs({ entry: item.filePath })
-        // })
-      }
-      // test
-      return fileUtils.createAndWriteFile(cachedPath, fs.readFileSync(item.filePath))
+    const distPath = file.filePath.replaceRoot().replaceSourceCode()
 
-      // return fileUtils.createAndWriteFile(
-      //   cachedPath, 
-      //   isJs ? babelCompiler(fs.readFileSync(item.filePath)).code
-      //     : fs.readFileSync(item.filePath)
-      // )
+    if (fileType === 'js') {
+      return traverseJs({ entry: file.filePath })
     }
-    // console.log('[copy] 编译文件');
-    let rst = splitSTSC(item)
-    
-    const compiledTemplate = !isApp && compileTemplate(rst.template)
-    const {
-      script: compiledScript,
-      config: configInScript,
-      fileType,
-      usingComponents,
-      mpRootFunc
-    } = compileScript(rst.script, item)
-    const compiledStyle = await less2css(rst.style)
-
-    let compiledConfig
-    if (fileType === 'app') {
-      compiledConfig = configInScript
-    } else if (fileType === 'page') {
-      compiledConfig = {
-        ...configInScript,
-        usingComponents: usingComponents
-      }
-    } else if (fileType === 'component') {
-      compiledConfig = {
-        ...configInScript,
-        component: true
-      }
+    if (fileType === 'wpy') {
+      return resolveWpy(file, distPath)
     }
-
-    const distPath = {
-      template: {
-        filePath: cachedPath.replace(item.ext, '.wxml'),
-        content: compiledTemplate
-      },
-      script: {
-        filePath: cachedPath.replace(item.ext, '.js'),
-        content: compiledScript + '\n' + mpRootFunc
-      },
-      style: {
-        filePath: cachedPath.replace(item.ext, '.wxss'),
-        content: compiledStyle
-      },
-      config: {
-        filePath: cachedPath.replace(item.ext, '.json'),
-        content: stringify(compiledConfig)
-      }
+    // 其他类型文件： copy
+    if (true) {
+      return fileUtils.createAndWriteFile(distPath, fs.readFileSync(file.filePath))
     }
-
-    // app.json中usingComponents无效
-    if (fileType === 'app') {
-      delete distPath.config.content.usingComponents
-    }
-
-    /* 创建文件 */
-    Object.keys(distPath).forEach(tag => {
-      const { filePath, content } = distPath[tag]
-
-      /* 无需写入文件的所有情况 */
-      const ignoreCases = [
-        // app中template标签无效
-        tag === 'template' && fileType === 'app'
-      ]
-
-      if (ignoreCases.some(c => c)) {
-        return
-      }
-      fileUtils.createAndWriteFile(filePath, content)
-    })
   })
+}
 
+async function resolveWpy(file, distPath) {
 
+  let { template, script, style } = splitSTSC(file)
+    
+  const compiledTemplate = file.fileName !== 'app.wpy' && compileTemplate(template)
+  const {
+    script: compiledScript,
+    config: configInScript,
+    fileType: wpyType,
+    usingComponents,
+    mpRootFunc
+  } = compileScript(script, file)
+  const compiledStyle = await less2css(style)
+
+  let compiledConfig
+  if (wpyType === 'app') {
+    compiledConfig = configInScript
+  }
+  if (wpyType === 'page') {
+    compiledConfig = {
+      ...configInScript,
+      usingComponents: usingComponents
+    }
+  }
+  if (wpyType === 'component') {
+    compiledConfig = {
+      ...configInScript,
+      component: true
+    }
+  }
+
+  const rstObject = {
+    template: {
+      filePath: distPath.replace(file.ext, '.wxml'),
+      content: compiledTemplate
+    },
+    script: {
+      filePath: distPath.replace(file.ext, '.js'),
+      content: compiledScript + '\n' + mpRootFunc
+    },
+    style: {
+      filePath: distPath.replace(file.ext, '.wxss'),
+      content: compiledStyle
+    },
+    config: {
+      filePath: distPath.replace(file.ext, '.json'),
+      content: stringify(compiledConfig)
+    }
+  }
+
+  if (wpyType === 'app') {
+    delete rstObject.config.content.usingComponents
+  }
+
+  Object.keys(rstObject).forEach(tag => {
+    const { filePath, content } = rstObject[tag]
+    /* 无需写入文件的所有情况 */
+    const ignoreCases = [
+      wpyType === 'app' && tag === 'template'
+    ]
+
+    if (ignoreCases.some(c => c))
+      return
+
+    fileUtils.createAndWriteFile(filePath, content)
+  })
 }

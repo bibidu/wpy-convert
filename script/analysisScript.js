@@ -2,19 +2,16 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-18 23:22:41
+ * @Last Modified time: 2019-05-20 16:24:23
  */
 
 const babel = require('babel-core')
 const types = require('babel-types')
 const generate = require('babel-generator').default
 
-// const resolveConfigByAst = require('./resolveConfigByAst')
-// const resolveCompsByAst = require('./resolveCompsByAst')
-const createMpRootFunc = require('./createMpRootFunc')
 
-
-const copyModuleRetNewPath = require('./resolveImportByAst/copyModuleRetNewPath')
+const babelCompiler = require('../compiler/babel-compiler')
+const copyModuleRetNewPath = require('./copyModuleRetNewPath')
 const {
   safeGet,
   upperStart
@@ -57,7 +54,7 @@ function analysisScriptByAst(compiledCode, file) {
           && safeGet(dec, 'dec.init.callee.name') === 'require'
         ) {
           module = dec.init.arguments[0].value
-          dec.init.arguments[0].value = copyModuleRetNewPath(module, filePath)
+          dec.init.arguments[0].value = copyModuleRetNewPath(filePath, module)
 
           /* 保存k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
           const key = dec.id.name
@@ -73,12 +70,14 @@ function analysisScriptByAst(compiledCode, file) {
 
     CallExpression(path) {
       const { object, property } = path.node.callee
-      if (safeGet(object, 'object.name') === 'Object' && safeGet(property, 'property.name') === 'defineProperty') {
+      if (
+        safeGet(object, 'object.name') === 'Object'
+        && safeGet(property, 'property.name') === 'defineProperty'
+      ) {
         const params = path.node.arguments
         Array.from(params).forEach(param => {
           /* 解析config属性 */
           if (param.type === 'StringLiteral' && param.value === 'config') {
-            
             const configureProperties = (
               Array.from(params).find(
                 i => i.type === 'ObjectExpression'
@@ -92,9 +91,6 @@ function analysisScriptByAst(compiledCode, file) {
             Array.from(
               safeGet(properties, 'properties.value.properties', [])
             ).forEach(prop => {
-              // config[prop.key.name] = prop.value.value
-
-              // const configCode = generate(prop, {}).code
               const configKey = generate(prop.key, {}).code
               const configValue = generate(prop.value, {
                 compact: true,
@@ -103,7 +99,6 @@ function analysisScriptByAst(compiledCode, file) {
               }).code
               config[configKey] = new Function(`return ${configValue}`)()
             })
-            // path.remove()
           }
 
           /* 解析components属性 */
@@ -129,42 +124,34 @@ function analysisScriptByAst(compiledCode, file) {
       }
     },
 
-    // require('babel-polyfill')
     ExpressionStatement(path) {
       const expression = safeGet(path, 'path.node.expression')
       if (expression
         && expression.type === 'AssignmentExpression'
+        && expression.right.name
       ) {
-        if (expression.right.name) {
-          // 保存该文件的默认导出类, eg: export.default = Banner
-          let t
-          if (t = safeGet(expression, 'expression.right.name')) {
-            // AST中不存在的属性可能会是string类型的undefined
-            if (t === 'undefined') {
-              return
-            }
-            exportDefaultName = t
+        let t
+        if (t = safeGet(expression, 'expression.right.name')) {
+          // AST中不存在的属性可能会是string类型的undefined
+          if (t === 'undefined') {
+            return
           }
+          exportDefaultName = t
         }
       }
+      // 创建引用文件并更改调用路径
       if (
         expression
         && expression.type === 'CallExpression'
         && safeGet(expression, 'expression.callee.name') === 'require'
       ) {
         module = path.node.expression.arguments[0].value
-        path.node.expression.arguments[0].value = copyModuleRetNewPath(module, filePath)
+        path.node.expression.arguments[0].value = copyModuleRetNewPath(filePath, module)
       }
 
-      /* 去除export语句 ·不需要删除 */
-      // if (
-      //   expression
-      //   && safeGet(expression, 'expression.left.object.name') === 'exports'
-      // ) {
-      //   path.remove()
-      // }
     },
     
+    // 解析wpy文件类型: [app|page|component]
     VariableDeclarator(path) {
       if (safeGet(path, 'path.node.id.name')) {
         const args = safeGet(path, 'path.node.init.superClass')
@@ -175,26 +162,11 @@ function analysisScriptByAst(compiledCode, file) {
     },
 
   }
-  let t = babel.transform(compiledCode, {
-    presets: [
-      ["es2015", { "loose": false }],
-
-      "stage-1"
-    ],
-    plugins: [  
-        ["transform-decorators-legacy"],
-        
-        { visitor },
-
-        ["transform-class-properties", { "spec": true }],
-
-    ]
-  })
+  let t = babelCompiler(compiledCode, visitor)
 
   /* 替换components的编译后路径 */
   replaceCompsPath(components, newCompsPaths)
 
-  // console.log(t.code);
   return {
     script: t.code,
     config: config,

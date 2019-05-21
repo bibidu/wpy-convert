@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 21:15:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-19 23:31:11
+ * @Last Modified time: 2019-05-20 16:44:59
  */
 const fs = require('fs')
 const path = require('path')
@@ -13,6 +13,28 @@ const { logger } = require('../utils')
 String.prototype.replaceRoot = function() { return this.replace(config.project.entry, config.project.output)}
 String.prototype.replaceSourceCode = function() { return this.replace(config.project.sourceEntry, '')}
 String.prototype.replaceNodeModules = function() { return this.replace('node_modules', 'npm')}
+
+
+/**
+ * 是否是npm模块
+ * 
+ * @param {*} moduleName 
+ * @param {*} currDependencies 
+ */
+function isNpmModuleName(current, currDependencies) {
+  const [ moduleName, ...rest ] = current.split('/')
+
+  const entry = config.project.entry
+  const _project = require(entry + '/package.json')
+  project = _project
+  const dependencies = currDependencies || _project.dependencies
+  const flag = Object.keys(dependencies).indexOf(moduleName) > -1
+
+  return {
+    flag, moduleName, rest
+  }
+}
+
 
 /**
  * 获取npm模块信息
@@ -95,7 +117,8 @@ function revertNpmInModule(moduleAbsPath, npmModuleName, allNpm) {
     moduleAbsPath = moduleAbsPath.replaceRoot().replaceSourceCode()
     npmAbsPath = npmAbsPath.replaceRoot().replaceNodeModules()
   }
-  
+
+  // TODO: abs2relative复用
   let relativeSymbol = path.relative(
     path.dirname(moduleAbsPath),
     path.dirname(npmAbsPath)
@@ -125,14 +148,43 @@ function revertRelativeModule(moduleAbsPath, relativePath) {
   let requireAbsPath = path.resolve(path.dirname(moduleAbsPath), relativePath)
   requireAbsPath = appendFileSuffix(requireAbsPath)
 
+  // TODO: abs2relative复用
   let relativeSymbol = path.relative(
     path.dirname(moduleAbsPath),
     path.dirname(requireAbsPath)
   )
-  relativeSymbol = relativeSymbol.charAt(0) === '.' ? relativeSymbol : `./${relativeSymbol}`
-  return relativeSymbol.charAt(relativeSymbol.length - 1) === '/'
-    ?  `${relativeSymbol}${path.basename(requireAbsPath)}`
-    : `/${relativeSymbol}${path.basename(requireAbsPath)}`
+  if (!relativeSymbol) 
+    return `./${path.basename(requireAbsPath)}`
+  if (relativeSymbol.charAt(0) === '.')
+    return `${relativeSymbol}/${path.basename(requireAbsPath)}`
+  return `./${relativeSymbol}/${path.basename(requireAbsPath)}`
+}
+
+/**
+ *
+ *
+ * @param {*} absolutePath 当前文件绝对路径
+ * @param {*} requireAbsolutePath 引入模块的绝对路径
+ * 
+ * @example:
+ *    /Users/duxianzhang/Desktop/own/wpy-revert/reciteword/src/common/api/aaa.js
+ *    /Users/duxianzhang/Desktop/own/wpy-revert/reciteword/src/common/api/base.js
+ * 
+ * @tips:
+ *    requireAbsolutePath是npm路径时需提前特别处理
+ * @returns
+ */
+function abs2relative(absolutePath, requireAbsolutePath) {
+  let relativeSymbol = path.relative(
+    path.dirname(absolutePath),
+    path.dirname(requireAbsolutePath)
+  )
+  if (!relativeSymbol) 
+    return `./${path.basename(requireAbsolutePath)}`
+  if (relativeSymbol.charAt(0) === '.')
+    return `${relativeSymbol}/${path.basename(requireAbsolutePath)}`
+  
+  return `/${relativeSymbol}/${path.basename(requireAbsolutePath)}`
 }
 
 /**
@@ -150,7 +202,8 @@ function checkAndReplaceAlias(module) {
       return {
         flag: true,
         alias: alias[i],
-        aliasValue: wepyrc.resolve.alias[alias[i]]
+        aliasValue: wepyrc.resolve.alias[alias[i]],
+        removeAliasModuleName: module.replace(alias[i], wepyrc.resolve.alias[alias[i]] )
       }
     }
   }
@@ -158,9 +211,11 @@ function checkAndReplaceAlias(module) {
 }
 
 module.exports = {
+  isNpmModuleName,
   appendFileSuffix,
   revertNpmInModule,
   revertRelativeModule,
-  checkAndReplaceAlias
+  checkAndReplaceAlias,
+  abs2relative
 }
 

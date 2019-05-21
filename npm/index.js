@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-19 18:49:56
+ * @Last Modified time: 2019-05-20 16:07:21
  */
 
 const path = require('path')
@@ -15,31 +15,8 @@ const {
 } = require('../utils')
 const fileUtils = require('../utils/file')
 const {
-  npmEntry2opt
-} = require('../npm/utils')
-const {
-  projectEntry2opt
-} = require('../utils/utils')
-
-/**
- * 是否是npm模块
- * 
- * @param {*} moduleName 
- * @param {*} currDependencies 
- */
-function isNpm(current, currDependencies) {
-  const [ moduleName, ...rest ] = current.split('/')
-
-  const entry = config.project.entry
-  const _project = require(entry + '/package.json')
-  project = _project
-  const dependencies = currDependencies || _project.dependencies
-  const flag = Object.keys(dependencies).indexOf(moduleName) > -1
-
-  return {
-    flag, moduleName, rest
-  }
-}
+  isNpmModuleName
+} = require('../script/utils')
 
 /**
  * 解析npm模块
@@ -107,12 +84,8 @@ function grabNpmEntryInfo(modulePath) {
  * @param {*} content 
  */
 function traverseRequire({ entry, pkg, fileContent }) {
-  const distPath = npmEntry2opt(projectEntry2opt(entry))
-  /* 去除原src目录 */
-    .replace(config.project.sourceEntry, '')
+  const distPath = entry.replaceRoot().replaceNodeModules().replaceSourceCode()
   
-    console.log('entry');
-    console.log(entry);
   let content = fileContent || fs.readFileSync(entry)
   if (!content) {
     return logger.error(`traverseRequire method: file should not be null in entry ${entry}`)
@@ -134,7 +107,7 @@ function traverseRequire({ entry, pkg, fileContent }) {
     current = relativeDeps[i]
     
     
-    const { flag, moduleName, rest } = pkg && pkg.dependencies ? isNpm(current, pkg.dependencies) :  isNpm(current)
+    const { flag, moduleName, rest } = pkg && pkg.dependencies ? isNpmModuleName(current, pkg.dependencies) :  isNpmModuleName(current)
     if (flag) {
       current = path.resolve(config.project.entry, './node_modules/' + moduleName)
       if (rest.length) {
@@ -157,8 +130,6 @@ function traverseRequire({ entry, pkg, fileContent }) {
     absoluteDeps.push(current)
   }
 
-  console.log('absoluteDeps');
-  console.log(absoluteDeps);
   absoluteDeps.forEach(dep => {
     traverseRequire({
       entry: dep,
@@ -182,7 +153,7 @@ function grabDependencies({entry, distPath, pkg, content}) {
         const depName = arguments[0].value
         dependencies.push(depName)
 
-        const { flag, moduleName, rest } = pkg && pkg.dependencies ? isNpm(depName, pkg.dependencies) : isNpm(depName)
+        const { flag, moduleName, rest } = pkg && pkg.dependencies ? isNpmModuleName(depName, pkg.dependencies) : isNpmModuleName(depName)
         if (flag) {
           const project = config.project
 
@@ -261,7 +232,6 @@ function addExt(path) {
 
 module.exports = {
   resolveNpm,
-  isNpm,
   addExt,
   traverseRequire,
   resolveNpmFromDevModule,
