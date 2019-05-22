@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 19:04:47
+ * @Last Modified time: 2019-05-22 23:25:55
  */
 
 const path = require('path')
@@ -10,7 +10,7 @@ const fs = require('fs')
 const config = require('../config')
 const wepyrc = require(config.project.entry + '/wepy.config.js')
 const {
-  resolveNpm,
+  traverseNpm,
   autoAddExtAccordRelativePath
 } = require('../npm')
 const {
@@ -20,7 +20,8 @@ const {
   checkIsNpmModuleAndRetDetail,
   revertNpmInModule,
   revertRelativeModule,
-  checkAndReplaceAlias
+  checkAndReplaceAlias,
+  getNpmModule
 } = require('./utils')
 let project = {}
 
@@ -76,9 +77,9 @@ module.exports = function copyModuleRetNewPath(wpyJsAbsPath, requireExpression) 
 
     replacedRelativePath = revertNpmInModule(wpyJsAbsPath, requireExpression)
 
-    // LAST_MODIFIED: 
     /* 解析项目中npm模块 */
-    resolveNpm(npmAbsPathFromRequireExpression)
+    const { npmAbsPath, pkg } = getNpmModule(requireExpression)
+    traverseNpm(npmAbsPath, pkg)
 
   } else {
     replacedRelativePath = revertRelativeModule(wpyJsAbsPath, requireExpression)

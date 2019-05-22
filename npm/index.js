@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 14:21:01
+ * @Last Modified time: 2019-05-22 23:35:43
  */
 
 const path = require('path')
@@ -26,17 +26,11 @@ const {
  * 
  * @example: /Users/mr.du/Desktop/owns/wpy-revert/reciteword/node_modules/regenerator
  */
-function resolveNpm(source) {
-  if (source.includes('combineAc')) {
-    console.log('resolveNpm');
-    console.log(source);
-    console.log();
-  }
-  // 获取入口文件信息
-  const { entry, pkg } = grabNpmEntryInfo(source)
+function traverseNpm(npmAbsPathWithSuffix, pkg) {
+  const entry = npmAbsPathWithSuffix
   
   // 读取入口文件引入项、遍历复制文件、npm模块绝对路径
-  traverseRequire({ entry, pkg, source })
+  traverseRequire({ entry, pkg })
 }
 
 /**
@@ -104,9 +98,9 @@ function traverseRequire({ entry, pkg, fileContent }) {
     code: newContent
   } = grabDependencies({entry, distPath, pkg, content})
 
+
   /* 写入npm模块文件到dist */
   fileUtils.createAndWriteFile(distPath, newContent)
-  // fileUtils.createAndWriteFile(distPath, content)
   
   let absoluteDeps = []
   let current
@@ -114,27 +108,17 @@ function traverseRequire({ entry, pkg, fileContent }) {
     current = relativeDeps[i]
     
     const { flag, moduleName, rest } = pkg && pkg.dependencies ? checkIsNpmModuleAndRetDetail(current, pkg.dependencies) :  checkIsNpmModuleAndRetDetail(current)
+
     if (flag) {
-      current = entry
-      // current = path.resolve(config.project.entry, './node_modules/' + moduleName)
-      // if (rest.length) {
-      absoluteDeps.push(addExt(current + rest.reduce((p, c) => p + c, '/')))
-      // }
-      logger.error()
-      resolveNpm(current)
+      const { npmAbsPath, pkg } = getNpmModule(current)
+
+      absoluteDeps.push(npmAbsPath)
+      traverseNpm(npmAbsPath, pkg)
       continue
     }
     
-    let addExtRelativePath = autoAddExtAccordRelativePath(entry, current)
-    const _isNpm = !!addExtRelativePath.includes('npm')
-    const withExpPath = _isNpm ?
-      addExtRelativePath.replace('npm', 'node_modules')
-      : addExtRelativePath
-    current = path.resolve(path.dirname(entry), path.dirname(withExpPath)) + '/' + path.basename(withExpPath)
-    if (_isNpm) {
-      current = current.replaceSourceCode()
-    }
-    absoluteDeps.push(current)
+    const npmAbsPath = addExt(path.resolve(path.dirname(entry), current))
+    absoluteDeps.push(npmAbsPath)
   }
 
   absoluteDeps.forEach(dep => {
@@ -225,30 +209,30 @@ function autoAddExtAccordRelativePath(entry, relativePathOrNpmModuleName, allNpm
 /**
  * 添加path的后缀名
  * 
- * @param {*} path 
+ * @param {*} _path 
  */
-function addExt(path) {
+function addExt(_path) {
   const reg = /\.\w+$/
   const defaultSuffix = '.js'
   
-  if (!reg.test(path)) {
-    const addJsSuffixPath = path + '.js'
+  if (!reg.test(_path)) {
+    const addJsSuffixPath = _path + '.js'
     if (!fs.existsSync(addJsSuffixPath)) {
-      path = path + '/index.js'
-      if (fs.existsSync(path)) {
-        return path
+      _path = path.join(_path, 'index.js')
+      if (fs.existsSync(_path)) {
+        return _path
       }
-      return logger.error(`auto add suffix fail: ${path}`)
+      return logger.error(`auto add suffix fail: ${_path}`)
     }
     return addJsSuffixPath
   } else {
-    return path
+    return _path
   }
 }
 
 
 module.exports = {
-  resolveNpm,
+  traverseNpm,
   addExt,
   traverseRequire,
   resolveNpmFromDevModule,

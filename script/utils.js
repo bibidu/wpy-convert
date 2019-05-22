@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 21:15:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 19:02:26
+ * @Last Modified time: 2019-05-22 23:23:48
  */
 const fs = require('fs')
 const path = require('path')
@@ -77,7 +77,6 @@ function getNpmModule(npmModuleName) {
 function appendFileSuffix(filePath, priority) {
   if (/\.\w+$/.test(filePath)) return filePath
 
-  console.log(filePath);
   const defaultSuffix = ['.js', '.wpy', '/index.js']
   if (priority) {
     const index = defaultSuffix.findIndex(suf => suf === priority)

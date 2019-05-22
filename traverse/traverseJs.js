@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 18:50:08
+ * @Last Modified time: 2019-05-22 23:25:28
  */
 const fs = require('fs')
 const path = require('path')
@@ -108,6 +108,9 @@ function traverseRequireInJs({entry, requireRelativePathArr}) {
   requireAbsPathArr.forEach(abs => traverseJs({ entry: abs }))
   // TODO: npm模块进行遍历
   // requireNpmModuleNameArr.forEach(npmModuleName => traverseNpm({ entry: npmModuleName }))
+  // requireNpmModuleNameArr.forEach(item => {
+  //   console.log(item, '先不创建');
+  // })
 }
 
 module.exports = traverseJs
