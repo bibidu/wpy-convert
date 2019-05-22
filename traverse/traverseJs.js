@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-21 11:21:35
+ * @Last Modified time: 2019-05-22 18:50:08
  */
 const fs = require('fs')
 const path = require('path')
@@ -10,7 +10,7 @@ const babelCompiler = require('../compiler/babel-compiler')
 const {
   checkAndReplaceAlias,
   appendFileSuffix,
-  isNpmModuleName,
+  checkIsNpmModuleAndRetDetail,
   revertNpmInModule,
   abs2relative
 } = require('../script/utils')
@@ -23,89 +23,77 @@ const {
   stringify,
   safeGet
 } = require('../utils')
-const copyModuleRetNewPath = require('../script/copyModuleRetNewPath')
+// const copyModuleRetNewPath = require('../script/copyModuleRetNewPath')
 
 /**
  *
  *
- * @param {*} { entry }
+ * @param {*} entry 开发者的JS文件绝对路径
  */
-function traverseJs({ entry }) {
+function traverseJs({ entry: jsEntry }) {
 
   /* 收集引用模块的相对路径(带后缀) */
   let requireRelativePathArr = []
-  let content
+  let code
 
   try {
-    content = fs.readFileSync(entry)
+    code = fs.readFileSync(jsEntry)
   } catch (error) {
-    console.log(`[readFileSync] entry: ${entry}`);
+    console.log(`[readFileSync] jsEntry: ${jsEntry}`);
   }
-  let compiled = babelCompiler(content, {
-    // TODO: ast修改require中的别名
-    VariableDeclaration(_path) {
-      const { declarations, kind } = _path.node
-      let module
-      declarations.forEach(dec => {
-        if (
-          safeGet(dec, 'dec.init.type') === 'CallExpression'
-          && safeGet(dec, 'dec.init.callee.name') === 'require'
-        ) {
-          module = dec.init.arguments[0].value
-          const { flag: hasAlias, removeAliasModuleName, aliasValue } = checkAndReplaceAlias(module)
+  
+  let compiled = babelCompiler(code, {
+    replaceRequirePath(requireExpression) {
+      let modifiedRequirePath
+      let isNpm = false
+      let requireAbsPath
 
-          let modifiedRequirePath
-          let isNpm = false
-          let requireAbsPath
-          
+      const { flag: hasAlias, removeAliasModuleName } = checkAndReplaceAlias(requireExpression)
 
-          const { flag } = isNpmModuleName(module)
+      const { flag } = checkIsNpmModuleAndRetDetail(requireExpression)
 
-          if (isNpm = flag) {
-            modifiedRequirePath = revertNpmInModule(entry, module)
-          } else if (hasAlias) {
-            requireAbsPath = appendFileSuffix(removeAliasModuleName)
-            modifiedRequirePath = abs2relative(entry, requireAbsPath)
-          } else {
-            requireAbsPath = appendFileSuffix(path.resolve(path.dirname(entry), module))
-            modifiedRequirePath = abs2relative(entry, requireAbsPath)
-          }
-          // 收集引用模块相对路径
-          requireRelativePathArr.push({
-            isNpm,
-            module,
-            path: modifiedRequirePath
-          })
-          
-          dec.init.arguments[0].value = modifiedRequirePath
-          
-        }
+      if (isNpm = flag) {
+        modifiedRequirePath = revertNpmInModule(jsEntry, requireExpression)
+      } else if (hasAlias) {
+        requireAbsPath = appendFileSuffix(removeAliasModuleName)
+        modifiedRequirePath = abs2relative(jsEntry, requireAbsPath)
+      } else {
+        requireAbsPath = appendFileSuffix(path.resolve(path.dirname(jsEntry), requireExpression))
+        modifiedRequirePath = abs2relative(jsEntry, requireAbsPath)
+      }
+      // 收集引用模块相对路径
+      requireRelativePathArr.push({
+        isNpm,
+        requireExpression,
+        path: modifiedRequirePath
       })
-    },
+      
+      return modifiedRequirePath
+    }
   })
 
   if (!compiled) {
-    logger.error(`compiled is undefined- entry: ${entry}`)
+    logger.error(`compiled is undefined- entry: ${jsEntry}`)
   }
-  const distFilePath = entry.replaceRoot().replaceSourceCode()
+  const distFilePath = jsEntry.replaceRoot().replaceSourceCode()
 
   fileUtils.createAndWriteFile(distFilePath, compiled.code)
 
   /* 遍历引用文件路径 */
-  traverseRequireInJs({entry, requireRelativePathArr})
+  traverseRequireInJs({entry: jsEntry, requireRelativePathArr})
 
 }
 
 function traverseRequireInJs({entry, requireRelativePathArr}) {
   // 引用文件的绝对路径数组
-
   let requireNpmModuleNameArr = []
   let requireAbsPathArr = []
+
   for (let i = 0; i < requireRelativePathArr.length; i++) {
-    const { isNpm, module, path: relativePath } = requireRelativePathArr[i]
+    const { isNpm, requireExpression, path: relativePath } = requireRelativePathArr[i]
 
     if (isNpm) {
-      requireNpmModuleNameArr.push(module)
+      requireNpmModuleNameArr.push(requireExpression)
       continue
     }
     const absPath = path.resolve(
@@ -116,12 +104,10 @@ function traverseRequireInJs({entry, requireRelativePathArr}) {
 
   }
   
-  // console.log('requireAbsPathArr');
-  // console.log(requireAbsPathArr);
   // 遍历引入的js模块
   requireAbsPathArr.forEach(abs => traverseJs({ entry: abs }))
-  // npm模块进行遍历
-  requireNpmModuleNameArr.forEach(npmModuleName => copyModuleRetNewPath(entry, npmModuleName))
+  // TODO: npm模块进行遍历
+  // requireNpmModuleNameArr.forEach(npmModuleName => traverseNpm({ entry: npmModuleName }))
 }
 
 module.exports = traverseJs

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 06:04:54
+ * @Last Modified time: 2019-05-22 19:04:47
  */
 
 const path = require('path')
@@ -17,9 +17,10 @@ const {
   logger
 } = require('../utils')
 const {
-  isNpmModuleName,
+  checkIsNpmModuleAndRetDetail,
   revertNpmInModule,
-  revertRelativeModule
+  revertRelativeModule,
+  checkAndReplaceAlias
 } = require('./utils')
 let project = {}
 
@@ -30,17 +31,17 @@ let project = {}
  * 
  * @param {*} path require引入的模块名
  */
-function replaceAlias(path) {
-  const aliases = wepyrc.resolve.alias
-  const keys = Object.keys(aliases)
+// function replaceAlias(path) {
+//   const aliases = wepyrc.resolve.alias
+//   const keys = Object.keys(aliases)
 
-  for (let i = 0; i < keys.length; i++) {
-    if (path.indexOf(keys[i]) > -1) {
-      path = path.replace(keys[i], aliases[keys[i]])
-    }
-  }
-  return path
-}
+//   for (let i = 0; i < keys.length; i++) {
+//     if (path.indexOf(keys[i]) > -1) {
+//       path = path.replace(keys[i], aliases[keys[i]])
+//     }
+//   }
+//   return path
+// }
 
 
 function getNpmPkg(npmPath) {
@@ -50,34 +51,37 @@ function getNpmPkg(npmPath) {
 
 
 /**
- * 创建引用文件并更改调用路径
  * 
- * @param {*} filePath 当前文件所在绝对路径 
- * @param {*} moduleName require引入第三方模块的路径
+ * @param {*} wpyJsAbsPath 当前文件所在绝对路径 
+ * @param {*} requireExpression require引入第三方模块的路径
  * 
  * @return {*} 新路径
  */
 // '/Users/mr.du/Desktop/owns/wpy-revert/reciteword/src/pages/answer.wpy'
-module.exports = function copyModuleRetNewPath(filePath, moduleName) {
+module.exports = function copyModuleRetNewPath(wpyJsAbsPath, requireExpression) {
+  const { flag: hasAlias, removeAliasModuleName } = checkAndReplaceAlias(requireExpression)
 
-  moduleName = replaceAlias(moduleName)
+  if (hasAlias) {
+    requireExpression = removeAliasModuleName
+  }
   
   const { entry, sourceEntry } = config.project
-  let source
+  let npmAbsPathFromRequireExpression
   let end
-  let newPath
+  let replacedRelativePath
 
-  if (isNpmModuleName(moduleName).flag) {
+  if (checkIsNpmModuleAndRetDetail(requireExpression).flag) {
 
-    source = path.resolve(entry, './node_modules/' + moduleName)
-    newPath = revertNpmInModule(filePath, moduleName)
+    npmAbsPathFromRequireExpression = path.join(entry, 'node_modules', requireExpression)
 
+    replacedRelativePath = revertNpmInModule(wpyJsAbsPath, requireExpression)
+
+    // LAST_MODIFIED: 
     /* 解析项目中npm模块 */
-    resolveNpm(source)
+    resolveNpm(npmAbsPathFromRequireExpression)
 
   } else {
-
-    newPath = revertRelativeModule(filePath, moduleName)
+    replacedRelativePath = revertRelativeModule(wpyJsAbsPath, requireExpression)
   }
-  return newPath
+  return replacedRelativePath
 }  

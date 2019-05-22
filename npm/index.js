@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 07:59:27
+ * @Last Modified time: 2019-05-22 14:21:01
  */
 
 const path = require('path')
@@ -15,7 +15,7 @@ const {
 } = require('../utils')
 const fileUtils = require('../utils/file')
 const {
-  isNpmModuleName,
+  checkIsNpmModuleAndRetDetail,
   getNpmModule
 } = require('../script/utils')
 
@@ -113,13 +113,14 @@ function traverseRequire({ entry, pkg, fileContent }) {
   for (let i = 0; i < relativeDeps.length; i++) {
     current = relativeDeps[i]
     
-    const { flag, moduleName, rest } = pkg && pkg.dependencies ? isNpmModuleName(current, pkg.dependencies) :  isNpmModuleName(current)
+    const { flag, moduleName, rest } = pkg && pkg.dependencies ? checkIsNpmModuleAndRetDetail(current, pkg.dependencies) :  checkIsNpmModuleAndRetDetail(current)
     if (flag) {
       current = entry
       // current = path.resolve(config.project.entry, './node_modules/' + moduleName)
-      if (rest.length) {
-        absoluteDeps.push(addExt(current + rest.reduce((p, c) => p + c, '/')))
-      }
+      // if (rest.length) {
+      absoluteDeps.push(addExt(current + rest.reduce((p, c) => p + c, '/')))
+      // }
+      logger.error()
       resolveNpm(current)
       continue
     }
@@ -132,13 +133,6 @@ function traverseRequire({ entry, pkg, fileContent }) {
     current = path.resolve(path.dirname(entry), path.dirname(withExpPath)) + '/' + path.basename(withExpPath)
     if (_isNpm) {
       current = current.replaceSourceCode()
-    }
-    if (current.includes('/Users/mr.du/Desktop/owns/wpy-revert/reciteword/node_modules/redux-actions/lib/combineActions')) {
-      console.log('++++++++++++++++++++');
-      console.log(addExtRelativePath);
-      console.log(_isNpm);
-      console.log(withExpPath);
-      console.log(current);
     }
     absoluteDeps.push(current)
   }
@@ -166,11 +160,7 @@ function grabDependencies({entry, distPath, pkg, content}) {
         const depName = arguments[0].value
         dependencies.push(depName)
 
-
-        console.log('depName');
-        console.log(depName);
-        console.log();
-        const { flag, moduleName, rest } = pkg && pkg.dependencies ? isNpmModuleName(depName, pkg.dependencies) : isNpmModuleName(depName)
+        const { flag, moduleName, rest } = pkg && pkg.dependencies ? checkIsNpmModuleAndRetDetail(depName, pkg.dependencies) : checkIsNpmModuleAndRetDetail(depName)
         
         if (flag) {
           const project = config.project
@@ -180,13 +170,7 @@ function grabDependencies({entry, distPath, pkg, content}) {
           // 2.引入的npm模块的绝对路径
           let importNpmAbsolute = project.entry + '/node_modules/' + depName
 
-          if (depName === 'invariant') {
-            console.log('11111111111111111111111');
-            console.log(npmAbsolute);
-            console.log(importNpmAbsolute);
-            console.log(moduleName);
-            console.log(depName);
-          }
+
           importNpmAbsolute = moduleName === depName ? grabNpmEntryInfo(importNpmAbsolute).entry : importNpmAbsolute + '/t.js'
           // 3.求上面两者的dirname然后relative
           const relativeA2B = path.relative(path.dirname(npmAbsolute), path.dirname(importNpmAbsolute))
@@ -227,14 +211,8 @@ function autoAddExtAccordRelativePath(entry, relativePathOrNpmModuleName, allNpm
   let newPath
   // TODO: 是否无需该行替换
   entry = entry.replace(config.project.output, config.project.entry)
-  if (relativePathOrNpmModuleName === '../../invariant') {
-    console.log('++++');
-    console.log(path.resolve(path.dirname(entry), relativePathOrNpmModuleName));
-  }
   if (allNpm) {
     // newPath = path.resolve(path.dirname(entry), relativePath) + 
-    console.log('getNpmModule........');
-    console.log(relativePathOrNpmModuleName);
     const moduleInfo = getNpmModule(relativePathOrNpmModuleName)
     newPath = moduleInfo.npmAbsPath
   } else {

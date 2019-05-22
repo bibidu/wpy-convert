@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 21:15:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-21 16:15:33
+ * @Last Modified time: 2019-05-22 19:02:26
  */
 const fs = require('fs')
 const path = require('path')
@@ -16,19 +16,16 @@ String.prototype.replaceNodeModules = function() { return this.replace('node_mod
 
 
 /**
- * 是否是npm模块
  * 
- * @param {*} moduleName 
+ * @param {*} requireExpression 
  * @param {*} currDependencies 
  */
-function isNpmModuleName(current, currDependencies) {
-  const [ moduleName, ...rest ] = current.split('/')
+function checkIsNpmModuleAndRetDetail(requireExpression, currDependencies) {
+  const [ moduleName, ...rest ] = requireExpression.split('/')
 
-  const entry = config.project.entry
-  const _project = require(entry + '/package.json')
-  project = _project
+  const _project = require(path.join(config.project.entry, 'package.json'))
   const dependencies = currDependencies || _project.dependencies
-  const flag = Object.keys(dependencies).indexOf(moduleName) > -1
+  const flag = Object.keys(dependencies).includes(moduleName)
 
   return {
     flag, moduleName, rest
@@ -47,20 +44,23 @@ function getNpmModule(npmModuleName) {
   let npmEntryAbsPath
   let npmPathPrefix
 
+  const _getNpmModuleRoot = (npmModuleName) => `${entry}/node_modules/${npmModuleName}`
+  
   const { entry } = config.project
   const npmRootFile = npmModuleName.includes('/')
 
   if (npmRootFile) {
-    npmAbsPath = appendFileSuffix(npmModuleName)
+    npmAbsPath = appendFileSuffix(_getNpmModuleRoot(npmModuleName))
     npmModuleName = npmModuleName.split('/')[0]
   }
 
   // npm路径前缀
-  npmPathPrefix = `${entry}/node_modules/${npmModuleName}/`
+  npmPathPrefix = _getNpmModuleRoot(npmModuleName)
 
-  const pkgPath = `${npmPathPrefix}package.json`
+  const pkgPath = path.join(npmPathPrefix, 'package.json')
+
   pkg = require(pkgPath)
-  npmEntryAbsPath = `${npmPathPrefix}${pkg.main}`
+  npmEntryAbsPath = path.join(npmPathPrefix, pkg.main)
   npmAbsPath = npmAbsPath || npmEntryAbsPath
   
   return {
@@ -70,13 +70,14 @@ function getNpmModule(npmModuleName) {
   }
 }
 /**
- * 自动追加文件后缀
+ * 追加文件后缀
  * 
  * @param {*} filePath 
  */
 function appendFileSuffix(filePath, priority) {
   if (/\.\w+$/.test(filePath)) return filePath
 
+  console.log(filePath);
   const defaultSuffix = ['.js', '.wpy', '/index.js']
   if (priority) {
     const index = defaultSuffix.findIndex(suf => suf === priority)
@@ -114,26 +115,23 @@ function appendFileSuffix(filePath, priority) {
  *      ../../promise-polyfill/lib/index.js
  * 
  */
-function revertNpmInModule(moduleAbsPath, npmModuleName, allNpm) {
+function revertNpmInModule(jsAbsPath, npmModuleName, allNpm) {
   let replacedRelativePath
   let { npmAbsPath } = getNpmModule(npmModuleName)
+  
   if (!allNpm) {
     // 转换成dist目录的路径
-    moduleAbsPath = moduleAbsPath.replaceRoot().replaceSourceCode()
+    jsAbsPath = jsAbsPath.replaceRoot().replaceSourceCode()
     npmAbsPath = npmAbsPath.replaceRoot().replaceNodeModules()
   }
 
   // TODO: abs2relative复用
   let relativeSymbol = path.relative(
-    path.dirname(moduleAbsPath),
+    path.dirname(jsAbsPath),
     path.dirname(npmAbsPath)
   )
   relativeSymbol = relativeSymbol.charAt(0) === '.' ? relativeSymbol : `./${relativeSymbol}`
   replacedRelativePath = relativeSymbol + '/' + path.basename(npmAbsPath)
-
-  // 继续递归该npm依赖的其它npm包
-  // 遍历npmAbsPath 找寻require 若本地 则直接取 若npm 则传入entry前缀
-  // 入口： geNpmModule得到的pkg
 
   return replacedRelativePath
 }
@@ -201,22 +199,22 @@ function abs2relative(absolutePath, requireAbsolutePath) {
 }
 
 /**
- * 检查、替换模块名中的别名
- * [about] alias/replaceAlias
+ * 
  * 
  * @param {*} module require的模块名
  * @example 
  *    require('generator-runtime/runtime')其中的generator-runtime/runtime
  */
-function checkAndReplaceAlias(module) {
+function checkAndReplaceAlias(requireExpression) {
   const alias = Object.keys(wepyrc.resolve.alias)
+
   for (let i = 0; i < alias.length; i++) {
-    if (module.includes(alias[i])) {
+    if (requireExpression.includes(alias[i])) {
       return {
         flag: true,
         alias: alias[i],
         aliasValue: wepyrc.resolve.alias[alias[i]],
-        removeAliasModuleName: module.replace(alias[i], wepyrc.resolve.alias[alias[i]] )
+        removeAliasModuleName: requireExpression.replace(alias[i], wepyrc.resolve.alias[alias[i]] )
       }
     }
   }
@@ -225,7 +223,7 @@ function checkAndReplaceAlias(module) {
 
 module.exports = {
   getNpmModule,
-  isNpmModuleName,
+  checkIsNpmModuleAndRetDetail,
   appendFileSuffix,
   revertNpmInModule,
   revertRelativeModule,
