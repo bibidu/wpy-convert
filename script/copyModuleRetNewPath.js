@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 16:46:46 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-21 11:45:06
+ * @Last Modified time: 2019-05-22 06:04:54
  */
 
 const path = require('path')
@@ -68,12 +68,6 @@ module.exports = function copyModuleRetNewPath(filePath, moduleName) {
   let newPath
 
   if (isNpmModuleName(moduleName).flag) {
-    // source = path.resolve(entry, './node_modules/' + moduleName)
-    // const { main } = getNpmPkg(source)
-
-    // newPath = path.relative(path.dirname(filePath), source.replaceNodeModules())
-    // newPath = path.join(newPath, main)
-    // newPath = newPath.charAt(0) !== '.' ? `./${newPath}` : newPath
 
     source = path.resolve(entry, './node_modules/' + moduleName)
     newPath = revertNpmInModule(filePath, moduleName)
@@ -82,37 +76,8 @@ module.exports = function copyModuleRetNewPath(filePath, moduleName) {
     resolveNpm(source)
 
   } else {
-    console.log('我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了我好像被废弃了');
-    // moduleName = addExt(moduleName.charAt(0) === '.' ? path.resolve(path.dirname(filePath), moduleName) : moduleName)
-    // const relativeDot = path.relative(path.dirname(filePath), moduleName)
-    // let t = autoAddExtAccordRelativePath(filePath, relativeDot)
+
     newPath = revertRelativeModule(filePath, moduleName)
   }
   return newPath
 }  
-
-// /**
-//  * 添加path的后缀名
-//  * 
-//  * @param {*} path 
-//  */
-// function addExt(path) {
-//   const reg = /\.\w+$/
-//   const defaultSuffix = '.js'
-  
-//   if (!reg.test(path)) {
-//     const addJsSuffixPath = path + '.js'
-//     if (!fs.existsSync(addJsSuffixPath)) {
-//       if (fs.existsSync(path + '.wpy')) {
-//         return path + '.wpy'
-//       }
-//       path = path + '/index.js'
-//       if (fs.existsSync(path)) {
-//         return path
-//       }
-//       return logger.error(`auto add suffix fail1: ${path}`)
-//     }
-//     return addJsSuffixPath
-//   }
-//   return path
-// }

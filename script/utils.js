@@ -224,6 +224,7 @@ function checkAndReplaceAlias(module) {
 }
 
 module.exports = {
+  getNpmModule,
   isNpmModuleName,
   appendFileSuffix,
   revertNpmInModule,
