@@ -2,9 +2,10 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 11:18:51
+ * @Last Modified time: 2019-05-23 14:59:55
  */
 
+const path = require('path')
 const babel = require('babel-core')
 const types = require('babel-types')
 const generate = require('babel-generator').default
@@ -15,6 +16,9 @@ const {
   safeGet,
   upperStart
 } = require('../utils')
+const {
+  checkAndReplaceAlias
+} = require('./utils')
 
 
 module.exports = function compileScript(scriptCode, file) {
@@ -33,7 +37,16 @@ module.exports = function compileScript(scriptCode, file) {
       config = _config
     },
     collectWepyComponents(_comps) {
-      components = _comps
+      // replace comps.path to relative path
+      Object.entries(_comps).forEach(([com, pathMayBeWithAlias]) => {
+        const {flag: hasAlias, removeAliasModuleName} = checkAndReplaceAlias(pathMayBeWithAlias)
+        const absoluteCompPath = hasAlias ? removeAliasModuleName : pathMayBeWithAlias
+        let relativeSymbol = path.relative(path.dirname(filePath), path.dirname(absoluteCompPath))
+        relativeSymbol = relativeSymbol.charAt(0) === '.' ? relativeSymbol : '.'
+        const modifiedRelativePath = path.join(relativeSymbol, path.basename(absoluteCompPath))
+
+        components[com] = modifiedRelativePath
+      })
     },
     getWepyFileType(_fileType) {
       fileType = _fileType

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 12:54:15
+ * @Last Modified time: 2019-05-23 15:08:53
  */
 
 
@@ -51,9 +51,9 @@ module.exports = function traverseFiles() {
     // .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('practice'))
+    .filter(i => i.fileName.includes('normal'))
     // .filter(i => i.fileName.includes('prizeModal'))
-    // .slice(0, 2)
+    // .slice(0, 20)
   // console.log('fileArr');
   // console.log(fileArr);
 
@@ -115,8 +115,10 @@ async function resolveWpy(distPath, file) {
   }
   if (wpyType === 'component') {
     compiledConfig = {
+      component: true,
       ...configInScript,
-      component: true
+      // 组件也可以引入其它组件
+      usingComponents: usingComponents
     }
   }
 

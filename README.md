@@ -122,8 +122,6 @@ AST + RegExp + parse5
 
 - [ ] $navigate等路由方法的实现
 
-- [ ] 代码目录结构未调整
-
 - [ ] problem未解决
 
 ### problem
@@ -143,11 +141,20 @@ AST + RegExp + parse5
 
 - [x] store内index.js编译后丢失(twoAbsPathToRelativePath路径解析错误)
 
+- [x] 解析npm包时，未安装该npm包依赖的其它npm包, (如redux-actions依赖invariant、reduce-reducers等)
+
 - [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+
+- [x] npm库中的process.env.NODE_ENV报错, 因为小程序中没有process环境
+
+- [x] babel处理import share from '../share'时会根据share出现次数编译为_share1/_share2/.... 目前无法获取import中share编译后的名称, hack处理, 详见compiler/babel-compiler/index.js-replaceCompsPath
 
 - [ ] ImportDeclaration/VariableDeclaration会同时发生
 
-- [ ] 解析npm包时，未安装该npm包依赖的其它npm包, (如redux-actions依赖invariant、reduce-reducers等)
+- [ ] 页面引入的wpy引用应删除
+
+- [ ] 编译速度过慢
+
 
 ### 坑
 - [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)

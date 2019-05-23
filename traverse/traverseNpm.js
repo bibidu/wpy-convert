@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 12:53:07
+ * @Last Modified time: 2019-05-23 13:09:11
  */
 
 const path = require('path')
@@ -59,6 +59,8 @@ module.exports = function traverseNpm({ entry: entireNpmAbsPath, pkg, fileConten
   
 
   /* 写入npm模块文件到dist */
+  // 移除npm模块中非小程序平台的环境代码, 如process.env
+  modifiedCode = removeEnvCode(modifiedCode)
   fileUtils.createAndWriteFile(distPath, modifiedCode)
   
   for (let i = 0; i < requireExpressions.length; i++) {
@@ -109,9 +111,7 @@ function grabDependencies({entry, distPath, pkg, content}) {
         
         const { npmAbsPath } = getNpmModule(requireExpression)
         
-        let t = twoAbsPathToRelativePath(entry, npmAbsPath)
-
-        return t
+        return twoAbsPathToRelativePath(entry, npmAbsPath)
       }
       const requireAbsPathMayBeNoSuffix = path.resolve(path.dirname(entry), requireExpression)
       const requireAbsPath = appendFileSuffix(requireAbsPathMayBeNoSuffix)
@@ -123,5 +123,11 @@ function grabDependencies({entry, distPath, pkg, content}) {
     dependencies,
     code: compiled.code
   }
+}
+
+function removeEnvCode(npmCode) {
+  const REMOVE_NODE_ENV_RE = /process\.env\.NODE\_ENV/g
+
+  return npmCode.replace(REMOVE_NODE_ENV_RE, '"production"')
 }
 

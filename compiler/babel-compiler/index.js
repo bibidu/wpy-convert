@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 16:24:00
+ * @Last Modified time: 2019-05-23 15:21:13
  */
 
 const babel = require('babel-core')
@@ -59,7 +59,8 @@ function collectWepyConfig(path, config) {
     })
   }
 }
-function collectWepyComponents(path, components) {
+function collectWepyComponents(path) {
+  let components = {}
   const { object, property } = path.node.callee
   if (
     safeGet(object, 'object.name') === 'Object'
@@ -88,6 +89,7 @@ function collectWepyComponents(path, components) {
       }
     })
   }
+  return components
 }
 module.exports = function babelCompiler(
   code = '',
@@ -118,7 +120,10 @@ module.exports = function babelCompiler(
       collectWepyConfig(_path, config)
 
       // 提取wepy中components属性
-      collectWepyComponents(_path, components)
+      const wepyComps = collectWepyComponents(_path)
+      if (Object.keys(wepyComps).length) {
+        components = wepyComps
+      }
     },
 
     // 解析wpy文件类型: [app|page|component]
@@ -159,10 +164,11 @@ module.exports = function babelCompiler(
           && safeGet(dec, 'dec.init.callee.name') === 'require'
         ) {
           module = dec.init.arguments[0].value
+          const requireExpression = (dec.init.arguments[0].value).replace('.wpy', '')
           /* k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
           newCompsPaths[
             dec.id.name.replace(/^\_/, '')
-          ] = (dec.init.arguments[0].value).replace('.wpy', '')
+          ] = requireExpression
           
           /* 移除引入的wpy.component */
           if (apis.removeComponent()) {
@@ -190,7 +196,7 @@ module.exports = function babelCompiler(
       ]
     } : { plugins: { visitor } }
   )
-
+  
   // 收集wepy文件config
   apis.collectWepyConfig(config)
 
@@ -209,7 +215,20 @@ module.exports = function babelCompiler(
  * @param {*} newCompsPaths 
  */
 function replaceCompsPath(components, newCompsPaths) {
+  const firstLower = (str) => str.replace(/^\w/, (s) => s.toLowerCase())
+  let upperNewCompsPaths = {}
+
+  Object.entries(newCompsPaths).forEach(([key, value]) => {
+    upperNewCompsPaths[key.toLowerCase()] = value
+  })
   Object.keys(components).forEach(comp => {
-    components[comp] = newCompsPaths[comp]
+    let lowerComp = components[comp].toLowerCase()
+    // hacker处理
+    if (!(lowerComp in upperNewCompsPaths)) {
+      const matchPath = Object.values(upperNewCompsPaths).find(com => new RegExp(`${comp}$`).test(com))
+      components[comp] = matchPath
+    } else {
+      components[comp] = upperNewCompsPaths[lowerComp]
+    }
   })
 }
