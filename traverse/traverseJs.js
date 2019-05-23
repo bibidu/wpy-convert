@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 23:25:28
+ * @Last Modified time: 2019-05-23 08:02:17
  */
 const fs = require('fs')
 const path = require('path')
@@ -39,7 +39,7 @@ function traverseJs({ entry: jsEntry }) {
   try {
     code = fs.readFileSync(jsEntry)
   } catch (error) {
-    console.log(`[readFileSync] jsEntry: ${jsEntry}`);
+    logger.error(`[readFileSync] jsEntry: ${jsEntry}`);
   }
   
   let compiled = babelCompiler(code, {
@@ -79,7 +79,7 @@ function traverseJs({ entry: jsEntry }) {
 
   fileUtils.createAndWriteFile(distFilePath, compiled.code)
 
-  /* 遍历引用文件路径 */
+  
   traverseRequireInJs({entry: jsEntry, requireRelativePathArr})
 
 }
@@ -96,10 +96,7 @@ function traverseRequireInJs({entry, requireRelativePathArr}) {
       requireNpmModuleNameArr.push(requireExpression)
       continue
     }
-    const absPath = path.resolve(
-      path.dirname(entry),
-      path.dirname(relativePath)
-    ) + '/' + path.basename(relativePath)
+    const absPath = path.resolve(path.dirname(entry), path.dirname(relativePath)) + '/' + path.basename(relativePath)
     requireAbsPathArr.push(absPath)
 
   }

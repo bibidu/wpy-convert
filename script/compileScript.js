@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 16:40:23
+ * @Last Modified time: 2019-05-23 08:11:51
  */
 
 const babel = require('babel-core')
@@ -10,39 +10,22 @@ const types = require('babel-types')
 const generate = require('babel-generator').default
 
 const babelCompiler = require('../compiler/babel-compiler')
-const copyModuleRetNewPath = require('./copyModuleRetNewPath')
+const traverseJsInWpy = require('./traverseJsInWpy')
 const {
   safeGet,
   upperStart
 } = require('../utils')
 
-/**
- * 验证是否继承自wepy
- * 
- * @param {*} object 
- */
-function verifyFilePrefix(object) {
-  const baseName = 'wepy'
-  if (object.name !== baseName) {
-    throw `未继承自${baseName}`
-  }
-}
 
-/**
- * 通过AST解析script代码
- * 
- * @param {*} compiledCode 
- */
-function analysisScriptByAst(compiledCode, file) {
+module.exports = function compileScript(scriptCode, file) {
   const { filePath } = file
   let exportDefaultName
   let config = {}
   let components = {}
-  let newCompsPaths = {}
   let mpRootFunc
   let fileType
 
-  let compiled = babelCompiler(compiledCode, {
+  let compiled = babelCompiler(scriptCode, {
     removeComponent() {
       return true
     },
@@ -59,7 +42,7 @@ function analysisScriptByAst(compiledCode, file) {
       exportDefaultName = _body
     },
     replaceRequirePath(requireExpression) {
-      return copyModuleRetNewPath(filePath, requireExpression)
+      return traverseJsInWpy(filePath, requireExpression)
     }
   })
   return {
@@ -70,6 +53,3 @@ function analysisScriptByAst(compiledCode, file) {
     mpRootFunc: `${upperStart(fileType)}(${exportDefaultName})`
   }
 }
-
-module.exports = analysisScriptByAst
-

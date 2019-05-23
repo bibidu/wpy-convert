@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:19:33 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 13:26:02
+ * @Last Modified time: 2019-05-23 07:39:48
  */
 
 const less = require('less')
@@ -11,11 +11,7 @@ const {
   logger
 } = require('../../utils')
 
-/**
- * 编译less -> css
- * @param {*} lessCode
- */
-function compile(lessCode) {
+module.exports = function lessCompiler(lessCode) {
   return new Promise((resolve, reject) => {
     try {
         less.render(lessCode, (err, rst) => {
@@ -37,4 +33,3 @@ function errorHandler(error) {
   logger.error(error)
 }
 
-module.exports = compile

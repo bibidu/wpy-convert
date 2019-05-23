@@ -2,14 +2,12 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:38:21 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-19 20:54:47
+ * @Last Modified time: 2019-05-23 07:40:48
  */
 require('babel-polyfill')
 const initEnv = require('./init')
 const traverseFiles = require('./traverse')
 
-const less2css = require('./style/less2css')
-const tpl2obj = require('./template/tpl2obj')
 const config = require('./config')
 
 

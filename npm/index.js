@@ -2,13 +2,14 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 23:35:43
+ * @Last Modified time: 2019-05-23 07:27:25
  */
 
 const path = require('path')
 const fs = require('fs')
-const babel = require('babel-core')
+// const babel = require('babel-core')
 
+const babelCompiler = require('../compiler/babel-compiler')
 const config = require('../config')
 const {
   logger,
@@ -26,12 +27,12 @@ const {
  * 
  * @example: /Users/mr.du/Desktop/owns/wpy-revert/reciteword/node_modules/regenerator
  */
-function traverseNpm(npmAbsPathWithSuffix, pkg) {
-  const entry = npmAbsPathWithSuffix
+// function traverseNpm(npmAbsPathWithSuffix, pkg) {
+//   const entry = npmAbsPathWithSuffix
   
-  // 读取入口文件引入项、遍历复制文件、npm模块绝对路径
-  traverseRequire({ entry, pkg })
-}
+//   // 读取入口文件引入项、遍历复制文件、npm模块绝对路径
+//   traverseRequire({ entry, pkg })
+// }
 
 /**
  * 从开发者模块作入口, 解析引入的npm模块
@@ -84,12 +85,12 @@ function grabNpmEntryInfo(modulePath) {
  * @param {*} pkg 
  * @param {*} content 
  */
-function traverseRequire({ entry, pkg, fileContent }) {
+function traverseNpm({ entry, pkg, fileContent }) {
   const distPath = entry.replaceRoot().replaceNodeModules().replaceSourceCode()
   
   let content = fileContent || fs.readFileSync(entry)
   if (!content) {
-    return logger.error(`traverseRequire method: file should not be null in entry ${entry}`)
+    return logger.error(`traverseNpm method: file should not be null in entry ${entry}`)
   }
   content = content.toString()
   // 获取文件依赖并替换其中npm模块路径
@@ -113,7 +114,7 @@ function traverseRequire({ entry, pkg, fileContent }) {
       const { npmAbsPath, pkg } = getNpmModule(current)
 
       absoluteDeps.push(npmAbsPath)
-      traverseNpm(npmAbsPath, pkg)
+      traverseNpm({ entry: npmAbsPath, pkg })
       continue
     }
     
@@ -122,7 +123,7 @@ function traverseRequire({ entry, pkg, fileContent }) {
   }
 
   absoluteDeps.forEach(dep => {
-    traverseRequire({
+    traverseNpm({
       entry: dep,
       pkg: pkg
     })
@@ -137,49 +138,78 @@ function traverseRequire({ entry, pkg, fileContent }) {
  */
 function grabDependencies({entry, distPath, pkg, content}) {
   let dependencies = []
-  const visitor = {
-    CallExpression(_path) {
-      const { callee, arguments } = _path.node
-      if (callee.name === 'require') {
-        const depName = arguments[0].value
-        dependencies.push(depName)
+  // const visitor = {
+  //   CallExpression(_path) {
+  //     const { callee, arguments } = _path.node
+  //     if (callee.name === 'require') {
+  //       const depName = arguments[0].value
+  //       dependencies.push(depName)
 
-        const { flag, moduleName, rest } = pkg && pkg.dependencies ? checkIsNpmModuleAndRetDetail(depName, pkg.dependencies) : checkIsNpmModuleAndRetDetail(depName)
+  //       const { flag, moduleName, rest } = pkg && pkg.dependencies ? checkIsNpmModuleAndRetDetail(depName, pkg.dependencies) : checkIsNpmModuleAndRetDetail(depName)
         
-        if (flag) {
-          const project = config.project
+  //       if (flag) {
+  //         const project = config.project
 
-          // 1.当前npm文件的绝对路径
-          let npmAbsolute = entry
-          // 2.引入的npm模块的绝对路径
-          let importNpmAbsolute = project.entry + '/node_modules/' + depName
-
-
-          importNpmAbsolute = moduleName === depName ? grabNpmEntryInfo(importNpmAbsolute).entry : importNpmAbsolute + '/t.js'
-          // 3.求上面两者的dirname然后relative
-          const relativeA2B = path.relative(path.dirname(npmAbsolute), path.dirname(importNpmAbsolute))
+  //         // 1.当前npm文件的绝对路径
+  //         let npmAbsolute = entry
+  //         // 2.引入的npm模块的绝对路径
+  //         let importNpmAbsolute = project.entry + '/node_modules/' + depName
 
 
-          // autoAddExtAccordRelativePath传1、3得到结果
-          const rst = autoAddExtAccordRelativePath(npmAbsolute, depName, true)
-          arguments[0].value = rst
-          return
-        }
-        // npm模块引入的非npm模块文件路径， 如wepy-async-function引入 ./global
-        const beforePath = arguments[0].value
-        const afterPath = autoAddExtAccordRelativePath(entry, beforePath)
-        arguments[0].value = afterPath
+  //         importNpmAbsolute = moduleName === depName ? grabNpmEntryInfo(importNpmAbsolute).entry : importNpmAbsolute + '/t.js'
+  //         // 3.求上面两者的dirname然后relative
+  //         const relativeA2B = path.relative(path.dirname(npmAbsolute), path.dirname(importNpmAbsolute))
+
+
+  //         // autoAddExtAccordRelativePath传1、3得到结果
+  //         const rst = autoAddExtAccordRelativePath(npmAbsolute, depName, true)
+  //         arguments[0].value = rst
+  //         return
+  //       }
+  //       // npm模块引入的非npm模块文件路径， 如wepy-async-function引入 ./global
+  //       const beforePath = arguments[0].value
+  //       const afterPath = autoAddExtAccordRelativePath(entry, beforePath)
+  //       arguments[0].value = afterPath
+  //     }
+  //   }
+  // }
+  // let t = babel.transform(content, {
+  //   plugins: [
+  //       { visitor },
+  //   ]
+  // })
+  let compiled = babelCompiler(content, {
+    replaceRequirePath(requireExpression) {
+      
+      dependencies.push(requireExpression)
+
+      const { flag, moduleName, rest } = pkg && pkg.dependencies ? checkIsNpmModuleAndRetDetail(requireExpression, pkg.dependencies) : checkIsNpmModuleAndRetDetail(requireExpression)
+      
+      if (flag) {
+        const project = config.project
+
+        // 1.当前npm文件的绝对路径
+        let npmAbsolute = entry
+        // 2.引入的npm模块的绝对路径
+        let importNpmAbsolute = project.entry + '/node_modules/' + requireExpression
+
+        importNpmAbsolute = moduleName === requireExpression ? grabNpmEntryInfo(importNpmAbsolute).entry : importNpmAbsolute + '/t.js'
+        // 3.求上面两者的dirname然后relative
+        const relativeA2B = path.relative(path.dirname(npmAbsolute), path.dirname(importNpmAbsolute))
+
+
+        // autoAddExtAccordRelativePath传1、3得到结果
+        const rst = autoAddExtAccordRelativePath(npmAbsolute, requireExpression, true)
+        return rst
       }
+      // npm模块引入的非npm模块文件路径， 如wepy-async-function引入 ./global
+      const afterPath = autoAddExtAccordRelativePath(entry, requireExpression)
+      return afterPath
     }
-  }
-  let t = babel.transform(content, {
-    plugins: [
-        { visitor },
-    ]
-  })
+  }, false)
   return {
     dependencies,
-    code: t.code
+    code: compiled.code
   }
 }
 /**
@@ -234,7 +264,6 @@ function addExt(_path) {
 module.exports = {
   traverseNpm,
   addExt,
-  traverseRequire,
   resolveNpmFromDevModule,
   autoAddExtAccordRelativePath
 }
