@@ -141,7 +141,7 @@ AST + RegExp + parse5
 
 - [x] npm模块内引入其他npm模块的路径也应修改路径
 
-- [x] store内index.js编译后丢失(abs2relative路径解析错误)
+- [x] store内index.js编译后丢失(twoAbsPathToRelativePath路径解析错误)
 
 - [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 

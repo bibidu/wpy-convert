@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 08:12:16
+ * @Last Modified time: 2019-05-23 12:54:15
  */
 
 
@@ -16,12 +16,6 @@ const {
   safeGet
 } = require('../utils')
 
-const {
-  autoAddExtAccordRelativePath,
-  addExt,
-  isNpm,
-  resolveNpmFromDevModule
-} = require('../npm')
 const traverseJs = require('./traverseJs')
 
 const splitSTSC = require('../splitSTSC')
@@ -55,11 +49,11 @@ module.exports = function traverseFiles() {
   const fileArr = opt
     .filter(i => i.isFile)
     // .filter(i => i.ext === '.js')
-    .filter(i => i.ext === '.wpy')
+    // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('app'))
+    // .filter(i => i.fileName.includes('practice'))
     // .filter(i => i.fileName.includes('prizeModal'))
-    // .slice(0, 10)
+    // .slice(0, 2)
   // console.log('fileArr');
   // console.log(fileArr);
 

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 08:02:17
+ * @Last Modified time: 2019-05-23 12:12:42
  */
 const fs = require('fs')
 const path = require('path')
@@ -12,18 +12,16 @@ const {
   appendFileSuffix,
   checkIsNpmModuleAndRetDetail,
   revertNpmInModule,
-  abs2relative
+  twoAbsPathToRelativePath,
+  getNpmModule
 } = require('../script/utils')
-const {
-  resolveNpmFromDevModule
-} = require('../npm')
+const traverseNpm = require('./traverseNpm')
 const fileUtils = require('../utils/file')
 const {
   logger,
   stringify,
   safeGet
 } = require('../utils')
-// const copyModuleRetNewPath = require('../script/copyModuleRetNewPath')
 
 /**
  *
@@ -56,10 +54,10 @@ function traverseJs({ entry: jsEntry }) {
         modifiedRequirePath = revertNpmInModule(jsEntry, requireExpression)
       } else if (hasAlias) {
         requireAbsPath = appendFileSuffix(removeAliasModuleName)
-        modifiedRequirePath = abs2relative(jsEntry, requireAbsPath)
+        modifiedRequirePath = twoAbsPathToRelativePath(jsEntry, requireAbsPath)
       } else {
         requireAbsPath = appendFileSuffix(path.resolve(path.dirname(jsEntry), requireExpression))
-        modifiedRequirePath = abs2relative(jsEntry, requireAbsPath)
+        modifiedRequirePath = twoAbsPathToRelativePath(jsEntry, requireAbsPath)
       }
       // 收集引用模块相对路径
       requireRelativePathArr.push({
@@ -104,7 +102,11 @@ function traverseRequireInJs({entry, requireRelativePathArr}) {
   // 遍历引入的js模块
   requireAbsPathArr.forEach(abs => traverseJs({ entry: abs }))
   // TODO: npm模块进行遍历
-  // requireNpmModuleNameArr.forEach(npmModuleName => traverseNpm({ entry: npmModuleName }))
+  requireNpmModuleNameArr.forEach(requireExpression => {
+    const { npmAbsPath, pkg } = getNpmModule(requireExpression)
+    
+    traverseNpm({ entry: npmAbsPath, pkg })
+  })
   // requireNpmModuleNameArr.forEach(item => {
   //   console.log(item, '先不创建');
   // })

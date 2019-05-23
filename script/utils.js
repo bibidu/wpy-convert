@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 21:15:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-22 23:23:48
+ * @Last Modified time: 2019-05-23 12:44:36
  */
 const fs = require('fs')
 const path = require('path')
@@ -36,31 +36,34 @@ function checkIsNpmModuleAndRetDetail(requireExpression, currDependencies) {
 /**
  * 获取npm模块信息
  * 
- * @param {*} npmModuleName npm模块名(wepy-redux | regenerator-runtime/runtime)
+ * @param {*} requireExpression npm模块名(wepy-redux | regenerator-runtime/runtime)
  */
-function getNpmModule(npmModuleName) {
+function getNpmModule(requireExpression) {
   let pkg
   let npmAbsPath
   let npmEntryAbsPath
   let npmPathPrefix
-
-  const _getNpmModuleRoot = (npmModuleName) => `${entry}/node_modules/${npmModuleName}`
-  
   const { entry } = config.project
-  const npmRootFile = npmModuleName.includes('/')
+
+  const _getNpmModuleRoot = (module) => `${entry}/node_modules/${module}`
+  
+  const npmRootFile = requireExpression.includes('/')
+
 
   if (npmRootFile) {
-    npmAbsPath = appendFileSuffix(_getNpmModuleRoot(npmModuleName))
-    npmModuleName = npmModuleName.split('/')[0]
+    npmAbsPath = appendFileSuffix(_getNpmModuleRoot(requireExpression))
+    requireExpression = requireExpression.split('/')[0]
   }
 
   // npm路径前缀
-  npmPathPrefix = _getNpmModuleRoot(npmModuleName)
+  npmPathPrefix = _getNpmModuleRoot(requireExpression)
 
   const pkgPath = path.join(npmPathPrefix, 'package.json')
 
   pkg = require(pkgPath)
-  npmEntryAbsPath = path.join(npmPathPrefix, pkg.main)
+
+  // fix bug: when pkg.main is not exist, set default value 
+  npmEntryAbsPath = path.join(npmPathPrefix, pkg.main || 'index.js')
   npmAbsPath = npmAbsPath || npmEntryAbsPath
   
   return {
@@ -124,7 +127,7 @@ function revertNpmInModule(jsAbsPath, npmModuleName, allNpm) {
     npmAbsPath = npmAbsPath.replaceRoot().replaceNodeModules()
   }
 
-  // TODO: abs2relative复用
+  // TODO: twoAbsPathToRelativePath复用
   let relativeSymbol = path.relative(
     path.dirname(jsAbsPath),
     path.dirname(npmAbsPath)
@@ -156,7 +159,7 @@ function revertRelativeModule(moduleAbsPath, relativePath) {
   let requireAbsPath = path.resolve(path.dirname(moduleAbsPath), relativePath)
   requireAbsPath = appendFileSuffix(requireAbsPath)
 
-  // TODO: abs2relative复用
+  // TODO: twoAbsPathToRelativePath复用
   let relativeSymbol = path.relative(
     path.dirname(moduleAbsPath),
     path.dirname(requireAbsPath)
@@ -182,7 +185,7 @@ function revertRelativeModule(moduleAbsPath, relativePath) {
  *    requireAbsolutePath是npm路径时需提前特别处理
  * @returns
  */
-function abs2relative(absolutePath, requireAbsolutePath) {
+function twoAbsPathToRelativePath(absolutePath, requireAbsolutePath) {
   let relativeSymbol = path.relative(
     path.dirname(absolutePath),
     path.dirname(requireAbsolutePath)
@@ -227,6 +230,6 @@ module.exports = {
   revertNpmInModule,
   revertRelativeModule,
   checkAndReplaceAlias,
-  abs2relative
+  twoAbsPathToRelativePath
 }
 

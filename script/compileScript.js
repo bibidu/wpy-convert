@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 08:11:51
+ * @Last Modified time: 2019-05-23 11:18:51
  */
 
 const babel = require('babel-core')
@@ -10,7 +10,7 @@ const types = require('babel-types')
 const generate = require('babel-generator').default
 
 const babelCompiler = require('../compiler/babel-compiler')
-const traverseJsInWpy = require('./traverseJsInWpy')
+const traverseJsInWpy = require('../traverse/traverseJsInWpy')
 const {
   safeGet,
   upperStart
