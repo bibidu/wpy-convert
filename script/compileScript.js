@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 14:59:55
+ * @Last Modified time: 2019-05-24 09:03:59
  */
 
 const path = require('path')
@@ -17,7 +17,9 @@ const {
   upperStart
 } = require('../utils')
 const {
-  checkAndReplaceAlias
+  checkAndReplaceAlias,
+  appendFileSuffix,
+  checkIsNpmModuleAndRetDetail
 } = require('./utils')
 
 
@@ -39,6 +41,10 @@ module.exports = function compileScript(scriptCode, file) {
     collectWepyComponents(_comps) {
       // replace comps.path to relative path
       Object.entries(_comps).forEach(([com, pathMayBeWithAlias]) => {
+        // TODO: undefined待处理
+        if (!pathMayBeWithAlias) {
+          console.log(_comps);
+        }
         const {flag: hasAlias, removeAliasModuleName} = checkAndReplaceAlias(pathMayBeWithAlias)
         const absoluteCompPath = hasAlias ? removeAliasModuleName : pathMayBeWithAlias
         let relativeSymbol = path.relative(path.dirname(filePath), path.dirname(absoluteCompPath))
@@ -56,6 +62,22 @@ module.exports = function compileScript(scriptCode, file) {
     },
     replaceRequirePath(requireExpression) {
       return traverseJsInWpy(filePath, requireExpression)
+    },
+    removeRequireNode(requireExpression) {
+      let absoluteCompPath
+      const {flag: hasAlias, removeAliasModuleName} = checkAndReplaceAlias(requireExpression)
+      if (hasAlias) {
+        absoluteCompPath = removeAliasModuleName
+      } else {
+        const isNpm = checkIsNpmModuleAndRetDetail(requireExpression).flag
+        absoluteCompPath = isNpm ? requireExpression : path.resolve(path.dirname(filePath), requireExpression)
+      }
+      // if (!hasAlias && !isNpm) {
+      //   console.log('NOALIAS');
+      //   console.log(absoluteCompPath);
+      // }
+      const isWpy = isWpyFile(absoluteCompPath)
+      return isWpy
     }
   })
   return {
@@ -65,4 +87,12 @@ module.exports = function compileScript(scriptCode, file) {
     usingComponents: components,
     mpRootFunc: `${upperStart(fileType)}(${exportDefaultName})`
   }
+}
+
+function isWpyFile(absPathOrNpmModule) {
+  if (['.', '/'].includes(absPathOrNpmModule.charAt(0))) {
+    const entireAbsPath = appendFileSuffix(absPathOrNpmModule)
+    return path.extname(entireAbsPath) === '.wpy'
+  }
+  return false
 }

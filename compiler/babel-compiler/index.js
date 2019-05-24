@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 15:21:13
+ * @Last Modified time: 2019-05-24 08:47:27
  */
 
 const babel = require('babel-core')
@@ -20,6 +20,7 @@ const astResolveApis = [
   'removeComponent',
   'collectWepyConfig',
   'collectWepyComponents',
+  'removeRequireNode'
 ]
 
 function initAstResolveApis(apis) {
@@ -100,6 +101,7 @@ module.exports = function babelCompiler(
   let config = {}
   let components = {}
   let newCompsPaths = {}
+  let waitToDeleteNodes = []
 
   initAstResolveApis(apis)
 
@@ -161,19 +163,37 @@ module.exports = function babelCompiler(
       declarations.forEach(dec => {
         if (
           safeGet(dec, 'dec.init.type') === 'CallExpression'
-          && safeGet(dec, 'dec.init.callee.name') === 'require'
+          && safeGet(dec, 'dec.init.callee.name')
         ) {
-          module = dec.init.arguments[0].value
-          const requireExpression = (dec.init.arguments[0].value).replace('.wpy', '')
-          /* k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
-          newCompsPaths[
-            dec.id.name.replace(/^\_/, '')
-          ] = requireExpression
-          
-          /* 移除引入的wpy.component */
-          if (apis.removeComponent()) {
-            if (module.includes('components/')) {
-              path.remove()
+          if (dec.init.callee.name === 'require') {
+            module = dec.init.arguments[0].value
+            const requireExpression = dec.init.arguments[0].value
+            /* k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
+            newCompsPaths[
+              dec.id.name.replace(/^\_/, '')
+            ] = requireExpression.replace('.wpy', '')
+            
+            /* 判断是否需要移除该require节点 */
+            if (
+              requireExpression.replace('.wpy', '')
+              && apis.removeRequireNode(requireExpression.replace('.wpy', ''))
+            ) {
+              waitToDeleteNodes.push(dec.id.name)
+              return path.remove()
+            }
+            
+            /* 移除引入的wpy.component */
+            if (apis.removeComponent()) {
+              if (module.includes('components/')) {
+                path.remove()
+              }
+            }
+          } else {
+            if (waitToDeleteNodes.length) {
+              const methodParam = dec.init.arguments[0].name
+              if (waitToDeleteNodes.includes(methodParam)) {
+                path.remove()
+              }
             }
           }
         }
