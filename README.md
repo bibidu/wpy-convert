@@ -157,6 +157,13 @@ AST + RegExp + parse5
 
 - [x] ImportDeclaration/VariableDeclaration会同时发生(同上)
 
+- [x] 
+`var global = module.exports = typeof window !== 'undefined' && window.Math === Math ? window : typeof self !== 'undefined' && self.Math === Math ? self : this;`
+转换后 最后的this 编译成了undefined 导致报错
+
+=> babel-preset-es2015添加{modules: false} -> 即不引入babel-plugin-es2015-modules-commonjs
+  或自行添加插件babel-plugin-es2015-modules-commonjs并配置 "allowTopLevelThis": true
+
 - [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
 - [ ] 编译速度过慢

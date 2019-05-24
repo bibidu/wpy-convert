@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 13:04:02
+ * @Last Modified time: 2019-05-24 22:34:00
  */
 const fs = require('fs')
 const path = require('path')
@@ -76,7 +76,7 @@ function traverseJs({ entry: jsEntry }) {
   const distFilePath = jsEntry.replaceRoot().replaceSourceCode()
 
   fileUtils.createAndWriteFile(distFilePath, compiled.code)
-
+  
   
   traverseRequireInJs({entry: jsEntry, requireRelativePathArr})
 
