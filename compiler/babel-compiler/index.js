@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-24 08:47:27
+ * @Last Modified time: 2019-05-24 14:16:59
  */
 
 const babel = require('babel-core')
@@ -48,12 +48,14 @@ function collectWepyConfig(path, config) {
         Array.from(
           safeGet(properties, 'properties.value.properties', [])
         ).forEach(prop => {
+
           const configKey = generate(prop.key, {}).code
           const configValue = generate(prop.value, {
             compact: true,
             jsonCompatibleStrings: true,
             comments: true,
           }).code
+
           config[configKey] = new Function(`return ${configValue}`)()
         })
       }
@@ -84,9 +86,9 @@ function collectWepyComponents(path) {
         Array.from(
           safeGet(properties, 'properties.value.properties', [])
         ).forEach(prop => {
-          components[prop.key.name] = prop.value.value || prop.key.name
+          components[prop.key.name] = prop.value.object.name
         })
-        path.remove()
+        // path.remove()
       }
     })
   }
@@ -106,37 +108,35 @@ module.exports = function babelCompiler(
   initAstResolveApis(apis)
 
   const visitor = {
-    CallExpression(_path) {
-      const { callee, arguments } = _path.node
-      if (callee.name === 'require') {
-        const depName = arguments[0].value
-
-        // 收集require依赖
-        apis.collectAllRequire(depName)
-
-        // 替换require依赖路径
-        arguments[0].value = apis.replaceRequirePath(depName)
-      }
-
-      // 提取wepy中config属性
-      collectWepyConfig(_path, config)
-
-      // 提取wepy中components属性
-      const wepyComps = collectWepyComponents(_path)
-      if (Object.keys(wepyComps).length) {
-        components = wepyComps
-      }
-    },
 
     // 解析wpy文件类型: [app|page|component]
-    VariableDeclarator(path) {
-      if (safeGet(path, 'path.node.id.name')) {
-        const args = safeGet(path, 'path.node.init.superClass')
-        if (args && args.object.name === 'wepy') {
+    // VariableDeclarator(_path) {
+    //   const { init } = _path.node
+    //   if (init && init.arguments && init.arguments[0]) {
+    //     const { object, property } = init.arguments[0]
+    //     if (
+    //       safeGet(object, 'object.object.name') === '_wepy2'
+    //       && object.property.name === 'default'
+    //     ) {
+    //       const fileType = property.name
+    //       // 获取wepy文件类型
+    //       apis.getWepyFileType(fileType)
+    //     }
+    //   }
+    // },
 
-          // 获取wepy文件类型
-          apis.getWepyFileType(args.property.name)
-        }
+    MemberExpression(_path) {
+      const { object, property } = _path.node
+      if (
+        safeGet(object, 'object.object.name') === '_wepy2'
+        && safeGet(object, 'object.property.name') === 'default'
+        && ['app', 'page', 'component'].includes(property.name)
+      ) {
+        const fileType = property.name
+        // console.log('filetype');
+        // console.log(fileType);
+        // 获取wepy文件类型
+        apis.getWepyFileType(fileType)
       }
     },
 
@@ -168,10 +168,11 @@ module.exports = function babelCompiler(
           if (dec.init.callee.name === 'require') {
             module = dec.init.arguments[0].value
             const requireExpression = dec.init.arguments[0].value
-            /* k: 组件名 v: 更新后的路径(去除babel编译生成的下划线) */
+            /* k: 组件路径 v: 组件名 */
             newCompsPaths[
-              dec.id.name.replace(/^\_/, '')
-            ] = requireExpression.replace('.wpy', '')
+              dec.id.name
+              // dec.id.name.replace(/^\_/, '')
+            ] = requireExpression
             
             /* 判断是否需要移除该require节点 */
             if (
@@ -189,9 +190,15 @@ module.exports = function babelCompiler(
               }
             }
           } else {
+            // newCompsPaths = [{_kcLoading: '@/xxx/'}]
+            // waitToDeleteNodes = ['_kcLoading', '']
+            // methodParam = '_kcLoading'
+            // dec.id.name = '_kcLoading2'
             if (waitToDeleteNodes.length) {
               const methodParam = dec.init.arguments[0].name
               if (waitToDeleteNodes.includes(methodParam)) {
+                newCompsPaths[dec.id.name] = newCompsPaths[methodParam]
+                delete newCompsPaths[methodParam]
                 path.remove()
               }
             }
@@ -199,28 +206,56 @@ module.exports = function babelCompiler(
         }
       })
     },
+
+    CallExpression(_path) {
+      const { callee, arguments } = _path.node
+      if (callee.name === 'require') {
+        const depName = arguments[0].value
+
+        // 收集require依赖
+        apis.collectAllRequire(depName)
+
+        // 替换require依赖路径
+        arguments[0].value = apis.replaceRequirePath(depName)
+      }
+
+      // 提取wepy中config属性
+      collectWepyConfig(_path, config)
+
+      // 提取wepy中components属性
+      const wepyComps = collectWepyComponents(_path)
+      if (Object.keys(wepyComps).length) {
+        components = wepyComps
+      }
+    },
   }
-  let t = babel.transform(
+  let cache = babel.transform(
     code,
-    compile ? {
+    {
       presets: [
         ["es2015", { "loose": false }],
         "stage-1"
       ],
       plugins: [  
-          ["transform-decorators-legacy"],
-          
-          { visitor: visitor },
-  
-          ["transform-class-properties", { "spec": true }],
+        ["transform-decorators-legacy"],
+        ["transform-class-properties", { "spec": true }],
       ]
-    } : { plugins: { visitor } }
+    }
+  )
+  let t = babel.transform(
+    cache.code,
+    {
+      plugins: [  
+        { visitor: visitor },
+      ]
+    }
   )
   
   // 收集wepy文件config
   apis.collectWepyConfig(config)
 
   replaceCompsPath(components, newCompsPaths)
+  
   // 收集wepy文件声明的components
   apis.collectWepyComponents(components)
 

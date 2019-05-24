@@ -143,21 +143,27 @@ AST + RegExp + parse5
 
 - [x] 解析npm包时，未安装该npm包依赖的其它npm包, (如redux-actions依赖invariant、reduce-reducers等)
 
-- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
-
 - [x] npm库中的process.env.NODE_ENV报错, 因为小程序中没有process环境
 
 - [x] babel处理import share from '../share'时会根据share出现次数编译为_share1/_share2/.... 目前无法获取import中share编译后的名称, hack处理, 详见compiler/babel-compiler/index.js-replaceCompsPath
 
-- [ ] ImportDeclaration/VariableDeclaration会同时发生
+- [x] 页面引入的wpy引用应删除
 
-- [ ] 页面引入的wpy引用应删除
+- [x] components = {VersionModal} 和 import VersionModal from '@/.../VersionModal/index' 形成映射关系，在babel解析前者时，错误的使用了babel-generator直接转换,但import未转换，实际上babel编译后生成了_index 和 _VersionModal, 导致映射失败
+
+- [x] babel-compiler同时进行es降级和ast转化同时进行会影响ast识别到的不是降级后的代码, 目前采用先es降级，再ast修改的方式。后期通过引入acorn进行ast修改、babel进行es降级编译。
+
+- [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同), 通过先es降级再ast分析(同上)
+
+- [x] ImportDeclaration/VariableDeclaration会同时发生(同上)
+
+- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
 
 - [ ] 编译速度过慢
 
 
 ### 坑
-- [x] 无法remove 所有exports节点可能是因为import分析ast转义时重新生成了新的exports(先后顺序不同)
+
 
 
 ### 可能导致编译失败的原因

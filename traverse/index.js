@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-24 08:45:25
+ * @Last Modified time: 2019-05-24 14:13:43
  */
 
 
@@ -47,16 +47,16 @@ module.exports = function traverseFiles() {
   fileUtils.readDirAllFiles(entry + sourceEntry, opt)
   
   const fileArr = opt
-    .filter(i => i.isFile)
+    .filter(i => i.isFile && !['.DS_Store'].includes(i.fileName))
     // .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('normal'))
+    // .filter(i => i.fileName.includes('index'))
     // .filter(i => i.fileName.includes('prizeModal'))
-    // .slice(0, 20)
+    // .filter(i => i.entry.includes('pages/subPages/answer/study'))
+    // .slice(0, 2)
   // console.log('fileArr');
   // console.log(fileArr);
-
   
   fileArr.forEach(async file => {
     logger.attention(`当前编译文件: ${file.filePath.split('reciteword')[1]}`)

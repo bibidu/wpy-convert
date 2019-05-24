@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-24 09:03:59
+ * @Last Modified time: 2019-05-24 14:25:40
  */
 
 const path = require('path')
@@ -42,16 +42,21 @@ module.exports = function compileScript(scriptCode, file) {
       // replace comps.path to relative path
       Object.entries(_comps).forEach(([com, pathMayBeWithAlias]) => {
         // TODO: undefined待处理
-        if (!pathMayBeWithAlias) {
+        // if (!pathMayBeWithAlias) {
+        //   console.log(_comps);
+        // }
+        try {
+          const {flag: hasAlias, removeAliasModuleName} = checkAndReplaceAlias(pathMayBeWithAlias)
+          const absoluteCompPath = hasAlias ? removeAliasModuleName : pathMayBeWithAlias
+          let relativeSymbol = path.relative(path.dirname(filePath), path.dirname(absoluteCompPath))
+          relativeSymbol = relativeSymbol.charAt(0) === '.' ? relativeSymbol : '.'
+          const modifiedRelativePath = path.join(relativeSymbol, path.basename(absoluteCompPath))
+
+          components[com] = modifiedRelativePath
+        } catch (error) {
+          console.log('error');
           console.log(_comps);
         }
-        const {flag: hasAlias, removeAliasModuleName} = checkAndReplaceAlias(pathMayBeWithAlias)
-        const absoluteCompPath = hasAlias ? removeAliasModuleName : pathMayBeWithAlias
-        let relativeSymbol = path.relative(path.dirname(filePath), path.dirname(absoluteCompPath))
-        relativeSymbol = relativeSymbol.charAt(0) === '.' ? relativeSymbol : '.'
-        const modifiedRelativePath = path.join(relativeSymbol, path.basename(absoluteCompPath))
-
-        components[com] = modifiedRelativePath
       })
     },
     getWepyFileType(_fileType) {
