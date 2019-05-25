@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-24 22:30:38
+ * @Last Modified time: 2019-05-25 09:00:38
  */
 
 
@@ -33,6 +33,7 @@ const exclude = []
  * 
  */
 module.exports = function traverseFiles() {
+
   let opt = []
   const { entry, output, sourceEntry } = cache.config.project
 
@@ -59,7 +60,7 @@ module.exports = function traverseFiles() {
   // console.log(fileArr);
   
   fileArr.forEach(async file => {
-    logger.attention(`当前编译文件: ${file.filePath.split('reciteword')[1]}`)
+    // logger.attention(`当前编译文件: ${file.filePath.split('reciteword')[1]}`)
 
     let fileType
     switch(file.ext) {

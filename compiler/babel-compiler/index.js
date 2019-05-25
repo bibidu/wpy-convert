@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-24 22:27:44
+ * @Last Modified time: 2019-05-25 08:47:35
  */
 
 const babel = require('babel-core')
@@ -233,15 +233,16 @@ module.exports = function babelCompiler(
     code,
     {
       presets: [
-        ["es2015", { "loose": false, "modules": false }],
+        ["env", { "loose": false }],
         "stage-1"
       ],
       plugins: [  
         ["transform-decorators-legacy"],
-        ["transform-class-properties", { "spec": true }],
+        ["transform-class-properties", { "spec": true }]
       ]
     }
   )
+  // console.log(cache.code);
   let t = babel.transform(
     cache.code,
     {

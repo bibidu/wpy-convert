@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 21:06:31 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-13 21:10:47
+ * @Last Modified time: 2019-05-25 06:34:27
  */
 
 const config = require('../config')
@@ -13,10 +13,14 @@ const cache = require('../utils/cache')
  * 编译环境初始化
  */
 module.exports = function initEnv() {
+  initWriteRecord()
   cacheWepyrc()
   cacheConfig()
 }
 
+function initWriteRecord() {
+  cache.writeRecord = {}
+}
 /**
  * 缓存wepy.config.js文件
  */

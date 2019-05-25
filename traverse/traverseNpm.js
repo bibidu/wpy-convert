@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-16 08:01:08 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 13:09:11
+ * @Last Modified time: 2019-05-25 09:00:12
  */
 
 const path = require('path')
@@ -21,6 +21,7 @@ const {
   twoAbsPathToRelativePath,
   appendFileSuffix
 } = require('../script/utils')
+const cache = require('../utils/cache')
 
 
 /**
@@ -39,6 +40,12 @@ function grabNpmEntryInfo(modulePath) {
 }
 
 module.exports = function traverseNpm({ entry: entireNpmAbsPath, pkg, fileContent }) {
+  if (entireNpmAbsPath in cache.writeRecord) {
+    // logger.green(`[exist npm]has exist ${entireNpmAbsPath.split('wpy-revert')[1]}`);
+    return
+  }
+  cache.writeRecord[entireNpmAbsPath] = true
+  
   let absoluteDeps = []
   let requireExpression
   let content

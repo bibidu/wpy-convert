@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-19 23:26:15 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-24 22:34:00
+ * @Last Modified time: 2019-05-25 09:00:08
  */
 const fs = require('fs')
 const path = require('path')
@@ -22,6 +22,7 @@ const {
   stringify,
   safeGet
 } = require('../utils')
+const cache = require('../utils/cache')
 
 /**
  *
@@ -29,6 +30,12 @@ const {
  * @param {*} entry 开发者的JS文件绝对路径
  */
 function traverseJs({ entry: jsEntry }) {
+
+  if (jsEntry in cache.writeRecord) {
+    // logger.green(`[exist js]has exist ${jsEntry.split('wpy-revert')[1]}`);
+    return
+  }
+  cache.writeRecord[jsEntry] = true
 
   /* 收集引用模块的相对路径(带后缀) */
   let requireRelativePathArr = []
@@ -63,7 +70,8 @@ function traverseJs({ entry: jsEntry }) {
       requireRelativePathArr.push({
         isNpm,
         requireExpression,
-        path: modifiedRequirePath
+        path: modifiedRequirePath,
+        isWpy: requireAbsPath && path.extname(requireAbsPath) === '.wpy'
       })
       
       return modifiedRequirePath

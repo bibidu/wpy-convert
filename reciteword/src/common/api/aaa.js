@@ -8,5 +8,8 @@
  */
 
 
-var global = module.exports = typeof window !== 'undefined' && window.Math === Math
+var global = (function() {
+  module.exports = typeof window !== 'undefined' && window.Math === Math
   ? window : typeof self !== 'undefined' && self.Math === Math ? self : this;
+})()
+
