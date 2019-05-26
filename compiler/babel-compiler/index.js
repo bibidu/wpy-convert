@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-25 08:47:35
+ * @Last Modified time: 2019-05-26 11:21:42
  */
 
 const babel = require('babel-core')
@@ -233,7 +233,7 @@ module.exports = function babelCompiler(
     code,
     {
       presets: [
-        ["env", { "loose": false }],
+        ["es2015", { "loose": false }],
         "stage-1"
       ],
       plugins: [  

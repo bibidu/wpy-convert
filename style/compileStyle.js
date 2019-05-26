@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-23 07:32:49 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-26 10:54:18
+ * @Last Modified time: 2019-05-26 12:46:29
  */
 
 const fs = require('fs')
@@ -69,8 +69,13 @@ function getLessVariableFromOuterLess(requireCssPaths, filePath) {
     // traverse compile
     compileStyle('less', requireFileContent, absPath)
       .then(code => {
-        if (!code) return
-        fileUtils.createAndWriteFile(absPath.replaceRoot().replaceSourceCode(), code)
+        // TODO: 由于当前less和引入外部less目前不是顺序编译写入，导致并不能把空less文件的页面引入语句删去，
+        //       故即使是空less文件，目前也进行less文件的创建。
+        // if (!code) return
+        fileUtils.createAndWriteFile(
+          absPath.replaceRoot().replaceSourceCode().replace('.less', '.wxss'),
+          code
+        )
       })
     
 
@@ -93,25 +98,5 @@ function getLessVariableFromOuterLess(requireCssPaths, filePath) {
   })
   return lessVariables
 }
-
-// function traverseLess(requireCssPaths, file) {
-//   const { filePath } = file
-//   let absPath
-
-//   requireCssPaths.forEach(async requirePath => {
-//     absPath = path.join(
-//       path.resolve(path.dirname(filePath), path.dirname(requirePath)),
-//       path.basename(requirePath)
-//     )
-//     console.log(absPath);
-//     if (absPath in cache.writeRecord) {
-//       return
-//     }
-//     cache.writeRecord[absPath] = true
-  
-//     const compiled = await compileStyle('less', fs.readFileSync(absPath).toString(), absPath)
-//     fileUtils.createAndWriteFile(absPath.replaceRoot().replaceSourceCode(), compiled)
-//   })
-// }
 
 module.exports = compileStyle

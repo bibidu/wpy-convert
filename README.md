@@ -131,6 +131,9 @@ AST + RegExp + parse5
 
 - [x] 编译速度过慢。通过使用cache对编译过的文件进行标记。
 
+- [ ] template编译时 :class="{nosure: true, 'bingo': realAnswer}" 需要被编译成:
+      class="{{true ? 'nosure' : ''}} {{right ? 'bingo' : ''}}", 目前配置的通用正则无法实现
+
 - [ ] 引入hook机制, 以实现以下设计：
       wpy -> 判断编译类型(less | babel | ...)
       -> this.hook(less-compiler | babel-compiler | ...)

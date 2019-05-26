@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-23 07:44:44 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 08:36:54
+ * @Last Modified time: 2019-05-26 12:17:47
  */
 
 const parser = require('../utils/parse5')
@@ -35,6 +35,7 @@ function traverseReplace(code) {
   if (code.tagName) {
     code.tagName = replaceWpyTag(code.tagName)
   }
+
   if (code.attrs) {
     Array.from(code.attrs).forEach((item, index) => {
       code.attrs[index] = replaceWpyAttrKV(item)

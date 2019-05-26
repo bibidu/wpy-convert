@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-26 10:23:28
+ * @Last Modified time: 2019-05-26 12:42:43
  */
 
 
@@ -17,7 +17,6 @@ const {
 } = require('../utils')
 
 const traverseJs = require('./traverseJs')
-const traverseLess = require('./traverseLess')
 
 
 const splitSTSC = require('../splitSTSC')
@@ -52,12 +51,12 @@ module.exports = function traverseFiles() {
   const fileArr = opt
     .filter(i => i.isFile && !['.DS_Store'].includes(i.fileName))
     // .filter(i => i.ext === '.js')
-    .filter(i => i.ext === '.wpy')
+    // .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    .filter(i => i.entry.includes('answer.wpy'))
+    // .filter(i => i.entry.includes('answer.wpy'))
     // .filter(i => i.fileName.includes('prizeModal'))
     // .filter(i => i.entry.includes('pages/subPages/answer/study'))
-    .slice(0, 2)
+    // .slice(0, 2)
   // console.log('fileArr');
   // console.log(fileArr);
   
@@ -72,6 +71,9 @@ module.exports = function traverseFiles() {
       case '.js':
         fileType = 'js'
         break
+      case '.less':
+        fileType = 'less'
+        break
       default:
         fileType = '.unknow.ext'
     }
@@ -85,8 +87,9 @@ module.exports = function traverseFiles() {
     if (fileType === 'wpy') {
       return resolveWpy(distPath, file)
     }
+    // 单独less文件无需编译, wpy.style引用less文件时进行递归编译即可
     if (fileType === 'less') {
-      return traverseLess({ entry: file.filePath })
+      return
     }
     // 其他类型文件： copy
     if (true) {

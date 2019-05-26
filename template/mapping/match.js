@@ -2,12 +2,15 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-06 10:42:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-14 13:11:30
+ * @Last Modified time: 2019-05-26 12:30:26
  */
 const {
   wpyAttrMapping,
   wpyTagMapping
 } = require('./rules')
+const {
+  trim
+} = require('../../utils')
 
 /**
  * 根据映射规则替换属性k/v值
@@ -51,7 +54,27 @@ function replaceWpyTag(tagName) {
   return tagName
 }
 
+function revertObjectClass(templateCode) {
+  const reg = /:class=['"]\{(.+?)\}['"]/g
+
+  let rst = templateCode.replace(reg, (s, m) => {
+    const start = `class="`
+    const end = `"`
+    let t = ''
+    const kvs = m.split(',')
+    for (let i = 0; i < kvs.length; i++) {
+      let [k, v] = kvs[i].split(':')
+      k = trim(k), v = trim(v)
+      k = ['\'', '"'].includes(k.charAt(0)) ? k : `'${k}'`
+      t += `{{ ${v} ? ${k} : '' }} `
+    }
+    return `${start}${t}${end}`
+  })
+  return rst
+}
+
 module.exports = {
   replaceWpyAttrKV,
-  replaceWpyTag
+  replaceWpyTag,
+  revertObjectClass
 }
