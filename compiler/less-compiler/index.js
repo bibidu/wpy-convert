@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:19:33 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 07:39:48
+ * @Last Modified time: 2019-05-26 10:53:20
  */
 
 const less = require('less')
@@ -17,7 +17,7 @@ module.exports = function lessCompiler(lessCode) {
         less.render(lessCode, (err, rst) => {
           if (err) return errorHandler(err)
 
-          const compiled = safeGet(rst, 'rst.css', null)
+          const compiled = safeGet(rst, 'rst.css', '')
           if (!compiled) {
             logger.warn(`The result of less->css is null`)
           }

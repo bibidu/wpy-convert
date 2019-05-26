@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-25 08:52:42
+ * @Last Modified time: 2019-05-25 09:33:46
  */
 
 const path = require('path')
@@ -41,10 +41,6 @@ module.exports = function compileScript(scriptCode, file) {
     collectWepyComponents(_comps) {
       // replace comps.path to relative path
       Object.entries(_comps).forEach(([com, pathMayBeWithAlias]) => {
-        // TODO: undefined待处理
-        // if (!pathMayBeWithAlias) {
-        //   console.log(_comps);
-        // }
         try {
           const {flag: hasAlias, removeAliasModuleName} = checkAndReplaceAlias(pathMayBeWithAlias)
           const absoluteCompPath = hasAlias ? removeAliasModuleName : pathMayBeWithAlias
@@ -77,10 +73,6 @@ module.exports = function compileScript(scriptCode, file) {
         const isNpm = checkIsNpmModuleAndRetDetail(requireExpression).flag
         absoluteCompPath = isNpm ? requireExpression : path.resolve(path.dirname(filePath), requireExpression)
       }
-      // if (!hasAlias && !isNpm) {
-      //   console.log('NOALIAS');
-      //   console.log(absoluteCompPath);
-      // }
       const isWpy = isWpyFile(absoluteCompPath)
       return isWpy
     }

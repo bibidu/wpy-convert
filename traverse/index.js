@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-25 09:00:38
+ * @Last Modified time: 2019-05-26 10:23:28
  */
 
 
@@ -17,6 +17,8 @@ const {
 } = require('../utils')
 
 const traverseJs = require('./traverseJs')
+const traverseLess = require('./traverseLess')
+
 
 const splitSTSC = require('../splitSTSC')
 const cache = require('../utils/cache')
@@ -50,12 +52,12 @@ module.exports = function traverseFiles() {
   const fileArr = opt
     .filter(i => i.isFile && !['.DS_Store'].includes(i.fileName))
     // .filter(i => i.ext === '.js')
-    // .filter(i => i.ext === '.wpy')
+    .filter(i => i.ext === '.wpy')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
-    // .filter(i => i.fileName.includes('aaa'))
+    .filter(i => i.entry.includes('answer.wpy'))
     // .filter(i => i.fileName.includes('prizeModal'))
     // .filter(i => i.entry.includes('pages/subPages/answer/study'))
-    // .slice(0, 2)
+    .slice(0, 2)
   // console.log('fileArr');
   // console.log(fileArr);
   
@@ -83,6 +85,9 @@ module.exports = function traverseFiles() {
     if (fileType === 'wpy') {
       return resolveWpy(distPath, file)
     }
+    if (fileType === 'less') {
+      return traverseLess({ entry: file.filePath })
+    }
     // 其他类型文件： copy
     if (true) {
       return fileUtils.createAndWriteFile(distPath, fs.readFileSync(file.filePath))
@@ -102,7 +107,7 @@ async function resolveWpy(distPath, file) {
     usingComponents,
     mpRootFunc
   } = compileScript(script, file)
-  const compiledStyle = await compileStyle('less', style)
+  const compiledStyle = await compileStyle('less', style, file.filePath)
 
   let compiledConfig
   if (wpyType === 'app') {

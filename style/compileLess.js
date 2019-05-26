@@ -2,24 +2,42 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-05 18:39:45 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-23 07:50:23
+ * @Last Modified time: 2019-05-26 07:35:32
  */
 const lessCompiler = require('../compiler/less-compiler')
 
-// 正则: 获取引入的外部样式
-const GET_IMPORT_REG = /\@import\s*['|"](.+)['|"];/g
 
-module.exports = async function compileLess(less) {
-  let resultCode = ''
-  if (GET_IMPORT_REG.test(less)) {
-    const importArr = less.match(GET_IMPORT_REG)
-    resultCode += replaceImportCode(importArr)
-  }
-  let compiled = await lessCompiler(less.replace(GET_IMPORT_REG, ''))
-  resultCode += compiled
-  return resultCode
+async function compileLess(importCssCode, pureCssCode) {
+  let compiled = await lessCompiler(pureCssCode)
+  importCssCode = replaceImportCode(importCssCode)
+  
+  return importCssCode + compiled 
 }
 
 function replaceImportCode(importArr) {
   return importArr.reduce((prev, curr) => prev + curr.replace(/\.less/, '.wxss') + '\n', '')
+}
+
+function splitImportAndStyleCode(cssInStyle) {
+  const GET_IMPORT_REG = /\@import\s*['|"](.+)['|"];/g
+  let importCssCode = []
+  let importCssPath = []
+  let pureCssCode
+  
+  if (GET_IMPORT_REG.test(cssInStyle)) {
+    importCssCode = cssInStyle.match(GET_IMPORT_REG)
+    cssInStyle.replace(GET_IMPORT_REG, (s, path) => importCssPath.push(path))
+  }
+  pureCssCode = cssInStyle.replace(GET_IMPORT_REG, '')
+
+  return {
+    importCssCode,
+    importCssPath,
+    pureCssCode
+  }
+}
+
+module.exports = {
+  compileLess,
+  splitImportAndStyleCode
 }

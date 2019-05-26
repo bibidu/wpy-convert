@@ -126,9 +126,17 @@ AST + RegExp + parse5
   或自行添加插件babel-plugin-es2015-modules-commonjs并配置 "allowTopLevelThis": true
   或修改为非顶层this调用，如使用IIFE
 
-- [ ] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+- [x] less中引入公共less文件, 如@import '../../common/common.less'; 在当前less中使用@circle-bgColor会报错
+  依次向上遍历引用less, 将引用less文件中的@color:#fff; 替换为当前引用的less文件路径。当less文件中只有less变量声明时, 不生成dist文件。原本的less文件引用改为wxss后缀。
 
-- [ ] 编译速度过慢
+- [x] 编译速度过慢。通过使用cache对编译过的文件进行标记。
+
+- [ ] 引入hook机制, 以实现以下设计：
+      wpy -> 判断编译类型(less | babel | ...)
+      -> this.hook(less-compiler | babel-compiler | ...)
+      -> 执行xx-compiler时需要递归继续执行 -> this.hook(xx-compiler)
+      
+
 
 
 ### 坑
