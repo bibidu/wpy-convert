@@ -131,8 +131,10 @@ AST + RegExp + parse5
 
 - [x] 编译速度过慢。通过使用cache对编译过的文件进行标记。
 
-- [ ] template编译时 :class="{nosure: true, 'bingo': realAnswer}" 需要被编译成:
+- [x] template编译时 :class="{nosure: true, 'bingo': realAnswer}" 需要被编译成:
       class="{{true ? 'nosure' : ''}} {{right ? 'bingo' : ''}}", 目前配置的通用正则无法实现
+
+- [x] 报promise undefined 是由于wepy-async-function~globaljs中使用了this，但编译后是严格模式导致最外层this undefined，故添加babel去除严格模式插件解决。
 
 - [ ] 引入hook机制, 以实现以下设计：
       wpy -> 判断编译类型(less | babel | ...)

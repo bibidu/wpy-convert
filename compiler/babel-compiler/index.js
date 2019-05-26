@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-26 11:21:42
+ * @Last Modified time: 2019-05-27 07:21:52
  */
 
 const babel = require('babel-core')
@@ -88,7 +88,7 @@ function collectWepyComponents(path) {
         ).forEach(prop => {
           components[prop.key.name] = prop.value.object.name
         })
-        // path.remove()
+        path.remove()
       }
     })
   }
@@ -237,6 +237,7 @@ module.exports = function babelCompiler(
         "stage-1"
       ],
       plugins: [  
+        ["transform-remove-strict-mode"],
         ["transform-decorators-legacy"],
         ["transform-class-properties", { "spec": true }]
       ]

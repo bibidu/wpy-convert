@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-25 09:33:46
+ * @Last Modified time: 2019-05-27 07:23:50
  */
 
 const path = require('path')
@@ -82,7 +82,7 @@ module.exports = function compileScript(scriptCode, file) {
     config: config,
     fileType: fileType,
     usingComponents: components,
-    mpRootFunc: `${upperStart(fileType)}(${exportDefaultName})`
+    mpRootFunc: `${upperStart(fileType)}(new ${exportDefaultName}())`
   }
 }
 
