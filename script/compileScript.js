@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-27 07:23:50
+ * @Last Modified time: 2019-05-27 08:46:47
  */
 
 const path = require('path')
@@ -24,6 +24,9 @@ const {
 
 
 module.exports = function compileScript(scriptCode, file) {
+
+  // TODO: 临时的wepy运行时
+  scriptCode = scriptCode.toString().replace("import wepy from 'wepy'", "import wepy from '@/wepy-runtime'")
   const { filePath } = file
   let exportDefaultName
   let config = {}
@@ -77,12 +80,13 @@ module.exports = function compileScript(scriptCode, file) {
       return isWpy
     }
   })
+  const upperFileType = upperStart(fileType)
   return {
     script: compiled.code,
     config: config,
     fileType: fileType,
     usingComponents: components,
-    mpRootFunc: `${upperStart(fileType)}(new ${exportDefaultName}())`
+    mpRootFunc: `${upperFileType}(create${upperFileType}(${exportDefaultName}))`
   }
 }
 

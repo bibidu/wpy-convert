@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-26 12:42:43
+ * @Last Modified time: 2019-05-27 08:01:26
  */
 
 
@@ -56,7 +56,7 @@ module.exports = function traverseFiles() {
     // .filter(i => i.entry.includes('answer.wpy'))
     // .filter(i => i.fileName.includes('prizeModal'))
     // .filter(i => i.entry.includes('pages/subPages/answer/study'))
-    // .slice(0, 2)
+    // .slice(0, 1)
   // console.log('fileArr');
   // console.log(fileArr);
   

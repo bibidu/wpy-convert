@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-27 07:21:52
+ * @Last Modified time: 2019-05-27 08:00:51
  */
 
 const babel = require('babel-core')
@@ -128,7 +128,8 @@ module.exports = function babelCompiler(
     MemberExpression(_path) {
       const { object, property } = _path.node
       if (
-        safeGet(object, 'object.object.name') === '_wepy2'
+        // TODO: 临时wepy运行时的导出
+        safeGet(object, 'object.object.name') === '_wepyRuntime2'
         && safeGet(object, 'object.property.name') === 'default'
         && ['app', 'page', 'component'].includes(property.name)
       ) {
@@ -275,6 +276,7 @@ function replaceCompsPath(components, newCompsPaths) {
   const firstLower = (str) => str.replace(/^\w/, (s) => s.toLowerCase())
   let upperNewCompsPaths = {}
 
+  // TODO: 移除hacker处理。[已废弃，通过先编译后ast遍历解决]
   Object.entries(newCompsPaths).forEach(([key, value]) => {
     upperNewCompsPaths[key.toLowerCase()] = value
   })

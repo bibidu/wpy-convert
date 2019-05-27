@@ -75,6 +75,8 @@ AST + RegExp + parse5
 
 - [x] npm目录递归创建未实现
 
+- [ ] 编译后生成compileCache文件，用于当下次编译时是否重复编译，添加script命令-完全编译-缓存编译
+
 - [ ] methods平铺
 
 - [ ] component生命周期方法名修改
