@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 15:37:27 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-27 08:46:47
+ * @Last Modified time: 2019-05-27 11:31:44
  */
 
 const path = require('path')
@@ -33,6 +33,7 @@ module.exports = function compileScript(scriptCode, file) {
   let components = {}
   let mpRootFunc
   let fileType
+  let sourceWepy
 
   let compiled = babelCompiler(scriptCode, {
     removeComponent() {
@@ -61,7 +62,8 @@ module.exports = function compileScript(scriptCode, file) {
     getWepyFileType(_fileType) {
       fileType = _fileType
     },
-    getWepyFileBody(_body) {
+    getWepyFileBody(_sourceWepy, _body) {
+      sourceWepy = _sourceWepy
       exportDefaultName = _body
     },
     replaceRequirePath(requireExpression) {
@@ -86,7 +88,7 @@ module.exports = function compileScript(scriptCode, file) {
     config: config,
     fileType: fileType,
     usingComponents: components,
-    mpRootFunc: `${upperFileType}(create${upperFileType}(${exportDefaultName}))`
+    mpRootFunc: `${upperFileType}(${sourceWepy}.create${upperFileType}(${exportDefaultName}))`
   }
 }
 

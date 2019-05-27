@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-13 22:20:59 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-27 08:01:26
+ * @Last Modified time: 2019-05-27 11:50:34
  */
 
 
@@ -52,6 +52,7 @@ module.exports = function traverseFiles() {
     .filter(i => i.isFile && !['.DS_Store'].includes(i.fileName))
     // .filter(i => i.ext === '.js')
     // .filter(i => i.ext === '.wpy')
+    // .filter(i => i.ext !== '.png')
     // .filter(i => i.fileName.includes('app') || i.fileName.includes('chooseBookCategory'))
     // .filter(i => i.entry.includes('answer.wpy'))
     // .filter(i => i.fileName.includes('prizeModal'))

@@ -2,7 +2,7 @@
  * @Author: kc.duxianzhang 
  * @Date: 2019-05-22 15:22:42 
  * @Last Modified by: kc.duxianzhang
- * @Last Modified time: 2019-05-27 08:00:51
+ * @Last Modified time: 2019-05-27 11:30:56
  */
 
 const babel = require('babel-core')
@@ -153,7 +153,7 @@ module.exports = function babelCompiler(
           if (t === 'undefined') return
 
           // 获取wepy文件body体
-          apis.getWepyFileBody(t)
+          apis.getWepyFileBody('_wepyRuntime2.default', t)
         }
       }
     },
