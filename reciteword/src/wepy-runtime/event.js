@@ -7,7 +7,25 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
-export default {
-};
+export default class {
 
+    active = true;
 
+    constructor (name, source, type) {
+
+        this.name = name;
+        this.source = source;
+        this.type = type;
+    }
+
+    $destroy () {
+        this.active = false;
+    }
+
+    $transfor(wxevent) {
+        let k = 0;
+        for (k in wxevent) {
+            this[k] = wxevent[k];
+        }
+    }
+}

@@ -88,7 +88,7 @@ module.exports = function compileScript(scriptCode, file) {
     config: config,
     fileType: fileType,
     usingComponents: components,
-    mpRootFunc: `${upperFileType}(${sourceWepy}.create${upperFileType}(${exportDefaultName}))`
+    mpRootFunc: `${upperFileType}(${sourceWepy}.$create${upperFileType}(${exportDefaultName}))`
   }
 }
 
